@@ -1,10 +1,9 @@
-from PIL import Image
+
 import plotly.express as px
 import plotly.graph_objects as go
 from config import engine
 import pandas as pd
 from data import download_image
-import os
 
 user='Vallicorp'
 mapbox_token = 'pk.eyJ1IjoiYXJ0aHVyY2hpcXVldCIsImEiOiJja2E1bDc3cjYwMTh5M2V0ZzdvbmF5NXB5In0.ETylJ3ztuDA-S3tQmNGpPQ'
@@ -44,9 +43,9 @@ def affichage_map_geo():
         )
     return fig
 
-def affichage_map_chantier(chantier, rm=False):
+def affichage_map_chantier(chantier):
     try:
-        download_image(chantier, 'plan.jpeg')
+        plan = download_image(chantier, 'plan.jpeg')
         with engine.connect() as con:
             query="select * from capteur where chantier ='%s'"%chantier
             coord_lambert = pd.read_sql_query(query, con=con)
@@ -71,7 +70,7 @@ def affichage_map_chantier(chantier, rm=False):
 
         fig.add_layout_image(
             dict(
-                source=Image.open("plan.jpeg"),
+                source=plan,
                 xref="x",
                 yref="y",
                 x=X,
@@ -113,10 +112,6 @@ def affichage_map_chantier(chantier, rm=False):
             showticklabels=False,
             title=None,
             showgrid=False)
-
-        if rm:
-            os.remove('plan.jpeg')
-
         return fig
     except:
         fig = go.Figure(

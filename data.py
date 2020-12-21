@@ -1,4 +1,5 @@
 import pandas as pd
+from PIL import Image
 from server import app, TIMEOUT, cache
 from google.cloud import storage
 from google.oauth2 import service_account
@@ -55,9 +56,13 @@ def export_data(df, chantier, path, filename, bucket = BUCKET_NAME, project_id =
     blob = bucket.blob(f'{chantier}/{path}/{filename}')
     blob.upload_from_string(df.to_csv(index=False))
 
-def download_image(chantier, filename, bucket = BUCKET_NAME, project_id = PROJECT_ID):
+def download_image(chantier, filename, bucket = BUCKET_NAME, project_id = PROJECT_ID, rm = True):
     creds = get_credentials()
     client = storage.Client(credentials=creds, project=PROJECT_ID)
     bucket = client.get_bucket(BUCKET_NAME)
     blob = bucket.blob(f'{chantier}/{filename}')
     blob.download_to_filename('plan.jpeg')
+    img = Image.open("plan.jpeg")
+    if rm:
+        os.remove('plan.jpeg')
+    return img
