@@ -44,7 +44,7 @@ def affichage_map_geo():
         )
     return fig
 
-def affichage_map_chantier(chantier, rm=True):
+def affichage_map_chantier(chantier, rm=False):
     try:
         download_image(chantier, 'plan.jpeg')
         with engine.connect() as con:
