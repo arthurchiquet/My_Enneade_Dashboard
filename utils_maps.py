@@ -3,6 +3,8 @@ import plotly.express as px
 import plotly.graph_objects as go
 from config import engine
 import pandas as pd
+from data import download_image
+import os
 
 user='Vallicorp'
 mapbox_token = 'pk.eyJ1IjoiYXJ0aHVyY2hpcXVldCIsImEiOiJja2E1bDc3cjYwMTh5M2V0ZzdvbmF5NXB5In0.ETylJ3ztuDA-S3tQmNGpPQ'
@@ -11,6 +13,7 @@ colors = {
     'background': '#222222',
     'text': '#FF8C00'
 }
+
 
 
 def affichage_map_geo():
@@ -27,7 +30,7 @@ def affichage_map_geo():
             hover_name="nom_chantier",
             hover_data={
                 'lat':False,
-                'lon':False
+                'lon':False,
             },
             color_discrete_sequence=["#FF8C00"],
             height=550,
@@ -41,24 +44,24 @@ def affichage_map_geo():
         )
     return fig
 
-def affichage_map_chantier(chantier):
+def affichage_map_chantier(chantier, rm=True):
     try:
+        download_image(chantier, 'plan.jpeg')
         with engine.connect() as con:
-            query="select * from capteur where chantier ='%s' and type=1"%chantier
+            query="select * from capteur where chantier ='%s'"%chantier
             coord_lambert = pd.read_sql_query(query, con=con)
+
         fig = px.scatter(
             coord_lambert,
             x="lat",
             y="lon",
             hover_name="capteur",
             template='plotly_dark',
-            color_discrete_sequence=["#FF8C00"],
-            width = 800,
-            height=650,
+            # color_discrete_sequence=["#FF8C00"],
+            color='type',
+            height=600,
             hover_data={
-                    'lat':False,
-                    'lon':False,
-                    'secteur':False
+                    'type':True
                 },
         )
         X = 2055229.22647546
@@ -68,7 +71,7 @@ def affichage_map_chantier(chantier):
 
         fig.add_layout_image(
             dict(
-                source=Image.open(f"data/{chantier}_plan_black.jpeg"),
+                source=Image.open("plan.jpeg"),
                 xref="x",
                 yref="y",
                 x=X,
@@ -79,6 +82,7 @@ def affichage_map_chantier(chantier):
                 layer="below",
             )
         )
+
         fig.update_layout(
                 # title={
                 #     'text': chantier,
@@ -89,7 +93,9 @@ def affichage_map_chantier(chantier):
                 title_font_color="#FF8C00",
                 plot_bgcolor=colors['background'],
                 paper_bgcolor=colors['background'],
+                margin={"r":0,"t":20,"l":10,"b":20}
             )
+
         fig.update_xaxes(
             range=[X, X + x_size],
             linecolor='white',
@@ -98,6 +104,7 @@ def affichage_map_chantier(chantier):
             showticklabels=False,
             title=None,
             showgrid=False)
+
         fig.update_yaxes(
             range=[Y - y_size, Y],
             linecolor='white',
@@ -106,6 +113,10 @@ def affichage_map_chantier(chantier):
             showticklabels=False,
             title=None,
             showgrid=False)
+
+        if rm:
+            os.remove('plan.jpeg')
+
         return fig
     except:
         fig = go.Figure(

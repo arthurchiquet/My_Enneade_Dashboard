@@ -54,3 +54,10 @@ def export_data(df, chantier, path, filename, bucket = BUCKET_NAME, project_id =
     bucket = client.get_bucket(BUCKET_NAME)
     blob = bucket.blob(f'{chantier}/{path}/{filename}')
     blob.upload_from_string(df.to_csv(index=False))
+
+def download_image(chantier, filename, bucket = BUCKET_NAME, project_id = PROJECT_ID):
+    creds = get_credentials()
+    client = storage.Client(credentials=creds, project=PROJECT_ID)
+    bucket = client.get_bucket(BUCKET_NAME)
+    blob = bucket.blob(f'{chantier}/{filename}')
+    blob.download_to_filename('plan.jpeg')

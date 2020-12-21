@@ -24,10 +24,6 @@ def display_page(pathname):
         return home.layout
     elif pathname == "/chantier":
         return chantier.layout
-    elif pathname == "/topographie":
-        return topographie.layout
-    elif pathname == "/inclinometrie":
-        return inclinometrie.layout
     elif pathname == "/admin":
         return admin.layout
     elif pathname == "/profil":

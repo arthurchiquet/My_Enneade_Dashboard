@@ -19,7 +19,6 @@ colors = {
     'text': '#FF8C00'
 }
 
-
 layout = html.Div(
     [
         dcc.Store(id='chantier-store', storage_type='session'),
@@ -33,7 +32,7 @@ layout = html.Div(
             id='zone-map',
             children=[
             dcc.Loading(
-                id = "loading-map",
+                id = "loading-map-geo",
                 color='#FF8C00',
                 type="cube",
                 children = dcc.Graph(id='map-geo', config={'displayModeBar': False}, figure=affichage_map_geo())
