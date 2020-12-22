@@ -1,13 +1,30 @@
+import dash_core_components as dcc
+import dash_html_components as html
+import dash_bootstrap_components as dbc
+from dash.dependencies import Input, Output, State
+from config import engine
 import pandas as pd
 import numpy as np
+from server import app
 import plotly.express as px
+import plotly.graph_objects as go
+from plotly.subplots import make_subplots
 from math import radians, cos, sin
-from data import get_data, memoized_df
+from data import get_data
 
 colors = {
     'background': '#222222',
     'text': 'white'
 }
+
+topo_content = html.Div(
+    [
+        html.Br(),
+        dbc.Container([
+        dcc.Graph(id="time-series", config={"scrollZoom": True}),
+        ],className='jumbotron', fluid=True)
+    ],
+)
 
 def first(col):
     i = 0
@@ -48,7 +65,6 @@ def facet_name(string):
 def remove_xyz(string):
     return string[:-2]
 
-
 def format_df(df, list_capteur, angle):
     df.date = pd.to_datetime(df.date, format="%d/%m/%Y")
     # range_date = [df.date.tolist()[-60], df.date.tolist()[-1]]
@@ -65,9 +81,8 @@ def format_df(df, list_capteur, angle):
     df["Cible"] = df["level_1"].map(remove_xyz)
     return df.rename(columns={0: "delta"}).drop(columns="level_1")
 
-
 def graph_topo(chantier, cible):
-    df = memoized_df(chantier, 'actif', 'topographie.csv', sep=False)
+    df = get_data(chantier, 'actif', 'topographie.csv', sep=False)
     dff = format_df(df, cible, 0)
     fig = px.line(
         dff,
@@ -77,6 +92,7 @@ def graph_topo(chantier, cible):
         color="Cible",
         facet_row_spacing=0.03,
         template="plotly_white",
+        line_shape='spline'
     )
     fig.update_yaxes(matches=None, showgrid=False)
     fig.update_xaxes(showgrid=False)

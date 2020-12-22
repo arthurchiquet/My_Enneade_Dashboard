@@ -29,7 +29,7 @@ def format_df(df):
 
 def graph_jauge(chantier, jauge):
     df = format_df(get_data(chantier, 'actif', 'jauges.csv', sep=False)[['Date',jauge]])
-    fig = px.line(df.reset_index(), x="Date", y=df.columns)
+    fig = px.line(df.reset_index(), x="Date", y=df.columns, line_shape='spline')
     fig.update_layout(
         height=550,
         showlegend=False,

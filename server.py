@@ -5,17 +5,17 @@ import dash_bootstrap_components as dbc
 # User management initialization
 import os
 from flask_login import LoginManager, UserMixin
-from flask_caching import Cache
+# from flask_caching import Cache
 from user_mgmt import db, User as base
 
 app = dash.Dash(__name__, external_stylesheets=[dbc.themes.DARKLY])
 
-cache = Cache(app.server, config={
-    'CACHE_TYPE': 'filesystem',
-    'CACHE_DIR': 'cache-directory'
-})
+# cache = Cache(app.server, config={
+#     'CACHE_TYPE': 'filesystem',
+#     'CACHE_DIR': 'cache-directory'
+# })
 
-TIMEOUT = 30
+# TIMEOUT = 60
 
 server = app.server
 app.config.suppress_callback_exceptions = True
