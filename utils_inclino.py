@@ -202,7 +202,7 @@ table_tan = dt.DataTable(
 )
 
 layout = html.Div(
-        [
+    [
         html.Br(),
         dbc.Container([
             dcc.Loading(
@@ -218,168 +218,118 @@ layout = html.Div(
             ]
         ),
         html.Br(),
-        html.Div(
+        dbc.Row(
             [
-                dbc.Row(
+                dbc.Col(
                     [
-                        dbc.Card(
-                            html.Div(
-                                [
-                                    html.Div(
-                                        [
-
-                                            dbc.Row(
-                                                [
-                                                    dbc.Col(
-                                                        [
-                                                            dcc.Graph(
-                                                                id="var_norm",
-                                                                config={
-                                                                    "scrollZoom": True
-                                                                },
-                                                            ),
-                                                        ]
-                                                    ),
-                                                    dbc.Col(
-                                                        [
-                                                            dcc.Graph(
-                                                                id="var_tan",
-                                                                config={
-                                                                    "scrollZoom": True
-                                                                },
-                                                            ),
-                                                        ]
-                                                    ),
-                                                ]
-                                            ),
-                                            dbc.Label(
-                                                "Affichage historique (nombre de courbes)"
-                                            ),
-                                            controls3,
-                                        ],
-                                    ),
-                                    html.Div(
-                                        [
-                                            dbc.Row(
-                                                [
-                                                    dbc.Col(
-                                                        [
-                                                            dcc.Graph(
-                                                                id="var_norm_2",
-                                                                config={
-                                                                    "scrollZoom": True
-                                                                },
-                                                            ),
-                                                        ]
-                                                    ),
-                                                    dbc.Col(
-                                                        [
-                                                            dcc.Graph(
-                                                                id="var_tan_2",
-                                                                config={
-                                                                    "scrollZoom": True
-                                                                },
-                                                            ),
-                                                        ]
-                                                    ),
-                                                ]
-                                            ),
-                                            dbc.Label(
-                                                "Affichage historique (nombre de courbes)"
-                                            ),
-                                            controls1,
-                                        ],
-                                    ),
-                                ]
-                            ),
-                            body=True,
+                        dcc.Graph(
+                            id="var_norm",
+                            config={
+                                "scrollZoom": True
+                            },
                         ),
                     ]
                 ),
-                html.Br(),
-                dbc.Row(
+                dbc.Col(
                     [
-                        dbc.Card(
-                            html.Div(
-                                [
-                                    dbc.Row(
-                                        [
-                                            dbc.Col(
-                                                [
-                                                    dcc.Graph(
-                                                        id="var_norm_3",
-                                                        config={"scrollZoom": True},
-                                                    ),
-                                                ]
-                                            ),
-                                            dbc.Col(
-                                                [
-                                                    dcc.Graph(
-                                                        id="var_tan_3",
-                                                        config={"scrollZoom": True},
-                                                    ),
-                                                ]
-                                            ),
-                                        ]
-                                    ),
-                                    dbc.Label(
-                                        "Affichage historique (nombre de courbes)"
-                                    ),
-                                    controls2,
-                                ],
-                            ),
-                            body=True,
+                        dcc.Graph(
+                            id="var_tan",
+                            config={
+                                "scrollZoom": True
+                            },
                         ),
                     ]
                 ),
-                html.Br(),
-                dbc.Row(
-                    [
-                        dbc.Card(
-                            html.Div(
-                                [
-                                    dbc.Row(
-                                        [
-                                            dbc.Col(
-                                                [
-                                                    dcc.Graph(
-                                                        id="var_norm_4",
-                                                        config={"scrollZoom": True},
-                                                    ),
-                                                ]
-                                            ),
-                                            dbc.Col(
-                                                [
-                                                    dcc.Graph(
-                                                        id="var_tan_4",
-                                                        config={"scrollZoom": True},
-                                                    ),
-                                                ]
-                                            ),
-                                        ]
-                                    ),
-                                    dbc.Label("Choix de la profondeur (m)"),
-                                    controls4,
-                                ],
-                            ),
-                            body=True,
-                        )
-                    ]
-                ),
-                html.Hr(),
-                dcc.Markdown(
-                    """**Composante normale "n" (mm) en fonction de la profondeur (m)**"""
-                ),
-                table_norm,
-                html.Br(),
-                dcc.Markdown(
-                    """**Composante tangentielle "t" (mm)  en fonction de la profondeur (m)**"""
-                ),
-                table_tan,
             ]
         ),
+        dbc.Label("Affichage historique (nombre de courbes)"),
+        controls3,
+        html.Br(),
+        dbc.Row(
+            [
+                dbc.Col(
+                    [
+                        dcc.Graph(
+                            id="var_norm_2",
+                            config={
+                                "scrollZoom": True
+                            },
+                        ),
+                    ]
+                ),
+                dbc.Col(
+                    [
+                        dcc.Graph(
+                            id="var_tan_2",
+                            config={
+                                "scrollZoom": True
+                            },
+                        ),
+                    ]
+                ),
+            ]
+        ),
+        dbc.Label("Affichage historique (nombre de courbes)"),
+        controls1,
+        html.Br(),
+        dbc.Row(
+            [
+                dbc.Col(
+                    [
+                        dcc.Graph(
+                            id="var_norm_3",
+                            config={"scrollZoom": True},
+                        ),
+                    ]
+                ),
+                dbc.Col(
+                    [
+                        dcc.Graph(
+                            id="var_tan_3",
+                            config={"scrollZoom": True},
+                        ),
+                    ]
+                ),
+            ]
+        ),
+        dbc.Label("Affichage historique (nombre de courbes)"),
+        controls2,
+        html.Br(),
+        dbc.Row(
+            [
+                dbc.Col(
+                    [
+                        dcc.Graph(
+                            id="var_norm_4",
+                            config={"scrollZoom": True},
+                        ),
+                    ]
+                ),
+                dbc.Col(
+                    [
+                        dcc.Graph(
+                            id="var_tan_4",
+                            config={"scrollZoom": True},
+                        )
+                    ]
+                )
+            ]
+        ),
+        dbc.Label("Choix de la profondeur (m)"),
+        controls4,
+        html.Hr(),
+        dcc.Markdown(
+            """**Composante normale "n" (mm) en fonction de la profondeur (m)**"""
+        ),
+        table_norm,
+        html.Br(),
+        dcc.Markdown(
+            """**Composante tangentielle "t" (mm)  en fonction de la profondeur (m)**"""
+        ),
+        table_tan
     ]
 )
+
 
 @app.callback(
     [
