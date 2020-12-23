@@ -123,11 +123,11 @@ def positions_GPS_capteur(df):
         # color_discrete_sequence=["#FF8C00"],
         color='type',
         height=550,
-        # hover_data={
-        #         'type':True
-        #     },
+        hover_data={
+                'type':True
+            },
     )
-    fig.update_traces(hovertemplate = " %{color} : %{hover_name}")
+    # fig.update_traces(hovertemplate = " %{color} : %{hover_name}")
     return fig
 
 def positions_GPS_secteur(df):
