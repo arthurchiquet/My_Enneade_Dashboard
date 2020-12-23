@@ -3,13 +3,16 @@ import dash_html_components as html
 from dash.dependencies import Input, Output, State
 from server import app
 from flask_login import logout_user, current_user
-from layouts import admin, conditions, error, login, login_fd, logout, profil, home, chantier, synth_secteur
+from layouts import admin,conditions,error,login,login_fd,logout,profil,home,chantier,secteur
+
+
 
 app.layout = html.Div(
     [
         dcc.Store(id='chantier-store', storage_type='session'),
         dcc.Store(id='secteur-store', storage_type='session'),
-        dcc.Location(id="url", refresh=True),
+        dcc.Store(id='type-store', storage_type='session'),
+        dcc.Location(id="url", refresh=False),
         html.Div(id="page-content")
         ]
 )
@@ -25,8 +28,8 @@ def display_page(pathname):
         return home.layout
     elif pathname == "/chantier":
         return chantier.layout
-    elif pathname == "/synth_secteur":
-        return synth_secteur.layout
+    elif pathname == "/secteur":
+        return secteur.layout
     elif pathname == "/admin":
         return admin.layout
     elif pathname == "/profil":

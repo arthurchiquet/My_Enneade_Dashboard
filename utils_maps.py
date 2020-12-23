@@ -88,7 +88,7 @@ def affichage_map_chantier(chantier, mode):
                 title_font_color="#FF8C00",
                 plot_bgcolor=colors['background'],
                 paper_bgcolor=colors['background'],
-                margin={"r":0,"t":20,"l":10,"b":20}
+                margin={"r":30,"t":10,"l":30,"b":20}
             )
 
         fig.update_xaxes(
@@ -122,15 +122,16 @@ def positions_GPS_capteur(df):
         template='plotly_dark',
         # color_discrete_sequence=["#FF8C00"],
         color='type',
-        height=600,
-        hover_data={
-                'type':True
-            },
+        height=550,
+        # hover_data={
+        #         'type':True
+        #     },
     )
+    fig.update_traces(hovertemplate = " %{color} : %{hover_name}")
     return fig
 
 def positions_GPS_secteur(df):
-    df = df[df.type=='cible'].groupby(['secteur']).mean().drop(labels='NON DEFINI', axis=0).reset_index()
+    df = df[df.type=='cible'].groupby(['secteur']).mean().reset_index()
 
     fig = px.scatter(
         df,
@@ -139,7 +140,7 @@ def positions_GPS_secteur(df):
         template='plotly_dark',
         text="secteur",
         color='secteur',
-        height=600,
+        height=550,
         hover_name='secteur',
         hover_data={
             'lat':False,

@@ -28,7 +28,7 @@ colors = {
 dropdowns = dcc.Dropdown(
                 id='mode',
                 persistence=True,
-                persistence_type="local",
+                persistence_type="session",
                 options=[
                 {'label': 'Positions GPS', 'value': 'GPS'},
                 {'label': 'Secteurs', 'value': 'secteurs'},
@@ -40,16 +40,20 @@ dropdowns = dcc.Dropdown(
 
 layout = html.Div(
     children=[
+        html.Br(),
         dbc.Row(
-            children=[dbc.Button('Carte', id='back-map', className="mr-1", href='/')],
-            justify='center'
+            children=[
+                dbc.Button('Vue générale', color = 'dark', className="mr-1", href='/'),
+                dbc.Button('Profil', color = 'dark', className="mr-1", href='/profil'),
+                dbc.Button('Déconnexion', color = 'dark', className="mr-1", href='/logout')
+            ], justify='center'
         ),
+        html.Hr(),
         dbc.Row(
             [
                 dbc.Col(
                     [
                         dbc.Row(dropdowns, justify = 'center'),
-                        html.Br(),
                         dbc.Row(
                             dbc.Container(
                                 children=[
@@ -97,10 +101,13 @@ layout = html.Div(
                     ]
                 )
             ]
-        )
+        ),
+        dbc.Row(dbc.Col(id='buttons-secteurs', children=[], width={"size": 5, "offset": 1}))
     ]
 )
 
+
+##### AFFICHAGE LA CARTE DU CHANTIER SELECTIONNE #####
 @app.callback(
     Output("map-chantier", "figure"),
     [Input('chantier-store', 'data'),
@@ -108,23 +115,57 @@ layout = html.Div(
 def affichage_map(chantier_store, mode):
     return affichage_map_chantier(chantier_store, mode)
 
-@app.callback(
-    Output('secteur-store', 'data'),
-    Input('map-chantier', 'clickData'),
-    State('mode', 'value'))
-def click(clickData, mode):
-    try:
-        return clickData['points'][0]['hovertext']
-    except:
-        return {}
 
+##### AFFICHE LES BOUTONS DE RAPPORTS LORSQU'UN SECTEUR EST SELECTIONNE  ET STOCKE LA VALEUR DU SECTEUR ####
+@app.callback(
+    [Output('buttons-secteurs', 'children'),
+    Output('secteur-store', 'data')],
+    Input('map-chantier', 'clickData'),
+    Input('mode', 'value'))
+def click(clickData, mode):
+    if mode =='secteurs' and clickData:
+        content = [
+            dbc.Button('Topo', href='/secteur', className="mr-1", id='topo', n_clicks=0),
+            dbc.Button('Inclino', href='/secteur', className="mr-1", id="inclino", n_clicks=0),
+            dbc.Button('Tirant', href='/secteur', className="mr-1", id='tirant', n_clicks=0),
+            dbc.Button('Jauge', href='/secteur', className="mr-1", id='jauge', n_clicks=0),
+            dbc.Button('Piezo', href='/secteur', className="mr-1", id='piezo', n_clicks=0)
+        ]
+        return content, clickData['points'][0]['hovertext']
+    else:
+        return [], {}
+
+
+##### RENVOI VERS LE RAPPORT CORRESPONDANT #####
+@app.callback(
+    Output('type-store', 'data'),
+    [Input('topo', 'n_clicks'),
+    Input('inclino', 'n_clicks'),
+    Input('tirant', 'n_clicks'),
+    Input('jauge', 'n_clicks'),
+    Input('piezo', 'n_clicks')])
+def click(n_clicks_1, n_clicks_2, n_clicks_3, n_clicks_4, n_clicks_5):
+    if n_clicks_1 > 0:
+        return 1
+    elif n_clicks_2 > 0:
+        return 2
+    elif n_clicks_3 > 0:
+        return 3
+    elif n_clicks_4 > 0:
+        return 4
+    elif n_clicks_5 > 0:
+        return 5
+
+
+#### AFFICHE LA COURBE CORRESPONDANT AU CAPTEUR SELECTIONNÉ ####
 @app.callback(
     [Output('tire_graph', 'children'),
     Output("courbe_capteur", "figure")],
-    Input("map-chantier", "clickData"),
+    [Input("map-chantier", "clickData"),
+    Input('mode', 'value')],
     State('chantier-store', 'data'),
-    State('mode', 'value'))
-def affichage_courbe_capteur(clickData, chantier, mode):
+    )
+def affichage_courbe_capteur(clickData, mode, chantier):
     if mode != 'GPS':
         return '', empty_figure()
     else:
@@ -135,9 +176,11 @@ def affichage_courbe_capteur(clickData, chantier, mode):
         except:
             return '', empty_figure()
 
+
+#### RENVOIE LA METHODE D'AFFICHAGE DE LA COURBE EN FONCTION DU TYPE DE CAPTEUR ####
 def selection_affichage(chantier, customdata, hovertext):
     if customdata == 'cible':
-        return graph_topo(chantier, hovertext)
+        return graph_topo(chantier, hovertext, 0)
     elif customdata == 'inclino':
         return graph_inclino(chantier, hovertext)
     elif customdata == 'tirant':

@@ -10,21 +10,41 @@ import plotly.express as px
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 from math import radians, cos, sin
-from data import get_data
+from data import get_data, memoized_df
 
 colors = {
     'background': '#222222',
     'text': 'white'
 }
 
-topo_content = html.Div(
+layout = html.Div(
     [
         html.Br(),
         dbc.Container([
-        dcc.Graph(id="time-series", config={"scrollZoom": True}),
-        ],className='jumbotron', fluid=True)
+            dcc.Loading(
+                dcc.Graph(id="time-series", config={"scrollZoom": True}),
+                )
+        ], fluid=True)
     ],
 )
+
+
+@app.callback(
+    Output("time-series", "figure"),
+    Input("secteur-store", "data"),
+    State("chantier-store", "data"),
+)
+def update_timeseries(secteur, chantier):
+    try:
+        with engine.connect() as con:
+            query1="select * from capteur where secteur ='%s' and type='cible'"%secteur
+            query2="select * from secteur where secteur ='%s'"%secteur
+            list_capteur = pd.read_sql_query(query1, con=con).capteur.unique()
+            angle=pd.read_sql_query(query2, con= con).angle[0]
+        return graph_topo(chantier, list_capteur, angle)
+    except:
+        return {}
+
 
 def first(col):
     i = 0
@@ -81,9 +101,12 @@ def format_df(df, list_capteur, angle):
     df["Cible"] = df["level_1"].map(remove_xyz)
     return df.rename(columns={0: "delta"}).drop(columns="level_1")
 
-def graph_topo(chantier, cible):
-    df = get_data(chantier, 'actif', 'topographie.csv', sep=False)
-    dff = format_df(df, cible, 0)
+def graph_topo(chantier, cible, angle, memo = False):
+    if memo :
+        df = memoized_df(chantier, 'actif', 'topographie.csv', sep=False)
+    else :
+        df = get_data(chantier, 'actif', 'topographie.csv', sep=False)
+    dff = format_df(df, cible, angle)
     fig = px.line(
         dff,
         x="date",
@@ -91,8 +114,6 @@ def graph_topo(chantier, cible):
         facet_row="Axe",
         color="Cible",
         facet_row_spacing=0.03,
-        template="plotly_white",
-        line_shape='spline'
     )
     fig.update_yaxes(matches=None, showgrid=False)
     fig.update_xaxes(showgrid=False)

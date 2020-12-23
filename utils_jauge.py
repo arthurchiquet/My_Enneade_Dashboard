@@ -1,12 +1,42 @@
 import pandas as pd
 import numpy as np
 import plotly.express as px
+from server import app
+from config import engine
 from data import get_data
+from dash.dependencies import Input, Output
+import dash_html_components as html
+import dash_bootstrap_components as dbc
+import dash_core_components as dcc
+
 
 colors = {
     'background': '#222222',
     'text': 'white'
 }
+
+layout = html.Div([
+    html.Br(),
+    dbc.Container([
+            html.H3("Evolution brute des fissures (écarts, mm)", style={"textAlign": "center"}),
+            dcc.Loading(
+                dcc.Graph(id="courbe_jauge", config={"scrollZoom": True})
+            )
+        ], fluid=True)
+    ])
+
+@app.callback(
+    Output("courbe_jauge", "figure"),
+    [Input("chantier-store", "data"),
+     Input("secteur-store", 'data')])
+def update_graph_jauges(chantier, secteur):
+    try:
+        with engine.connect() as con:
+            query=f"select * from capteur where chantier='{chantier}' and secteur ='{secteur}' and type='jauge'"
+            liste_jauges = pd.read_sql_query(query, con=con).capteur.unique()
+        return graph_jauge(chantier, liste_jauges)
+    except:
+        return {}
 
 def first(col):
     i = 0
@@ -28,6 +58,7 @@ def format_df(df):
     return df
 
 def graph_jauge(chantier, jauge):
+    df = get_data(chantier, 'actif', 'jauges.csv', sep=False)
     df = format_df(get_data(chantier, 'actif', 'jauges.csv', sep=False)[['Date',jauge]])
     fig = px.line(df.reset_index(), x="Date", y=df.columns, line_shape='spline')
     fig.update_layout(

@@ -21,7 +21,6 @@ colors = {
 
 layout = html.Div(
     [
-        dcc.Store(id='chantier-store', storage_type='session'),
         html.Br(),
         dbc.Row(
             id='options-buttons',
@@ -35,7 +34,11 @@ layout = html.Div(
                 id = "loading-map-geo",
                 color='#FF8C00',
                 type="cube",
-                children = dcc.Graph(id='map-geo', config={'displayModeBar': False}, figure=affichage_map_geo())
+                children = dcc.Graph(
+                    id='map-geo',
+                    config={'displayModeBar': False},
+                    figure=affichage_map_geo(),
+                    clear_on_unhover=True)
                 )
             ], fluid=True
         ),
@@ -60,16 +63,20 @@ layout = html.Div(
     ]
 )
 
+
+##### SELECTIONNE CHANTIER #####
 @app.callback(
     [Output('chantier-store', 'data'),
     Output('url', 'pathname')],
     Input('map-geo', 'clickData'))
-def click(clickData):
+def select_chantier(clickData):
     try:
         return clickData['points'][0]['hovertext'], '/chantier'
     except:
         return None, '/'
 
+
+##### MAJ TABLEAU PARAMETRES #####
 @app.callback(
     Output("table_param_chantier", "data"),
     Output("table_param_chantier", "columns"),
@@ -85,16 +92,18 @@ def update_table_chantier(hoverData):
     except:
         return [],[]
 
+
+##### AFFICHE LES BOUTONS NAVIGATION EN FONCTION DU PROFIL #####
 @app.callback(
     Output('options-buttons','children'),
     Input('page-content', 'children'))
 def options_buttons(content):
     if profil==1:
         return [
-                dbc.Button('Profil', id= 'profil', color='link', href='profil'),
-                dbc.Button('Admin', id= 'profil', color='link', href='admin'),
-                dbc.Button('Déconnexion', id='logout', color='link', href='/logout')]
+                dbc.Button('Profil', id= 'profil', color='dark', className="mr-1", href='profil'),
+                dbc.Button('Admin', id= 'profil', color='dark', className="mr-1", href='admin'),
+                dbc.Button('Déconnexion', id='logout', color='dark', className="mr-1", href='/logout')]
     else :
         return [
-                dbc.Button('Profil', id= 'profil', color='link', href='profil'),
-                dbc.Button('Déconnexion', id='logout', color='link', href='/logout')]
+                dbc.Button('Profil', id= 'profil', color='dark', className="mr-1", href='profil'),
+                dbc.Button('Déconnexion', id='logout', color='dark', className="mr-1", href='/logout')]
