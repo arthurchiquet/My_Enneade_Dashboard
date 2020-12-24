@@ -4,6 +4,7 @@ import dash_table as dt
 from config import engine
 import dash_core_components as dcc
 import dash_html_components as html
+from utils_maps import empty_figure
 from dash.dependencies import Input, Output, State
 import dash_bootstrap_components as dbc
 import plotly.express as px
@@ -41,7 +42,7 @@ def graph_inclino(chantier, inclino):
         legend_title_text=None,
         yaxis_title="Profondeur (m)",
         xaxis_title=None,
-        height=600,
+        height=550,
         legend_orientation='h',
         plot_bgcolor=colors['background'],
         paper_bgcolor=colors['background'],
@@ -203,130 +204,156 @@ table_tan = dt.DataTable(
 
 layout = html.Div(
     [
-        html.Br(),
-        dbc.Container([
-            dcc.Loading(
-                [
-                    dcc.Graph(
-                        id="inclino_3d",
-                        config={"scrollZoom": True}
+        dbc.Container(
+            [
+                dbc.Row(html.H4('Déplacements normaux et tangentiels (mm)'), justify='center'),
+                dbc.Row(
+                    [
+                        dbc.Col(
+                            [
+                                dcc.Graph(
+                                    id="var_norm",
+                                    config={
+                                        "scrollZoom": True,
+                                    },
+                                    figure=empty_figure()
+                                ),
+                            ]
                         ),
-                    dbc.Label("Affichage historique (nombre de courbes)"),
-                    controls3D,
+                        dbc.Col(
+                            [
+                                dcc.Graph(
+                                    id="var_tan",
+                                    config={
+                                        "scrollZoom": True
+                                    },
+                                    figure=empty_figure()
+                                ),
+                            ]
+                        ),
                     ]
-                )
-            ]
+                ),
+                html.Br(),
+                dbc.Label("Affichage historique (nombre de courbes)"),
+                controls3,
+                html.Br(),
+                dbc.Row(
+                    [
+                        dbc.Col(
+                            [
+                                dcc.Graph(
+                                    id="var_norm_2",
+                                    config={
+                                        "scrollZoom": True
+                                    },
+                                    figure=empty_figure()
+                                ),
+                            ]
+                        ),
+                        dbc.Col(
+                            [
+                                dcc.Graph(
+                                    id="inclino_3d",
+                                    config={
+                                        "scrollZoom": True
+                                    },
+                                    figure=empty_figure()
+                                ),
+                            ]
+                        ),
+                        dbc.Col(
+                            [
+                                dcc.Graph(
+                                    id="var_tan_2",
+                                    config={
+                                        "scrollZoom": True
+                                    },
+                                    figure=empty_figure()
+                                ),
+                            ]
+                        ),
+                    ]
+                ),
+                html.Br(),
+                dbc.Label("Affichage historique (nombre de courbes)"),
+                controls1,
+            ], className='jumbotron', fluid=True
         ),
         html.Br(),
-        dbc.Row(
+        dbc.Container(
             [
-                dbc.Col(
+                dbc.Row(html.H4('Déplacements ponctuels normaux et tangentiels (mm)'), justify='center'),
+                dbc.Row(
                     [
-                        dcc.Graph(
-                            id="var_norm",
-                            config={
-                                "scrollZoom": True
-                            },
+                        dbc.Col(
+                            [
+                                dcc.Graph(
+                                    id="var_norm_3",
+                                    config={"scrollZoom": True},
+                                    figure=empty_figure()
+                                ),
+                            ]
+                        ),
+                        dbc.Col(
+                            [
+                                dcc.Graph(
+                                    id="var_tan_3",
+                                    config={"scrollZoom": True},
+                                    figure=empty_figure()
+                                ),
+                            ]
                         ),
                     ]
                 ),
-                dbc.Col(
-                    [
-                        dcc.Graph(
-                            id="var_tan",
-                            config={
-                                "scrollZoom": True
-                            },
-                        ),
-                    ]
-                ),
-            ]
+                html.Br(),
+                dbc.Label("Affichage historique (nombre de courbes)"),
+                controls2,
+            ], className='jumbotron', fluid=True
         ),
-        dbc.Label("Affichage historique (nombre de courbes)"),
-        controls3,
         html.Br(),
-        dbc.Row(
+        dbc.Container(
             [
-                dbc.Col(
+                dbc.Row(html.H4('Evolution des déplacements normaux et tangentiels (mm)'), justify='center'),
+                dbc.Row(
                     [
-                        dcc.Graph(
-                            id="var_norm_2",
-                            config={
-                                "scrollZoom": True
-                            },
+                        dbc.Col(
+                            [
+                                dcc.Graph(
+                                    id="var_norm_4",
+                                    config={"scrollZoom": True},
+                                    figure=empty_figure()
+                                ),
+                            ]
                         ),
-                    ]
-                ),
-                dbc.Col(
-                    [
-                        dcc.Graph(
-                            id="var_tan_2",
-                            config={
-                                "scrollZoom": True
-                            },
-                        ),
-                    ]
-                ),
-            ]
-        ),
-        dbc.Label("Affichage historique (nombre de courbes)"),
-        controls1,
-        html.Br(),
-        dbc.Row(
-            [
-                dbc.Col(
-                    [
-                        dcc.Graph(
-                            id="var_norm_3",
-                            config={"scrollZoom": True},
-                        ),
-                    ]
-                ),
-                dbc.Col(
-                    [
-                        dcc.Graph(
-                            id="var_tan_3",
-                            config={"scrollZoom": True},
-                        ),
-                    ]
-                ),
-            ]
-        ),
-        dbc.Label("Affichage historique (nombre de courbes)"),
-        controls2,
-        html.Br(),
-        dbc.Row(
-            [
-                dbc.Col(
-                    [
-                        dcc.Graph(
-                            id="var_norm_4",
-                            config={"scrollZoom": True},
-                        ),
-                    ]
-                ),
-                dbc.Col(
-                    [
-                        dcc.Graph(
-                            id="var_tan_4",
-                            config={"scrollZoom": True},
+                        dbc.Col(
+                            [
+                                dcc.Graph(
+                                    id="var_tan_4",
+                                    config={"scrollZoom": True},
+                                    figure=empty_figure()
+                                )
+                            ]
                         )
                     ]
-                )
-            ]
+                ),
+                html.Br(),
+                dbc.Label("Choix de la profondeur (m)"),
+                controls4,
+            ], className='jumbotron', fluid=True
         ),
-        dbc.Label("Choix de la profondeur (m)"),
-        controls4,
-        html.Hr(),
-        dcc.Markdown(
-            """**Composante normale "n" (mm) en fonction de la profondeur (m)**"""
-        ),
-        table_norm,
-        html.Br(),
-        dcc.Markdown(
-            """**Composante tangentielle "t" (mm)  en fonction de la profondeur (m)**"""
-        ),
-        table_tan
+        dbc.Container(
+            [
+                dcc.Markdown(
+                    """**Composante normale "n" (mm) en fonction de la profondeur (m)**"""
+                ),
+                table_norm,
+                html.Br(),
+                dcc.Markdown(
+                    """**Composante tangentielle "t" (mm)  en fonction de la profondeur (m)**""",
+                ),
+                table_tan
+            ], className='jumbotron', fluid=True
+        )
     ]
 )
 
@@ -350,42 +377,34 @@ layout = html.Div(
         Input("nb_curv", "value"),
         Input("nb_curv2", "value"),
         Input("nb_curv3", "value"),
-        Input("nb_curv3d", "value"),
+        # Input("nb_curv3d", "value"),
         Input("prof", "value"),
         Input("chantier-store", "data"),
     ]
 )
-def update_graphs(secteur, nb_courbes, nb_courbes2, nb_courbes3, nb_courbes_3D, profondeur, chantier):
-    # try:
-    with engine.connect() as con:
-        query=f"select * from capteur where secteur ='{secteur}' and type='inclino' and chantier='{chantier}'"
-        inclino = pd.read_sql_query(query, con=con).capteur.unique()[0]
-    dfnorm = get_data(chantier, 'actif', f'{inclino}_norm.csv', sep=False)
-    dftan = get_data(chantier, 'actif', f'{inclino}_tan.csv', sep=False)
-    fig1 = create_graph_1(dfnorm, chantier, inclino, nb_courbes3)
-    fig1.update_layout(title="Déplacements normaux (mm)")
-    fig2 = create_graph_1(dftan, chantier, inclino, nb_courbes3)
-    fig2.update_layout(title="Déplacements tangentiels (mm)")
-    fig3 = create_graph_2(dfnorm, chantier, inclino, nb_courbes)
-    fig3.update_layout(title="Déplacements normaux (mm)")
-    fig4 = create_graph_2(dftan, chantier, inclino, nb_courbes)
-    fig4.update_layout(title="Déplacements tangentiels (mm)")
-    fig5 = create_3d_graph(dfnorm, dftan, chantier, inclino, nb_courbes_3D)
-    fig6 = create_graph_3(dfnorm, chantier, inclino, nb_courbes2)
-    fig6.update_layout(title="Déplacements normaux ponctuels (mm)")
-    fig7 = create_graph_3(dftan, chantier, inclino, nb_courbes2)
-    fig7.update_layout(title="Déplacements tangentiels ponctuels (mm)")
-    fig8 = create_graph_4(dfnorm, chantier, inclino, profondeur)
-    fig8.update_layout(title="Evolution des déplacements normaux (mm)")
-    fig9 = create_graph_4(dftan, chantier, inclino, profondeur)
-    fig9.update_layout(title="Evolution des déplacements tangentiels (mm)")
-    tablenorm = dfnorm.set_index("profondeur").T[[2, 5, 10, 20, 30, 40, 50, 60]].iloc[-15:, :]
-    tablenorm = tablenorm.reset_index().rename(columns={"index": "Date"})
-    tabletan = dftan.set_index("profondeur").T[[2, 5, 10, 20, 30, 40, 50, 60]].iloc[-15:, :]
-    tabletan = tabletan.reset_index().rename(columns={"index": "Date"})
-    return fig1, fig2, fig3, fig4, fig5,fig6, fig7, fig8, fig9, tablenorm.to_dict("rows"), tabletan.to_dict("rows")
-    # except:
-    #     return {}, {}, {}, {}, {}, {}, {}, {}, {}, [],[]
+def update_graphs(secteur, nb_courbes, nb_courbes2, nb_courbes3, profondeur, chantier):
+    try:
+        with engine.connect() as con:
+            query=f"select * from capteur where secteur ='{secteur}' and type='inclino' and chantier='{chantier}'"
+            inclino = pd.read_sql_query(query, con=con).capteur.unique()[0]
+        dfnorm = get_data(chantier, 'actif', f'{inclino}_norm.csv', sep=False)
+        dftan = get_data(chantier, 'actif', f'{inclino}_tan.csv', sep=False)
+        fig1 = create_graph_1(dfnorm, chantier, inclino, nb_courbes3)
+        fig2 = create_graph_1(dftan, chantier, inclino, nb_courbes3)
+        fig3 = create_graph_2(dfnorm, chantier, inclino, nb_courbes)
+        fig4 = create_graph_2(dftan, chantier, inclino, nb_courbes)
+        fig5 = create_3d_graph(dfnorm, dftan, chantier, inclino, nb_courbes)
+        fig6 = create_graph_3(dfnorm, chantier, inclino, nb_courbes2)
+        fig7 = create_graph_3(dftan, chantier, inclino, nb_courbes2)
+        fig8 = create_graph_4(dfnorm, chantier, inclino, profondeur)
+        fig9 = create_graph_4(dftan, chantier, inclino, profondeur)
+        tablenorm = dfnorm.set_index("profondeur").T[[2, 5, 10, 20, 30, 40, 50, 60]].iloc[-15:, :]
+        tablenorm = tablenorm.reset_index().rename(columns={"index": "Date"})
+        tabletan = dftan.set_index("profondeur").T[[2, 5, 10, 20, 30, 40, 50, 60]].iloc[-15:, :]
+        tabletan = tabletan.reset_index().rename(columns={"index": "Date"})
+        return fig1, fig2, fig3, fig4, fig5,fig6, fig7, fig8, fig9, tablenorm.to_dict("rows"), tabletan.to_dict("rows")
+    except:
+        return {}, {}, {}, {}, {}, {}, {}, {}, {}, [],[]
 
 def create_graph_1(dfi, chantier, inclino, nb_courbes):
     df = dfi.copy()
@@ -397,12 +416,16 @@ def create_graph_1(dfi, chantier, inclino, nb_courbes):
     fig.update_yaxes(autorange="reversed")
     fig.update_traces(hovertemplate=None)
     fig.update_layout(legend_title_text=None,
+        height=400,
         yaxis_title="Profondeur (m)",
         xaxis_title=None,
         legend_orientation='h',
         plot_bgcolor=colors['background'],
         paper_bgcolor=colors['background'],
-        font_color=colors['text'])
+        font_color=colors['text'],
+        margin={"r":0,"t":20,"l":0,"b":0})
+    fig.update_xaxes(showgrid=False)
+    fig.update_yaxes(showgrid=False)
     return fig
 
 def create_graph_2(dfi, chantier, inclino, nb_courbes):
@@ -416,13 +439,17 @@ def create_graph_2(dfi, chantier, inclino, nb_courbes):
     fig.update_yaxes(autorange="reversed")
     fig.update_traces(hovertemplate=None)
     fig.update_layout(
+        height=400,
         legend_title_text=None,
         yaxis_title="Profondeur (m)",
         xaxis_title=None,
         legend_orientation='h',
         plot_bgcolor=colors['background'],
         paper_bgcolor=colors['background'],
-        font_color=colors['text'])
+        font_color=colors['text'],
+        margin={"r":0,"t":20,"l":0,"b":0})
+    fig.update_xaxes(showgrid=False)
+    fig.update_yaxes(showgrid=False)
     return fig
 
 def create_graph_3(dfi, chantier, inclino, nb_courbes):
@@ -435,13 +462,17 @@ def create_graph_3(dfi, chantier, inclino, nb_courbes):
     fig.update_yaxes(autorange="reversed")
     fig.update_traces(hovertemplate=None)
     fig.update_layout(
+        height=400,
         legend_title_text=None,
         yaxis_title="Profondeur (m)",
         xaxis_title=None,
         legend_orientation='h',
         plot_bgcolor=colors['background'],
         paper_bgcolor=colors['background'],
-        font_color=colors['text'])
+        font_color=colors['text'],
+        margin={"r":0,"t":20,"l":0,"b":0})
+    fig.update_xaxes(showgrid=False)
+    fig.update_yaxes(showgrid=False)
     return fig
 
 def create_graph_4(dfi, chantier, inclino, profondeur):
@@ -456,13 +487,17 @@ def create_graph_4(dfi, chantier, inclino, profondeur):
     fig.update_yaxes(range=[-10, 25])
     fig.update_traces(hovertemplate=None)
     fig.update_layout(
+        height=400,
         legend_title_text=None,
         yaxis_title="Déplacements (mm)",
         xaxis_title=None,
         legend_orientation='h',
         plot_bgcolor=colors['background'],
         paper_bgcolor=colors['background'],
-        font_color=colors['text'])
+        font_color=colors['text'],
+        margin={"r":0,"t":20,"l":0,"b":0})
+    fig.update_xaxes(showgrid=False)
+    fig.update_yaxes(showgrid=False)
     return fig
 
 def create_3d_graph(dfnormi, dftani, chantier, inclino, nb_courbes):
@@ -477,12 +512,25 @@ def create_3d_graph(dfnormi, dftani, chantier, inclino, nb_courbes):
     fig.update_layout(scene = dict(
                     xaxis_title='Normal',
                     yaxis_title='Tangent',
-                    zaxis_title='Profondeur'),
-                    height=550,
-                    margin=dict(l=20, r=20, t=10, b=20),
+                    zaxis_title='Profondeur',
+                    xaxis = dict(
+                        backgroundcolor=colors['background'],
+                        showgrid=False,
+                        showbackground=False),
+                    yaxis = dict(
+                        backgroundcolor=colors['background'],
+                        showgrid=False,
+                        showbackground=False),
+                    zaxis = dict(
+                        backgroundcolor=colors['background'],
+                        showgrid=False,
+                        showbackground=False)),
+                    margin=dict(l=0, r=0, t=0, b=0),
+                    legend_orientation='h',
                     plot_bgcolor=colors['background'],
                     paper_bgcolor=colors['background'],
                     font_color=colors['text'],
-                    template='plotly_dark')
+                    height=400,
+                    )
     fig.update_scenes(zaxis_autorange="reversed")
     return fig

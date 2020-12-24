@@ -41,6 +41,7 @@ def affichage_map_geo():
             font_color=colors['text'],
             margin=dict(l=100, r=100, t=20, b=15)
         )
+
     return fig
 
 def affichage_map_chantier(chantier, mode):

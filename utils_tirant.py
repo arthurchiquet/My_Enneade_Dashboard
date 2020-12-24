@@ -52,13 +52,11 @@ layout = dbc.Container([
     ]
 )
 def update_graph_tirants(secteur, chantier):
-    # try:
     with engine.connect() as con:
         query=f"select * from capteur where chantier='{chantier}' and secteur ='{secteur}' and type='tirant'"
         liste_tirants = pd.read_sql_query(query, con=con).capteur.unique()
     return graph_tirant(chantier, liste_tirants)
-    # except:
-    #     return {}, {}
+
 
 def first(col):
     i = 0
@@ -82,13 +80,13 @@ def format_df(df, list_tirants):
     return df, df_ratio
 
 
-def graph_tirant(chantier, list_tirants):
+def graph_tirant(chantier, list_tirants, height=500):
     df = get_data(chantier, 'actif', 'tirants.csv', sep=False)
     df, df_ratio = format_df(df, list_tirants)
-    fig1 = px.line(df.reset_index(), x='date', y=list_tirants, template="plotly_white")
-    fig2 = px.line(df_ratio.reset_index(), x='date', y=list_tirants, template="plotly_white")
+    fig1 = px.line(df.reset_index(), x='date', y=list_tirants)
+    fig2 = px.line(df_ratio.reset_index(), x='date', y=list_tirants)
     fig1.update_layout(
-        height=450,
+        height=height,
         legend_title_text=None,
         yaxis_title="Tension (kN)",
         xaxis_title=None,
@@ -96,11 +94,15 @@ def graph_tirant(chantier, list_tirants):
         paper_bgcolor=colors['background'],
         font_color=colors['text'])
     fig2.update_layout(
-        height=450,
+        height=height,
         legend_title_text=None,
         yaxis_title="Tension (%)",
         xaxis_title=None,
         plot_bgcolor=colors['background'],
         paper_bgcolor=colors['background'],
         font_color=colors['text'],)
+    fig1.update_yaxes(showgrid=False)
+    fig1.update_xaxes(showgrid=False)
+    fig2.update_yaxes(showgrid=False)
+    fig2.update_xaxes(showgrid=False)
     return fig1, fig2

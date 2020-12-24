@@ -48,7 +48,7 @@ def first(col):
 
 def diff_jauge(df):
     for col in df.columns:
-        df[col] = df[col] / first(df[col])
+        df[col] = (df[col] / first(df[col]))*100
     return df
 
 def format_df(df):

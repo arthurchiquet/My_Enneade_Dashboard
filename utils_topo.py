@@ -101,7 +101,7 @@ def format_df(df, list_capteur, angle):
     df["Cible"] = df["level_1"].map(remove_xyz)
     return df.rename(columns={0: "delta"}).drop(columns="level_1")
 
-def graph_topo(chantier, cible, angle, memo = False):
+def graph_topo(chantier, cible, angle, height = 700, memo = False):
     if memo :
         df = memoized_df(chantier, 'actif', 'topographie.csv', sep=False)
     else :
@@ -120,7 +120,7 @@ def graph_topo(chantier, cible, angle, memo = False):
     # fig.update_xaxes(range=range_date)
     fig.update_traces(hovertemplate=None)
     fig.update_layout(
-        height=550,
+        height=height,
         plot_bgcolor=colors['background'],
         paper_bgcolor=colors['background'],
         font_color=colors['text'],

@@ -7,6 +7,7 @@ from data import get_data
 import pandas as pd
 from config import engine
 from server import app
+from utils_maps import empty_figure
 from plotly.subplots import make_subplots
 import plotly.graph_objects as go
 from data import get_data
@@ -15,16 +16,15 @@ warnings.filterwarnings("ignore")
 
 colors = {
     'background': '#222222',
-    'text': '#FF8C00'
+    'text': 'white'
 }
 
 layout = html.Div(
     [
-        html.Br(),
         dbc.Container([
-        dcc.Graph(id="graph_meteo", config={"scrollZoom": True}),
-        html.Br(),
-        dcc.Graph(id='graph_piezo')
+        dcc.Graph(id="graph_meteo", config={"scrollZoom": True}, figure=empty_figure()),
+        html.Hr(),
+        dcc.Graph(id='graph_piezo', figure=empty_figure())
     ], fluid=True)
     ]
 )
@@ -62,10 +62,11 @@ def update_graph_meteo(chantier):
             paper_bgcolor=colors['background'],
             font_color=colors['text']
         )
+        fig.update_yaxes(showgrid=False)
+        fig.update_xaxes(showgrid=False)
         return fig
     except:
-        return {}
-    return fig
+        return empty_figure()
 
 
 @app.callback(
@@ -97,6 +98,8 @@ def graph_piezo(chantier, piezo, relayout_data = None):
         plot_bgcolor=colors['background'],
         paper_bgcolor=colors['background'],
         font_color=colors['text'])
+    fig.update_yaxes(showgrid=False)
+    fig.update_xaxes(showgrid=False)
     try:
         fig['layout']["xaxis"]["range"] = [relayout_data['xaxis.range[0]'], relayout_data['xaxis.range[1]']]
         fig['layout']["xaxis"]["autorange"] = False

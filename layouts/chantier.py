@@ -14,8 +14,8 @@ from data import get_data
 from utils_maps import affichage_map_chantier, empty_figure
 from utils_topo import graph_topo, format_df
 from utils_inclino import graph_inclino
-# from utils_tirant import graph_tirant
-# from utils_piezo import graph_piezo
+from utils_tirant import graph_tirant
+from utils_piezo import graph_piezo
 from utils_jauge import graph_jauge
 
 warnings.filterwarnings("ignore")
@@ -180,7 +180,7 @@ def affichage_courbe_capteur(clickData, mode, chantier):
 #### RENVOIE LA METHODE D'AFFICHAGE DE LA COURBE EN FONCTION DU TYPE DE CAPTEUR ####
 def selection_affichage(chantier, customdata, hovertext):
     if customdata == 'cible':
-        return graph_topo(chantier, hovertext, 0)
+        return graph_topo(chantier, hovertext, 0, height = 550)
     elif customdata == 'inclino':
         return graph_inclino(chantier, hovertext)
     elif customdata == 'tirant':
