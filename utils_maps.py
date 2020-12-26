@@ -89,7 +89,7 @@ def affichage_map_chantier(chantier, mode):
                 title_font_color="#FF8C00",
                 plot_bgcolor=colors['background'],
                 paper_bgcolor=colors['background'],
-                margin={"r":30,"t":10,"l":30,"b":20}
+                margin={"r":30,"t":10,"l":25,"b":20}
             )
 
         fig.update_xaxes(
@@ -124,6 +124,7 @@ def positions_GPS_capteur(df):
         # color_discrete_sequence=["#FF8C00"],
         color='type',
         height=550,
+        width = 720,
         hover_data={
                 'type':True
             },
@@ -142,6 +143,7 @@ def positions_GPS_secteur(df):
         text="secteur",
         color='secteur',
         height=550,
+        width = 645,
         hover_name='secteur',
         hover_data={
             'lat':False,

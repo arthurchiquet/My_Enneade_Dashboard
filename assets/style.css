@@ -1,0 +1,5 @@
+/* Red border */
+hr {
+  border:
+  0.5px solid white;
+}

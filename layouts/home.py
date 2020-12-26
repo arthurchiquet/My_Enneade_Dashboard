@@ -27,6 +27,7 @@ layout = html.Div(
             children=[],
             justify='center'
         ),
+        html.Hr(),
         dbc.Container(
             id='zone-map',
             children=[
@@ -42,6 +43,7 @@ layout = html.Div(
                 )
             ], fluid=True
         ),
+        html.Hr(),
         dbc.Container(
             dt.DataTable(
                 id="table_param_chantier",

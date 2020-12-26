@@ -12,11 +12,7 @@ from server import app
 from config import engine
 from data import get_data
 from utils_maps import affichage_map_chantier, empty_figure
-from utils_topo import graph_topo, format_df
-from utils_inclino import graph_inclino
-from utils_tirant import graph_tirant
-from utils_piezo import graph_piezo
-from utils_jauge import graph_jauge
+import utils_topo, utils_inclino, utils_jauge, utils_tirant, utils_piezo
 
 warnings.filterwarnings("ignore")
 
@@ -24,6 +20,25 @@ colors = {
     'background': '#222222',
     'text': '#FF8C00'
 }
+
+tabs = html.Div(
+    [
+        dbc.Tabs(
+            [
+                dbc.Tab(label="Cibles", tab_id=1),
+                dbc.Tab(label="Inclinomètres", tab_id=2),
+                dbc.Tab(label="Tirants", tab_id=3),
+                dbc.Tab(label="Piezometres", tab_id=5),
+                dbc.Tab(label="Jauges", tab_id=4),
+                dbc.Tab(label="Butons", tab_id=6),
+            ],
+            id="tabs_secteurs",
+            active_tab="tab-topo",
+        ),
+        html.Div(id='tab_content')
+    ]
+)
+
 
 dropdowns = dcc.Dropdown(
                 id='mode',
@@ -35,7 +50,7 @@ dropdowns = dcc.Dropdown(
                 {'label': 'Vecteurs', 'value': 'vecteurs'},
                 ],
                 value='GPS',
-                style={"width": "50%", 'color':'black'}
+                style={"width": "90%", 'color':'black'}
             )
 
 layout = html.Div(
@@ -70,7 +85,7 @@ layout = html.Div(
                 ),
                 dbc.Col(
                     [
-                        dbc.Row(dbc.Label(id='tire_graph', size='lg'), justify = 'center'),
+                        dbc.Row(dbc.Label(id='titre_graph', size='lg'), justify = 'center'),
                         html.Br(),
                         # dbc.Row(
                         #     dbc.Container(
@@ -102,7 +117,9 @@ layout = html.Div(
                 )
             ]
         ),
-        dbc.Row(dbc.Col(id='buttons-secteurs', children=[], width={"size": 5, "offset": 1}))
+        html.Br(),
+        html.Hr(),
+        tabs,
     ]
 )
 
@@ -118,48 +135,18 @@ def affichage_map(chantier_store, mode):
 
 ##### AFFICHE LES BOUTONS DE RAPPORTS LORSQU'UN SECTEUR EST SELECTIONNE  ET STOCKE LA VALEUR DU SECTEUR ####
 @app.callback(
-    [Output('buttons-secteurs', 'children'),
-    Output('secteur-store', 'data')],
-    Input('map-chantier', 'clickData'),
-    Input('mode', 'value'))
+    Output('secteur-store', 'data'),
+    [Input('map-chantier', 'clickData'),
+    Input('mode', 'value')])
 def click(clickData, mode):
     if mode =='secteurs' and clickData:
-        content = [
-            dbc.Button('Topo', href='/secteur', className="mr-1", id='topo', n_clicks=0),
-            dbc.Button('Inclino', href='/secteur', className="mr-1", id="inclino", n_clicks=0),
-            dbc.Button('Tirant', href='/secteur', className="mr-1", id='tirant', n_clicks=0),
-            dbc.Button('Jauge', href='/secteur', className="mr-1", id='jauge', n_clicks=0),
-            dbc.Button('Piezo', href='/secteur', className="mr-1", id='piezo', n_clicks=0)
-        ]
-        return content, clickData['points'][0]['hovertext']
+        return clickData['points'][0]['hovertext']
     else:
-        return [], {}
-
-
-##### RENVOI VERS LE RAPPORT CORRESPONDANT #####
-@app.callback(
-    Output('type-store', 'data'),
-    [Input('topo', 'n_clicks'),
-    Input('inclino', 'n_clicks'),
-    Input('tirant', 'n_clicks'),
-    Input('jauge', 'n_clicks'),
-    Input('piezo', 'n_clicks')])
-def click(n_clicks_1, n_clicks_2, n_clicks_3, n_clicks_4, n_clicks_5):
-    if n_clicks_1 > 0:
-        return 1
-    elif n_clicks_2 > 0:
-        return 2
-    elif n_clicks_3 > 0:
-        return 3
-    elif n_clicks_4 > 0:
-        return 4
-    elif n_clicks_5 > 0:
-        return 5
-
+        return {}
 
 #### AFFICHE LA COURBE CORRESPONDANT AU CAPTEUR SELECTIONNÉ ####
 @app.callback(
-    [Output('tire_graph', 'children'),
+    [Output('titre_graph', 'children'),
     Output("courbe_capteur", "figure")],
     [Input("map-chantier", "clickData"),
     Input('mode', 'value')],
@@ -180,15 +167,35 @@ def affichage_courbe_capteur(clickData, mode, chantier):
 #### RENVOIE LA METHODE D'AFFICHAGE DE LA COURBE EN FONCTION DU TYPE DE CAPTEUR ####
 def selection_affichage(chantier, customdata, hovertext):
     if customdata == 'cible':
-        return graph_topo(chantier, hovertext, 0, height = 550)
+        return utils_topo.graph_topo(chantier, hovertext, 0, height = 550)
     elif customdata == 'inclino':
-        return graph_inclino(chantier, hovertext)
+        return utils_inclino.graph_inclino(chantier, hovertext)
     elif customdata == 'tirant':
-        return graph_tirant(chantier, hovertext)
+        return utils_tirant.graph_tirant(chantier, hovertext)
     elif customdata == 'jauge':
-        return graph_jauge(chantier, hovertext)
+        return utils_jauge.graph_jauge(chantier, hovertext)
     elif customdata == 'piezo':
-        return graph_piezo(chantier, hovertext)
+        return utils_piezo.graph_piezo(chantier, hovertext)
+
+
+@app.callback(
+    Output('tab_content', 'children'),
+    [Input('tabs_secteurs', 'active_tab'),
+     Input('chantier-store', 'data'),
+     Input('secteur-store', 'data')
+    ])
+def return_content(tab, chantier, secteur):
+    if tab == 1:
+        return utils_topo.layout
+    elif tab == 2:
+        return utils_inclino.layout
+    elif tab == 3:
+        return utils_tirant.layout
+    elif tab == 4:
+        return utils_jauge.layout
+    elif tab == 5:
+        return utils_piezo.layout
+
 
 # @app.callback(
 #     [Output("table_param", "data"),
