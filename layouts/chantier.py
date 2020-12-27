@@ -21,24 +21,7 @@ colors = {
     'text': '#FF8C00'
 }
 
-tabs = html.Div(
-    [
-        dbc.Tabs(
-            [
-                dbc.Tab(label="Cibles", tab_id=1),
-                dbc.Tab(label="Inclinomètres", tab_id=2),
-                dbc.Tab(label="Tirants", tab_id=3),
-                dbc.Tab(label="Piezometres", tab_id=5),
-                dbc.Tab(label="Jauges", tab_id=4),
-                dbc.Tab(label="Butons", tab_id=6),
-            ],
-            id="tabs_secteurs",
-            active_tab="tab-topo",
-        ),
-        html.Div(id='tab_content')
-    ]
-)
-
+tabs_content = html.Div(id='tabs_content')
 
 dropdowns = dcc.Dropdown(
                 id='mode',
@@ -76,7 +59,10 @@ layout = html.Div(
                                     id = "loading-map-chantier",
                                     color='#FF8C00',
                                     type="dot",
-                                    children = dcc.Graph(id='map-chantier', config={'displayModeBar': False, "scrollZoom": True})
+                                    children = dcc.Graph(
+                                        id='map-chantier',
+                                        config={'displayModeBar': False, "scrollZoom": True},
+                                        clear_on_unhover=True)
                                     )
                                 ], fluid=True
                             )
@@ -87,22 +73,6 @@ layout = html.Div(
                     [
                         dbc.Row(dbc.Label(id='titre_graph', size='lg'), justify = 'center'),
                         html.Br(),
-                        # dbc.Row(
-                        #     dbc.Container(
-                        #         dt.DataTable(
-                        #             id="table_param",
-                        #             editable=True,
-                        #             style_cell={
-                        #                 'backgroundColor': 'rgb(50, 50, 50)',
-                        #                 'color': 'white',
-                        #                 'minWidth': '180px',
-                        #                 'width': '180px',
-                        #                 'maxWidth': '180px',
-                        #                 'textAlign': 'center'
-                        #                 },
-                        #             ),
-                        #     )
-                        # ),
                         dbc.Container(
                             children=[
                             dcc.Loading(
@@ -119,10 +89,36 @@ layout = html.Div(
         ),
         html.Br(),
         html.Hr(),
-        tabs,
+        tabs_content,
     ]
 )
 
+
+@app.callback(
+    Output('tabs_content', 'children'),
+    Input('mode', 'value'))
+def return_tabs(mode):
+    if mode == 'secteurs':
+        return [
+            dbc.Row(
+                dbc.Tabs(
+                    [
+                        dbc.Tab(label="Cibles", tab_id=1),
+                        dbc.Tab(label="Inclinomètres", tab_id=2),
+                        dbc.Tab(label="Tirants", tab_id=3),
+                        dbc.Tab(label="Piezometres", tab_id=5),
+                        dbc.Tab(label="Jauges", tab_id=4),
+                        dbc.Tab(label="Butons", tab_id=6),
+                    ],
+                    id="tabs_secteurs",
+                    active_tab="tab-topo",
+                ), justify='center'
+            ),
+            html.Br(),
+            html.Div(id='tab_content')
+        ]
+    else:
+        return []
 
 ##### AFFICHAGE LA CARTE DU CHANTIER SELECTIONNE #####
 @app.callback(
@@ -184,17 +180,20 @@ def selection_affichage(chantier, customdata, hovertext):
      Input('chantier-store', 'data'),
      Input('secteur-store', 'data')
     ])
-def return_content(tab, chantier, secteur):
-    if tab == 1:
-        return utils_topo.layout
-    elif tab == 2:
-        return utils_inclino.layout
-    elif tab == 3:
-        return utils_tirant.layout
-    elif tab == 4:
-        return utils_jauge.layout
-    elif tab == 5:
-        return utils_piezo.layout
+def return_tabs_content(tab, chantier, secteur):
+    if secteur=={}:
+        return dbc.Row(html.H4('Veuillez selectionner un secteur sur la carte'), justify='center')
+    else:
+        if tab == 1:
+            return utils_topo.layout
+        elif tab == 2:
+            return utils_inclino.layout
+        elif tab == 3:
+            return utils_tirant.layout
+        elif tab == 4:
+            return utils_jauge.layout
+        elif tab == 5:
+            return utils_piezo.layout
 
 
 # @app.callback(

@@ -4,7 +4,7 @@ import dash_bootstrap_components as dbc
 import dash_table as dt
 from dash.dependencies import Input, Output, State
 from server import app
-from user_mgmt import show_users, update_profil, update_output
+from user_mgmt import show_users, update_profil, update_output, del_user
 from config import engine
 import warnings
 
@@ -88,6 +88,13 @@ layout = html.Div(
                                     type="submit",
                                     className="btn btn-primary btn-lg",
                                 ),
+                                html.Button(
+                                    children="Supprimer",
+                                    id="delete_button",
+                                    n_clicks=0,
+                                    type="submit",
+                                    className="btn btn-alert btn-lg",
+                                ),
                                 html.Br(),
                                 html.Div(id="update_profil_success"),
                             ],
@@ -107,13 +114,15 @@ layout = html.Div(
     Output("update_profil_success", "children"),
     [
         Input("update_button", "n_clicks"),
+        Input("delete_button", "n_clicks"),
         Input("user_list", "value"),
         Input("profil_select", "value"),
     ],
 )
-def modify_profil(n_clicks, user_list, profil):
-    if (n_clicks > 0) and user_list != "":
-        update_profil(user_list, profil)
-        return html.Div(
-            children=["Le profil a été mis à jour"], className="text-success"
-        )
+def modify_profil(n_clicks1, n_clicks2, user, profil):
+    if (n_clicks1 > 0) and user != "":
+        update_profil(user, profil)
+        return html.Div(children=["Le profil a été mis à jour"], className="text-success")
+    if (n_clicks2 > 0) and user != "":
+        del_user(user)
+        return html.Div(children=["L'utilisateur a été supprimé"], className="text-success")

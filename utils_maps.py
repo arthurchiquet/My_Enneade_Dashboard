@@ -123,8 +123,6 @@ def positions_GPS_capteur(df):
         template='plotly_dark',
         # color_discrete_sequence=["#FF8C00"],
         color='type',
-        height=550,
-        width = 720,
         hover_data={
                 'type':True
             },
@@ -142,8 +140,6 @@ def positions_GPS_secteur(df):
         template='plotly_dark',
         text="secteur",
         color='secteur',
-        height=550,
-        width = 645,
         hover_name='secteur',
         hover_data={
             'lat':False,

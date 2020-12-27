@@ -19,7 +19,8 @@ colors = {
 
 layout = dbc.Container([
         dcc.Loading(
-            [
+            type='graph',
+            children = [
                 dbc.Row(
                     [
                         dbc.Col(

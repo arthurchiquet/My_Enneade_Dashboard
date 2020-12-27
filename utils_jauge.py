@@ -20,7 +20,8 @@ layout = html.Div([
     dbc.Container([
             html.H3("Evolution brute des fissures (écarts, mm)", style={"textAlign": "center"}),
             dcc.Loading(
-                dcc.Graph(id="courbe_jauge", config={"scrollZoom": True})
+                type='graph',
+                children = [dcc.Graph(id="courbe_jauge", config={"scrollZoom": True})]
             )
         ], fluid=True)
     ])
