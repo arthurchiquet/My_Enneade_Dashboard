@@ -3,17 +3,25 @@ import plotly.express as px
 import plotly.graph_objects as go
 from config import engine
 import pandas as pd
-from data import download_image
+from data import download_image, get_data
+import numpy as np
 
 user='Vallicorp'
 mapbox_token = 'pk.eyJ1IjoiYXJ0aHVyY2hpcXVldCIsImEiOiJja2E1bDc3cjYwMTh5M2V0ZzdvbmF5NXB5In0.ETylJ3ztuDA-S3tQmNGpPQ'
 
 colors = {
     'background': '#222222',
-    'text': '#FF8C00'
+    'text': 'white'
 }
 
+coeff_Lamb_GPS = [[1.23952112e-05, 6.63800392e-07], [-4.81267332e-07,  8.98816386e-06]]
+intercept_Lamb_GPS = [-20.17412175, 16.14120241]
 
+def changement_repere(df, coef, intercept):
+    lon = df.lat * coef[0][0] + df.lon * coef[0][1] + intercept[0]
+    lat = df.lat * coef[1][0] + df.lon * coef[1][1] + intercept[1]
+    df.lat, df.lon = lat, lon
+    return df
 
 def affichage_map_geo():
     with engine.connect() as con:
@@ -33,8 +41,12 @@ def affichage_map_geo():
             },
             color_discrete_sequence=["#FF8C00"],
             height=550,
-            zoom=4)
-        fig.update_layout(mapbox_style="dark", mapbox_accesstoken=mapbox_token)
+            zoom=4
+        )
+        fig.update_layout(
+            mapbox_style="dark",
+            mapbox_accesstoken=mapbox_token
+        )
         fig.update_layout(
             plot_bgcolor=colors['background'],
             paper_bgcolor=colors['background'],
@@ -44,111 +56,100 @@ def affichage_map_geo():
 
     return fig
 
-def affichage_map_chantier(chantier, mode):
-    try:
+def affichage_map_chantier(chantier, mode, affichage_plan = False):
+    # try:
+    with engine.connect() as con:
+        query="select * from capteur where chantier ='%s'"%chantier
+        df = pd.read_sql_query(query, con=con)
+
+    if mode == 'GPS':
+        fig = positions_GPS_capteur(df)
+
+    if mode ==  'secteurs':
+        fig = positions_GPS_secteur(df)
+
+    if mode == 'vecteurs':
+        dff = get_data(chantier, 'actif', 'topographie.csv', sep=False).drop(columns=["date"]).dropna(axis=1, how="all")
+        fig = create_quiver(dff)
+
+    if affichage_plan:
         plan = download_image(chantier, 'plan.jpeg')
-        with engine.connect() as con:
-            query="select * from capteur where chantier ='%s'"%chantier
-            df = pd.read_sql_query(query, con=con)
-
-        if mode == 'GPS':
-            fig = positions_GPS_capteur(df)
-
-        if mode ==  'secteurs':
-            fig = positions_GPS_secteur(df)
-
-        if mode == 'vecteurs':
-            fig = create_quiver(df)
-
-        X = 2055229.22647546
-        Y = 3179752.70410855
-        x_size = 2055406.7254806 - 2055229.22647546
-        y_size = 3179752.70410855 - 3179618.20410255
-
-        fig.add_layout_image(
+        layers = [
             dict(
-                source=plan,
-                xref="x",
-                yref="y",
-                x=X,
-                y=Y,
-                sizex=x_size,
-                sizey=y_size,
-                sizing="stretch",
-                layer="below",
+                below ='traces',
+                minzoom=16,
+                maxzoom=20,
+                opacity=0.5,
+                source = plan,
+                sourcetype= "image",
+                coordinates =  [
+                    [7.4115104, 43.7321406],
+                    [7.4137998, 43.7321406],
+                    [7.4137998, 43.7310171],
+                    [7.4115104, 43.7310171]
+                ],
             )
-        )
+        ]
+    else:
+        layers = None
 
-        fig.update_layout(
-                # title={
-                #     'text': chantier,
-                #     'xanchor': 'center',
-                #     'yanchor': 'top',
-                #     'x':0.5,
-                #     },
-                title_font_color="#FF8C00",
-                plot_bgcolor=colors['background'],
-                paper_bgcolor=colors['background'],
-                margin={"r":30,"t":10,"l":25,"b":20}
-            )
+    mapbox = dict(
+        zoom= 17.6,
+        center=dict(
+            lon=7.4126551,
+            lat=43.7315788),
+        layers=layers
+    )
 
-        fig.update_xaxes(
-            range=[X, X + x_size],
-            linecolor='white',
-            linewidth=2,
-            mirror=True,
-            showticklabels=False,
-            title=None,
-            showgrid=False)
+    fig.update_layout(
+        mapbox=mapbox,
+        plot_bgcolor=colors['background'],
+        paper_bgcolor=colors['background'],
+        margin={"r":30,"t":10,"l":25,"b":20}
+    )
 
-        fig.update_yaxes(
-            range=[Y - y_size, Y],
-            linecolor='white',
-            linewidth=2,
-            mirror=True,
-            showticklabels=False,
-            title=None,
-            showgrid=False)
-        return fig
-    except:
-        return empty_figure()
+    return fig
+    # except:
+    #     return empty_figure()
 
 
 def positions_GPS_capteur(df):
-    fig = px.scatter(
+    df = changement_repere(df, coeff_Lamb_GPS, intercept_Lamb_GPS)
+    fig = px.scatter_mapbox(
         df,
-        x="lat",
-        y="lon",
-        hover_name="capteur",
-        template='plotly_dark',
-        # color_discrete_sequence=["#FF8C00"],
+        lat="lat",
+        lon="lon",
         color='type',
-        hover_data={
-                'type':True
-            },
+        hover_name="capteur",
+        hover_data={'type':True})
+    fig.update_layout(mapbox_style="dark", mapbox_accesstoken=mapbox_token)
+    fig.update_layout(
+        plot_bgcolor=colors['background'],
+        paper_bgcolor=colors['background'],
+        font_color=colors['text'],
+        margin=dict(l=100, r=100, t=20, b=15)
     )
-    # fig.update_traces(hovertemplate = " %{color} : %{hover_name}")
     return fig
 
 def positions_GPS_secteur(df):
+    df = changement_repere(df, coeff_Lamb_GPS, intercept_Lamb_GPS)
     df = df[df.type=='cible'].groupby(['secteur']).mean().reset_index()
 
-    fig = px.scatter(
+    fig = px.scatter_mapbox(
         df,
-        x="lat",
-        y="lon",
-        template='plotly_dark',
-        text="secteur",
+        lat="lat",
+        lon="lon",
         color='secteur',
         hover_name='secteur',
+        text='secteur',
         hover_data={
             'lat':False,
             'lon':False,
             'secteur':False
         },
         )
-    fig.update_layout(showlegend=False)
-    fig.update_traces(marker=dict(size=50,line=dict(width=2)))
+    fig.update_layout(mapbox_style="dark", mapbox_accesstoken=mapbox_token, showlegend=False)
+    fig.update_traces(marker=dict(size=50))
     return fig
 
 def empty_figure():

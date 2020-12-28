@@ -33,8 +33,18 @@ dropdowns = dcc.Dropdown(
                 {'label': 'Vecteurs', 'value': 'vecteurs'},
                 ],
                 value='GPS',
-                style={"width": "90%", 'color':'black'}
+                style={'color':'black'}
             )
+
+options = dbc.Checklist(
+    options=[
+        {"label": "Afficher / masquer le plan", "value": 1},
+    ],
+    value=[],
+    id="affichage_plan",
+    inline=True,
+    switch=True
+)
 
 layout = html.Div(
     children=[
@@ -51,19 +61,15 @@ layout = html.Div(
             [
                 dbc.Col(
                     [
-                        dbc.Row(dropdowns, justify = 'center'),
+                        dropdowns,
+                        options,
                         dbc.Row(
                             dbc.Container(
                                 children=[
-                                dcc.Loading(
-                                    id = "loading-map-chantier",
-                                    color='#FF8C00',
-                                    type="dot",
-                                    children = dcc.Graph(
-                                        id='map-chantier',
-                                        config={'displayModeBar': False, "scrollZoom": True},
-                                        clear_on_unhover=True)
-                                    )
+                                dcc.Graph(
+                                    id='map-chantier',
+                                    config={ "scrollZoom": True},
+                                    clear_on_unhover=True)
                                 ], fluid=True
                             )
                         )
@@ -123,13 +129,24 @@ def return_tabs(mode):
 ##### AFFICHAGE LA CARTE DU CHANTIER SELECTIONNE #####
 @app.callback(
     Output("map-chantier", "figure"),
-    [Input('chantier-store', 'data'),
-    Input('mode', 'value')])
-def affichage_map(chantier_store, mode):
-    return affichage_map_chantier(chantier_store, mode)
+    [Input('affichage_plan','value'),
+    Input('mode', 'value'),
+    State('chantier-store', 'data')
+    ])
+def affichage_map(plan, mode, chantier_store):
+    if plan == [1]:
+        return affichage_map_chantier(chantier_store, mode, True)
+    else:
+        return affichage_map_chantier(chantier_store, mode)
 
 
-##### AFFICHE LES BOUTONS DE RAPPORTS LORSQU'UN SECTEUR EST SELECTIONNE  ET STOCKE LA VALEUR DU SECTEUR ####
+@app.callback(
+    Output('hover-data', 'children'),
+    Input('map-chantier', 'hoverData'))
+def display_hover_data(hoverData):
+    return json.dumps(hoverData, indent=2)
+
+##### STOCKE LA VALEUR DU SECTEUR ####
 @app.callback(
     Output('secteur-store', 'data'),
     [Input('map-chantier', 'clickData'),
