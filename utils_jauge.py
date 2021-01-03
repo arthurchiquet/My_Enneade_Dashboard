@@ -63,14 +63,13 @@ def graph_jauge(chantier, jauge):
     df = format_df(get_data(chantier, 'actif', 'jauges.csv', sep=False)[['Date',jauge]])
     fig = px.line(df.reset_index(), x="Date", y=df.columns, line_shape='spline')
     fig.update_layout(
-        height=550,
         showlegend=False,
         yaxis_title="% Jauges",
         xaxis_title=None,
         plot_bgcolor=colors['background'],
         paper_bgcolor=colors['background'],
         font_color=colors['text'],
-        margin={"r":0,"t":0,"l":0,"b":0})
+        margin={"r":10,"t":0,"l":0,"b":0})
     fig.update_yaxes(showgrid=False)
     fig.update_xaxes(showgrid=False)
     return fig

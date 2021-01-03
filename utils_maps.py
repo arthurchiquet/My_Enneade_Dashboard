@@ -62,13 +62,13 @@ def affichage_map_chantier(chantier, mode, affichage_plan = False):
         query="select * from capteur where chantier ='%s'"%chantier
         df = pd.read_sql_query(query, con=con)
 
-    if mode == 'GPS':
+    if mode == 1:
         fig = positions_GPS_capteur(df)
 
-    if mode ==  'secteurs':
+    if mode ==  2:
         fig = positions_GPS_secteur(df)
 
-    if mode == 'vecteurs':
+    if mode == 3:
         dff = get_data(chantier, 'actif', 'topographie.csv', sep=False).drop(columns=["date"]).dropna(axis=1, how="all")
         fig = create_quiver(dff)
 
@@ -79,7 +79,7 @@ def affichage_map_chantier(chantier, mode, affichage_plan = False):
                 below ='traces',
                 minzoom=16,
                 maxzoom=20,
-                opacity=0.5,
+                opacity=0.7,
                 source = plan,
                 sourcetype= "image",
                 coordinates =  [
@@ -105,7 +105,7 @@ def affichage_map_chantier(chantier, mode, affichage_plan = False):
         mapbox=mapbox,
         plot_bgcolor=colors['background'],
         paper_bgcolor=colors['background'],
-        margin={"r":30,"t":10,"l":25,"b":20}
+        margin=dict(l=20, r=20, t=10, b=0)
     )
 
     return fig
@@ -127,13 +127,19 @@ def positions_GPS_capteur(df):
         plot_bgcolor=colors['background'],
         paper_bgcolor=colors['background'],
         font_color=colors['text'],
-        margin=dict(l=100, r=100, t=20, b=15)
+        legend=dict(
+            yanchor="top",
+            y=0.99,
+            xanchor="left",
+            x=0.01
+        ),
+        legend_title_text=None,
     )
     return fig
 
 def positions_GPS_secteur(df):
     df = changement_repere(df, coeff_Lamb_GPS, intercept_Lamb_GPS)
-    df = df[df.type=='cible'].groupby(['secteur']).mean().reset_index()
+    df = df[(df.type=='cible') & (df.secteur != 'NON DEFINI')].groupby(['secteur']).mean().reset_index()
 
     fig = px.scatter_mapbox(
         df,
@@ -148,7 +154,11 @@ def positions_GPS_secteur(df):
             'secteur':False
         },
         )
-    fig.update_layout(mapbox_style="dark", mapbox_accesstoken=mapbox_token, showlegend=False)
+    fig.update_layout(
+        mapbox_style="dark",
+        mapbox_accesstoken=mapbox_token,
+        showlegend=False
+    )
     fig.update_traces(marker=dict(size=50))
     return fig
 

@@ -42,12 +42,13 @@ def graph_inclino(chantier, inclino):
         legend_title_text=None,
         yaxis_title="Profondeur (m)",
         xaxis_title=None,
-        height=550,
+        # height=550,
         legend_orientation='h',
         plot_bgcolor=colors['background'],
         paper_bgcolor=colors['background'],
         font_color=colors['text'],
-        margin={"r":0,"t":20,"l":0,"b":0})
+        margin={"r":20,"t":30,"l":0,"b":0}
+    )
     return fig
 
 
@@ -467,6 +468,7 @@ def create_graph_3(dfi, chantier, inclino, nb_courbes):
         yaxis_title="Profondeur (m)",
         xaxis_title=None,
         legend_orientation='h',
+        legend_traceorder="reversed",
         plot_bgcolor=colors['background'],
         paper_bgcolor=colors['background'],
         font_color=colors['text'],

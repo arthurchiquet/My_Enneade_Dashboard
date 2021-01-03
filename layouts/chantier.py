@@ -23,18 +23,16 @@ colors = {
 
 tabs_content = html.Div(id='tabs_content')
 
-dropdowns = dcc.Dropdown(
-                id='mode',
-                persistence=True,
-                persistence_type="session",
-                options=[
-                {'label': 'Positions GPS', 'value': 'GPS'},
-                {'label': 'Secteurs', 'value': 'secteurs'},
-                {'label': 'Vecteurs', 'value': 'vecteurs'},
-                ],
-                value='GPS',
-                style={'color':'black'}
-            )
+modes = dbc.RadioItems(
+    options=[
+        {"label": "Capteurs", "value": 1},
+        {"label": "Secteurs", "value": 2},
+        {"label": "Vecteurs", "value": 3},
+    ],
+    value=1,
+    id="mode",
+    inline=True,
+)
 
 options = dbc.Checklist(
     options=[
@@ -61,33 +59,35 @@ layout = html.Div(
             [
                 dbc.Col(
                     [
-                        dropdowns,
-                        options,
                         dbc.Row(
                             dbc.Container(
                                 children=[
+                                dbc.Row([modes, options], justify='center'),
                                 dcc.Graph(
                                     id='map-chantier',
                                     config={ "scrollZoom": True},
-                                    clear_on_unhover=True)
-                                ], fluid=True
-                            )
+                                    clear_on_unhover=True,
+                                    figure = empty_figure()
+                                )
+                                ]
+                            ), justify='center'
                         )
                     ]
                 ),
                 dbc.Col(
                     [
-                        dbc.Row(dbc.Label(id='titre_graph', size='lg'), justify = 'center'),
-                        html.Br(),
-                        dbc.Container(
-                            children=[
-                            dcc.Loading(
-                                id = "loading-graph",
-                                color='#FF8C00',
-                                type="graph",
-                                children = dcc.Graph(id='courbe_capteur', config={"scrollZoom": True})
+                        dbc.Row(
+                            dbc.Container(
+                                children=[
+                                dbc.Row(dbc.Label(id='titre_graph', size='lg'), justify = 'center'),
+                                dcc.Loading(
+                                    id = "loading-graph",
+                                    color='#FF8C00',
+                                    type="graph",
+                                    children = dcc.Graph(id='courbe_capteur', config={"scrollZoom": True})
                                 )
-                            ], fluid=True
+                                ]
+                            ), justify='center'
                         )
                     ]
                 )
@@ -95,6 +95,7 @@ layout = html.Div(
         ),
         html.Br(),
         html.Hr(),
+        dbc.Row(html.H4(id='title_secteur'), justify='center'),
         tabs_content,
     ]
 )
@@ -102,23 +103,28 @@ layout = html.Div(
 
 @app.callback(
     Output('tabs_content', 'children'),
-    Input('mode', 'value'))
-def return_tabs(mode):
-    if mode == 'secteurs':
+    [Input('mode', 'value'),
+    Input('secteur-store', 'data')]
+    )
+def return_tabs(mode, secteur):
+    if mode == 2 and secteur !={}:
         return [
+            html.Hr(style=dict(width=500)),
             dbc.Row(
-                dbc.Tabs(
-                    [
-                        dbc.Tab(label="Cibles", tab_id=1),
-                        dbc.Tab(label="Inclinomètres", tab_id=2),
-                        dbc.Tab(label="Tirants", tab_id=3),
-                        dbc.Tab(label="Piezometres", tab_id=5),
-                        dbc.Tab(label="Jauges", tab_id=4),
-                        dbc.Tab(label="Butons", tab_id=6),
-                    ],
-                    id="tabs_secteurs",
-                    active_tab="tab-topo",
-                ), justify='center'
+                [
+                    dbc.Tabs(
+                        [
+                            dbc.Tab(label="Cibles", tab_id=1),
+                            dbc.Tab(label="Inclinomètres", tab_id=2),
+                            dbc.Tab(label="Tirants", tab_id=3),
+                            dbc.Tab(label="Piezometres", tab_id=5),
+                            dbc.Tab(label="Jauges", tab_id=4),
+                            dbc.Tab(label="Butons", tab_id=6),
+                        ],
+                        id="tabs_secteurs",
+                        active_tab="tab-topo",
+                    )
+                ], justify='center'
             ),
             html.Br(),
             html.Div(id='tab_content')
@@ -139,20 +145,13 @@ def affichage_map(plan, mode, chantier_store):
     else:
         return affichage_map_chantier(chantier_store, mode)
 
-
-@app.callback(
-    Output('hover-data', 'children'),
-    Input('map-chantier', 'hoverData'))
-def display_hover_data(hoverData):
-    return json.dumps(hoverData, indent=2)
-
 ##### STOCKE LA VALEUR DU SECTEUR ####
 @app.callback(
     Output('secteur-store', 'data'),
-    [Input('map-chantier', 'clickData'),
-    Input('mode', 'value')])
-def click(clickData, mode):
-    if mode =='secteurs' and clickData:
+    Input('map-chantier', 'clickData'),
+    State('mode', 'value'))
+def secteur_store(clickData, mode):
+    if mode ==2 and clickData:
         return clickData['points'][0]['hovertext']
     else:
         return {}
@@ -166,7 +165,7 @@ def click(clickData, mode):
     State('chantier-store', 'data'),
     )
 def affichage_courbe_capteur(clickData, mode, chantier):
-    if mode != 'GPS':
+    if mode != 1:
         return '', empty_figure()
     else:
         try :
@@ -199,7 +198,7 @@ def selection_affichage(chantier, customdata, hovertext):
     ])
 def return_tabs_content(tab, chantier, secteur):
     if secteur=={}:
-        return dbc.Row(html.H4('Veuillez selectionner un secteur sur la carte'), justify='center')
+        return {}
     else:
         if tab == 1:
             return utils_topo.layout
@@ -211,6 +210,21 @@ def return_tabs_content(tab, chantier, secteur):
             return utils_jauge.layout
         elif tab == 5:
             return utils_piezo.layout
+
+
+@app.callback(
+    Output('title_secteur', 'children'),
+    [Input('mode', 'value'),
+     Input('secteur-store', 'data')
+    ])
+def title_secteur(mode, secteur):
+    if mode == 2 and secteur !={}:
+        return f'Bilan secteur : {secteur}'
+    elif mode == 2:
+        return 'Veuillez selectionner un secteur sur la carte'
+    else:
+        return ''
+
 
 
 # @app.callback(
