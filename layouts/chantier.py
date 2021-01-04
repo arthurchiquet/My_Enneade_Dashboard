@@ -32,6 +32,8 @@ modes = dbc.RadioItems(
     value=1,
     id="mode",
     inline=True,
+    persistence=True,
+    persistence_type="local"
 )
 
 options = dbc.Checklist(
@@ -41,8 +43,11 @@ options = dbc.Checklist(
     value=[],
     id="affichage_plan",
     inline=True,
-    switch=True
+    switch=True,
+    persistence=True,
+    persistence_type="local"
 )
+
 
 layout = html.Div(
     children=[
@@ -51,6 +56,7 @@ layout = html.Div(
             children=[
                 dbc.Button('Vue générale', color = 'dark', className="mr-1", href='/'),
                 dbc.Button('Profil', color = 'dark', className="mr-1", href='/profil'),
+                dbc.Button('Export PDF', color = 'light', className="mr-1"),
                 dbc.Button('Déconnexion', color = 'dark', className="mr-1", href='/logout')
             ], justify='center'
         ),
@@ -78,15 +84,8 @@ layout = html.Div(
                     [
                         dbc.Row(
                             dbc.Container(
-                                children=[
-                                dbc.Row(dbc.Label(id='titre_graph', size='lg'), justify = 'center'),
-                                dcc.Loading(
-                                    id = "loading-graph",
-                                    color='#FF8C00',
-                                    type="graph",
-                                    children = dcc.Graph(id='courbe_capteur', config={"scrollZoom": True})
-                                )
-                                ]
+                                id='right-content',
+                                children=[]
                             ), justify='center'
                         )
                     ]
@@ -99,6 +98,27 @@ layout = html.Div(
         tabs_content,
     ]
 )
+
+
+@app.callback(
+    Output('right-content', 'children'),
+    Input('mode', 'value'))
+def display_right_content(mode):
+    if mode==1:
+        return [
+            dbc.Row(dbc.Label(id='titre_graph', size='lg'), justify = 'center'),
+            dcc.Loading(
+                id = "loading-graph",
+                color='#FF8C00',
+                type="graph",
+                children = dcc.Graph(id='courbe_capteur')
+            )
+        ]
+    elif mode==2:
+        return []
+    elif mode==3:
+        return []
+
 
 
 @app.callback(
@@ -170,24 +190,24 @@ def affichage_courbe_capteur(clickData, mode, chantier):
     else:
         try :
             customdata = clickData['points'][0]['customdata'][0]
-            hovertext = clickData['points'][0]['hovertext']
-            return f'{customdata} : {hovertext}', selection_affichage(chantier, customdata, hovertext)
+            text = clickData['points'][0]['text']
+            return f'{customdata} : {text}', selection_affichage(chantier, customdata, text)
         except:
             return '', empty_figure()
 
 
 #### RENVOIE LA METHODE D'AFFICHAGE DE LA COURBE EN FONCTION DU TYPE DE CAPTEUR ####
-def selection_affichage(chantier, customdata, hovertext):
+def selection_affichage(chantier, customdata, text):
     if customdata == 'cible':
-        return utils_topo.graph_topo(chantier, hovertext, 0, height = 550)
+        return utils_topo.graph_topo(chantier, text, 0, height = 450)
     elif customdata == 'inclino':
-        return utils_inclino.graph_inclino(chantier, hovertext)
+        return utils_inclino.graph_inclino(chantier, text)
     elif customdata == 'tirant':
-        return utils_tirant.graph_tirant(chantier, hovertext)
+        return utils_tirant.graph_tirant(chantier, text)
     elif customdata == 'jauge':
-        return utils_jauge.graph_jauge(chantier, hovertext)
+        return utils_jauge.graph_jauge(chantier, text)
     elif customdata == 'piezo':
-        return utils_piezo.graph_piezo(chantier, hovertext)
+        return utils_piezo.graph_piezo(chantier, text)
 
 
 @app.callback(

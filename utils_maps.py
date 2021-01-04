@@ -78,7 +78,7 @@ def affichage_map_chantier(chantier, mode, affichage_plan = False):
             dict(
                 below ='traces',
                 minzoom=16,
-                maxzoom=20,
+                maxzoom=21,
                 opacity=0.7,
                 source = plan,
                 sourcetype= "image",
@@ -105,6 +105,7 @@ def affichage_map_chantier(chantier, mode, affichage_plan = False):
         mapbox=mapbox,
         plot_bgcolor=colors['background'],
         paper_bgcolor=colors['background'],
+        font_color=colors['text'],
         margin=dict(l=20, r=20, t=10, b=0)
     )
 
@@ -120,8 +121,11 @@ def positions_GPS_capteur(df):
         lat="lat",
         lon="lon",
         color='type',
-        hover_name="capteur",
-        hover_data={'type':True})
+        text='capteur',
+        hover_data={
+            'type':True,
+        },
+    )
     fig.update_layout(mapbox_style="dark", mapbox_accesstoken=mapbox_token)
     fig.update_layout(
         plot_bgcolor=colors['background'],
@@ -135,6 +139,7 @@ def positions_GPS_capteur(df):
         ),
         legend_title_text=None,
     )
+    fig.update_traces(hovertemplate='%{text}')
     return fig
 
 def positions_GPS_secteur(df):

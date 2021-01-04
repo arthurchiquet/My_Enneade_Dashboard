@@ -22,9 +22,9 @@ colors = {
 layout = html.Div(
     [
         dbc.Container([
-        dcc.Graph(id="graph_meteo", config={"scrollZoom": True}, figure=empty_figure()),
+        dcc.Graph(id='graph_piezo', figure=empty_figure(), config={"scrollZoom": True}),
         html.Hr(),
-        dcc.Graph(id='graph_piezo', figure=empty_figure())
+        dcc.Graph(id="graph_meteo", figure=empty_figure()),
     ], fluid=True)
     ]
 )
@@ -33,9 +33,10 @@ layout = html.Div(
     Output("graph_meteo", "figure"),
     [
         Input("chantier-store", "data"),
+        Input('graph_piezo', 'relayoutData'),
     ],
 )
-def update_graph_meteo(chantier):
+def update_graph_meteo(chantier, relayout_data):
     try:
         df = get_data(chantier, 'actif', 'temperature.csv')
         df.Date = pd.to_datetime(df.Date, format="%d/%m/%Y")
@@ -64,6 +65,11 @@ def update_graph_meteo(chantier):
         )
         fig.update_yaxes(showgrid=False)
         fig.update_xaxes(showgrid=False)
+        try:
+            fig['layout']["xaxis"]["range"] = [relayout_data['xaxis.range[0]'], relayout_data['xaxis.range[1]']]
+            fig['layout']["xaxis"]["autorange"] = False
+        except (KeyError, TypeError):
+            fig['layout']["xaxis"]["autorange"] = True
         return fig
     except:
         return empty_figure()
@@ -73,20 +79,19 @@ def update_graph_meteo(chantier):
     Output("graph_piezo", "figure"),
     [Input("chantier-store", "data"),
      Input('secteur-store', 'data'),
-     Input('graph_meteo', 'relayoutData'),
      ]
     )
-def update_graph_piezos(chantier, secteur, relayout_data):
+def update_graph_piezos(chantier, secteur):
     if secteur == None:
         return {}
     else:
         with engine.connect() as con:
             query=f"select * from capteur where chantier='{chantier}' and secteur ='{secteur}' and type='piezo'"
             piezo = pd.read_sql_query(query, con=con).capteur.unique()[0]
-        return graph_piezo(chantier, piezo, relayout_data = relayout_data)
+        return graph_piezo(chantier, piezo)
 
 
-def graph_piezo(chantier, piezo, relayout_data = None):
+def graph_piezo(chantier, piezo):
     df = get_data(chantier, 'actif', f'{piezo}.csv')
     terrassement = get_data(chantier, 'actif', 'terrassement.csv')
     df.date = pd.to_datetime(df.date, format="%d/%m/%Y")
@@ -100,9 +105,4 @@ def graph_piezo(chantier, piezo, relayout_data = None):
         font_color=colors['text'])
     fig.update_yaxes(showgrid=False)
     fig.update_xaxes(showgrid=False)
-    try:
-        fig['layout']["xaxis"]["range"] = [relayout_data['xaxis.range[0]'], relayout_data['xaxis.range[1]']]
-        fig['layout']["xaxis"]["autorange"] = False
-    except (KeyError, TypeError):
-        fig['layout']["xaxis"]["autorange"] = True
     return fig

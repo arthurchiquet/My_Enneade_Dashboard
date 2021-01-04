@@ -22,7 +22,7 @@ layout = html.Div(
         html.Br(),
         dbc.Container([
             dcc.Loading(
-                dcc.Graph(id="time-series", config={"scrollZoom": True}),
+                dcc.Graph(id="time-series"),
                 type='graph'
                 )
         ], fluid=True)
