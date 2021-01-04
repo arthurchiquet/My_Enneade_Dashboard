@@ -48,6 +48,68 @@ options = dbc.Checklist(
     persistence_type="local"
 )
 
+secteur_params = [
+    html.Br(),
+    dbc.Row(
+        [
+            dbc.Col(
+                dbc.Label('Paramètres secteur : ', size='lg'),
+                width={"size": 3.5, "offset": 3},
+            ),
+            dbc.Col(
+                dbc.Label(id='titre_secteur', size='lg'),
+                width={"size": 2, "offset": 0},
+            )
+        ]
+    ),
+    html.Br(),
+    dbc.Row(
+        [
+            dbc.Col(
+                [
+                    dbc.Label("Parametre 1:   "),
+                    html.Br(),
+                    html.Br(),
+                    dbc.Label("Parametre 2:   "),
+                    html.Br(),
+                    html.Br(),
+                    dbc.Label("Parametre 3:   "),
+                    html.Br(),
+                    html.Br(),
+                    dbc.Label("Parametre 4:   "),
+                    html.Br(),
+                    html.Br(),
+                    dbc.Label("Parametre 5:   "),
+                    html.Br(),
+                    html.Br(),
+                    dbc.Label("Parametre 6:   "),
+                ],
+                width={"size": 3.5, "offset": 3}
+            ),
+            dbc.Col(
+                [
+                    dbc.Label(id="Parametre 1", className="text-success"),
+                    html.Br(),
+                    html.Br(),
+                    dbc.Label(id="Parametre 2", className="text-success"),
+                    html.Br(),
+                    html.Br(),
+                    dbc.Label(id="Parametre 3", className="text-success"),
+                    html.Br(),
+                    html.Br(),
+                    dbc.Label(id="Parametre 4", className="text-success"),
+                    html.Br(),
+                    html.Br(),
+                    dbc.Label(id="Parametre 5", className="text-success"),
+                    html.Br(),
+                    html.Br(),
+                    dbc.Label(id="Parametre 6", className="text-success"),
+
+                ],
+            ),
+        ]
+    )
+]
 
 layout = html.Div(
     children=[
@@ -102,24 +164,52 @@ layout = html.Div(
 
 @app.callback(
     Output('right-content', 'children'),
-    Input('mode', 'value'))
-def display_right_content(mode):
-    if mode==1:
+    [Input('mode', 'value'),
+    Input("map-chantier", "clickData")])
+def display_right_content(mode, clickData):
+    if mode==1 and clickData:
         return [
             dbc.Row(dbc.Label(id='titre_graph', size='lg'), justify = 'center'),
             dcc.Loading(
                 id = "loading-graph",
                 color='#FF8C00',
                 type="graph",
-                children = dcc.Graph(id='courbe_capteur')
+                children = dcc.Graph(id='courbe_capteur', figure = empty_figure())
             )
         ]
     elif mode==2:
-        return []
+        return secteur_params
     elif mode==3:
         return []
+    else:
+        return []
 
 
+@app.callback(
+    Output('titre_secteur', 'children'),
+    Output('Parametre 1', 'children'),
+    Output('Parametre 2', 'children'),
+    Output('Parametre 3', 'children'),
+    Output('Parametre 4', 'children'),
+    Output('Parametre 5', 'children'),
+    Output('Parametre 6', 'children'),
+    [Input('mode', 'value'),
+    Input('secteur-store', 'data')]
+    )
+def return_secteurs_params(mode, secteur):
+    if mode == 2 and secteur !={}:
+        with engine.connect() as con:
+            query=f"select * from secteur where secteur='{secteur}'"
+            parametres = pd.read_sql_query(query, con=con)
+        param_1= parametres.angle[0]
+        param_2= parametres.seuil_alerte[0]
+        param_3= parametres.seuil_intervention[0]
+        param_4= parametres.affichage[0]
+        param_5=""
+        param_6=""
+        return secteur, param_1, param_2, param_3, param_4, param_5, param_6
+    else:
+        return "", "", "", "", "", "", ""
 
 @app.callback(
     Output('tabs_content', 'children'),
@@ -172,11 +262,11 @@ def affichage_map(plan, mode, chantier_store):
     State('mode', 'value'))
 def secteur_store(clickData, mode):
     if mode ==2 and clickData:
-        return clickData['points'][0]['hovertext']
+        return clickData['points'][0]['text']
     else:
         return {}
 
-#### AFFICHE LA COURBE CORRESPONDANT AU CAPTEUR SELECTIONNÉ ####
+### AFFICHE LA COURBE CORRESPONDANT AU CAPTEUR SELECTIONNÉ ####
 @app.callback(
     [Output('titre_graph', 'children'),
     Output("courbe_capteur", "figure")],
@@ -188,15 +278,19 @@ def affichage_courbe_capteur(clickData, mode, chantier):
     if mode != 1:
         return '', empty_figure()
     else:
-        try :
+        try:
             customdata = clickData['points'][0]['customdata'][0]
             text = clickData['points'][0]['text']
-            return f'{customdata} : {text}', selection_affichage(chantier, customdata, text)
+            if customdata not in ['cible', 'inclino', 'tirant','jauge','piezo']:
+                return '', empty_figure()
+            else:
+                return f'{customdata} : {text}', selection_affichage(chantier, customdata, text)
         except:
             return '', empty_figure()
 
 
-#### RENVOIE LA METHODE D'AFFICHAGE DE LA COURBE EN FONCTION DU TYPE DE CAPTEUR ####
+
+### RENVOIE LA METHODE D'AFFICHAGE DE LA COURBE EN FONCTION DU TYPE DE CAPTEUR ####
 def selection_affichage(chantier, customdata, text):
     if customdata == 'cible':
         return utils_topo.graph_topo(chantier, text, 0, height = 450)
@@ -208,16 +302,18 @@ def selection_affichage(chantier, customdata, text):
         return utils_jauge.graph_jauge(chantier, text)
     elif customdata == 'piezo':
         return utils_piezo.graph_piezo(chantier, text)
+    else:
+        return empty_figure()
 
 
 @app.callback(
     Output('tab_content', 'children'),
-    [Input('tabs_secteurs', 'active_tab'),
-     Input('chantier-store', 'data'),
-     Input('secteur-store', 'data')
-    ])
-def return_tabs_content(tab, chantier, secteur):
-    if secteur=={}:
+    [Input('mode', 'value'),
+    Input('tabs_secteurs', 'active_tab')],
+    [State('chantier-store', 'data'),
+    State('secteur-store', 'data')])
+def return_tabs_content(mode, tab, chantier, secteur):
+    if secteur=={} or mode !=2:
         return {}
     else:
         if tab == 1:
@@ -245,29 +341,3 @@ def title_secteur(mode, secteur):
     else:
         return ''
 
-
-
-# @app.callback(
-#     [Output("table_param", "data"),
-#     Output("table_param", "columns")],
-#     Input("map-chantier", "hoverData"),
-#     State('mode', 'value')
-# )
-# def update_table_param(hoverData, mode):
-#     try:
-#         customdata = hoverData['points'][0]['customdata'][0]
-#         hovertext = hoverData['points'][0]['hovertext']
-#         if mode == 'GPS':
-#             with engine.connect() as con:
-#                 query=f"select * from {customdata}_param where {customdata}='{hovertext}'"
-#                 parametres = pd.read_sql_query(query, con=con)
-#             return parametres.to_dict("records"), [{"name": i, "id": i} for i in parametres.columns]
-#         if mode == 'secteurs':
-#             with engine.connect() as con:
-#                 query=f"select * from secteur where secteur='{hovertext}'"
-#                 parametres = pd.read_sql_query(query, con=con)
-#             return parametres.to_dict("records"), [{"name": i, "id": i} for i in parametres.columns]
-#         else:
-#             return [],[]
-#     except:
-#         return [],[]

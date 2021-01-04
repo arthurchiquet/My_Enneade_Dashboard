@@ -57,61 +57,61 @@ def affichage_map_geo():
     return fig
 
 def affichage_map_chantier(chantier, mode, affichage_plan = False):
-    # try:
-    with engine.connect() as con:
-        query="select * from capteur where chantier ='%s'"%chantier
-        df = pd.read_sql_query(query, con=con)
+    try:
+        with engine.connect() as con:
+            query="select * from capteur where chantier ='%s'"%chantier
+            df = pd.read_sql_query(query, con=con)
 
-    if mode == 1:
-        fig = positions_GPS_capteur(df)
+        if mode == 1:
+            fig = positions_GPS_capteur(df)
 
-    if mode ==  2:
-        fig = positions_GPS_secteur(df)
+        if mode ==  2:
+            fig = positions_GPS_secteur(df)
 
-    if mode == 3:
-        dff = get_data(chantier, 'actif', 'topographie.csv', sep=False).drop(columns=["date"]).dropna(axis=1, how="all")
-        fig = create_quiver(dff)
+        if mode == 3:
+            dff = get_data(chantier, 'actif', 'topographie.csv', sep=False).drop(columns=["date"]).dropna(axis=1, how="all")
+            fig = create_quiver(dff)
 
-    if affichage_plan:
-        plan = download_image(chantier, 'plan.jpeg')
-        layers = [
-            dict(
-                below ='traces',
-                minzoom=16,
-                maxzoom=21,
-                opacity=0.7,
-                source = plan,
-                sourcetype= "image",
-                coordinates =  [
-                    [7.4115104, 43.7321406],
-                    [7.4137998, 43.7321406],
-                    [7.4137998, 43.7310171],
-                    [7.4115104, 43.7310171]
-                ],
-            )
-        ]
-    else:
-        layers = None
+        if affichage_plan:
+            plan = download_image(chantier, 'plan.jpeg')
+            layers = [
+                dict(
+                    below ='traces',
+                    minzoom=16,
+                    maxzoom=21,
+                    opacity=0.7,
+                    source = plan,
+                    sourcetype= "image",
+                    coordinates =  [
+                        [7.4115104, 43.7321406],
+                        [7.4137998, 43.7321406],
+                        [7.4137998, 43.7310171],
+                        [7.4115104, 43.7310171]
+                    ],
+                )
+            ]
+        else:
+            layers = None
 
-    mapbox = dict(
-        zoom= 17.6,
-        center=dict(
-            lon=7.4126551,
-            lat=43.7315788),
-        layers=layers
-    )
+        mapbox = dict(
+            zoom= 17.6,
+            center=dict(
+                lon=7.4126551,
+                lat=43.7315788),
+            layers=layers
+        )
 
-    fig.update_layout(
-        mapbox=mapbox,
-        plot_bgcolor=colors['background'],
-        paper_bgcolor=colors['background'],
-        font_color=colors['text'],
-        margin=dict(l=20, r=20, t=10, b=0)
-    )
+        fig.update_layout(
+            mapbox=mapbox,
+            plot_bgcolor=colors['background'],
+            paper_bgcolor=colors['background'],
+            font_color=colors['text'],
+            margin=dict(l=20, r=20, t=10, b=0)
+        )
 
-    return fig
-    # except:
-    #     return empty_figure()
+        return fig
+    except:
+        return empty_figure()
 
 
 def positions_GPS_capteur(df):
@@ -151,7 +151,6 @@ def positions_GPS_secteur(df):
         lat="lat",
         lon="lon",
         color='secteur',
-        hover_name='secteur',
         text='secteur',
         hover_data={
             'lat':False,
