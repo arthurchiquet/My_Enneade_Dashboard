@@ -20,6 +20,7 @@ colors = {
 layout = html.Div(
     [
         html.Br(),
+        dbc.Row(html.H3('Déplacement normal, tangentiel et vertical (mm)'), justify='center'),
         dbc.Container([
             dcc.Loading(
                 dcc.Graph(id="time-series"),

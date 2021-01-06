@@ -5,6 +5,7 @@ from config import engine
 import pandas as pd
 from data import download_image, get_data
 import numpy as np
+from datetime import timedelta
 
 user='Vallicorp'
 mapbox_token = 'pk.eyJ1IjoiYXJ0aHVyY2hpcXVldCIsImEiOiJja2E1bDc3cjYwMTh5M2V0ZzdvbmF5NXB5In0.ETylJ3ztuDA-S3tQmNGpPQ'
@@ -56,7 +57,7 @@ def affichage_map_geo():
 
     return fig
 
-def affichage_map_chantier(chantier, mode, affichage_plan = False):
+def affichage_map_chantier(chantier, mode,  preset = 3, affichage_plan = False):
     try:
         with engine.connect() as con:
             query="select * from capteur where chantier ='%s'"%chantier
@@ -69,8 +70,34 @@ def affichage_map_chantier(chantier, mode, affichage_plan = False):
             fig = positions_GPS_secteur(df)
 
         if mode == 3:
-            dff = get_data(chantier, 'actif', 'topographie.csv', sep=False).drop(columns=["date"]).dropna(axis=1, how="all")
-            fig = create_quiver(dff)
+            if preset==3:
+                dff = get_data(chantier, 'actif', 'topographie.csv', sep=False)
+            else:
+                dff = get_data(chantier, 'actif', 'topographie.csv', sep=False)
+                dff.date = pd.to_datetime(dff.date, format="%d/%m/%Y")
+                last_date = dff.date.iloc[-1]
+                dff = dff[dff.date > last_date - timedelta(30*preset)]
+
+            fig = create_quiver(dff.drop(columns=["date"]).dropna(axis=1, how="all"), scale=750//preset)
+            X = 2055229.22647546
+            Y = 3179752.70410855
+            x_size = 2055406.7254806 - 2055229.22647546
+            y_size = 3179752.70410855 - 3179618.20410255
+            fig.add_layout_image(
+                dict(
+                    source=download_image(chantier, 'plan.jpeg'),
+                    xref="x",
+                    yref="y",
+                    x=X,
+                    y=Y,
+                    sizex=x_size,
+                    sizey=y_size,
+                    sizing="stretch",
+                    layer="below",
+                )
+            )
+            fig.update_xaxes(visible=False, range=[X, X + x_size])
+            fig.update_yaxes(visible=False, range=[Y - y_size, Y])
 
         if affichage_plan:
             plan = download_image(chantier, 'plan.jpeg')
@@ -178,7 +205,7 @@ def empty_figure():
     return fig
 
 
-def create_quiver(df):
+def create_quiver(df, scale):
     first_indexes = df.apply(pd.Series.first_valid_index).to_dict()
     last_indexes = df.apply(pd.Series.last_valid_index).to_dict()
     first = [df.loc[first_indexes[col], col] for col in df.columns]
@@ -225,7 +252,7 @@ def create_quiver(df):
         first_y.pop(index)
         u.pop(index)
         v.pop(index)
-    return ff.create_quiver(first_x, first_y, u, v, scale=250)
+    return ff.create_quiver(first_x, first_y, u, v, scale=scale)
 
 
 def mean_pos(list):

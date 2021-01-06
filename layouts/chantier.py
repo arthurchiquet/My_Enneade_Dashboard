@@ -6,7 +6,6 @@ import plotly.graph_objects as go
 import pandas as pd
 import dash_table as dt
 import warnings
-import json
 
 from server import app
 from config import engine
@@ -113,9 +112,11 @@ secteur_params = [
     )
 ]
 
+
 layout = html.Div(
     children=[
         html.Br(),
+        # html.Img(src=app.get_asset_url('test.png')),
         dbc.Row(
             id='options-buttons',
             children=[],
@@ -129,15 +130,34 @@ layout = html.Div(
                         dbc.Row(
                             dbc.Container(
                                 children=[
-                                dbc.Row([modes, options], justify='center'),
-                                dcc.Graph(
-                                    id='map-chantier',
-                                    config={ "scrollZoom": True},
-                                    clear_on_unhover=True,
-                                    figure = empty_figure()
-                                )
+                                    dbc.Row([modes, options], justify='center'),
+                                    dcc.Loading(
+                                        color='#FF8C00',
+                                        type="graph",
+                                        children=dcc.Graph(
+                                            id='map-chantier',
+                                            config={ "scrollZoom": True},
+                                            clear_on_unhover=True,
+                                            figure = empty_figure()
+                                        )
+                                    )
                                 ]
                             ), justify='center'
+                        ),
+                        html.Br(),
+                        dcc.Slider(
+                            id="preset_slider",
+                            disabled=True,
+                            min=1,
+                            max=3,
+                            value=3,
+                            dots=True,
+                            step=None,
+                            marks={
+                                1: "30 jrs",
+                                2: "60jrs",
+                                3: "Tout"
+                            },
                         )
                     ]
                 ),
@@ -187,6 +207,7 @@ def display_right_content(mode, clickData):
     if mode==1 and clickData:
         return [
             dbc.Row(dbc.Label(id='titre_graph', size='lg'), justify = 'center'),
+            dbc.Row(dbc.Label(id='sous_titre_graph'), justify = 'center'),
             dcc.Loading(
                 id = "loading-graph",
                 color='#FF8C00',
@@ -229,6 +250,15 @@ def return_secteurs_params(mode, secteur):
         return "", "", "", "", "", "", ""
 
 @app.callback(
+    Output('preset_slider','disabled'),
+    Input('mode', 'value'))
+def disabled_slider(mode):
+    if mode==3:
+        return False
+    else:
+        return True
+
+@app.callback(
     Output('tabs_content', 'children'),
     [Input('mode', 'value'),
     Input('secteur-store', 'data')]
@@ -264,13 +294,14 @@ def return_tabs(mode, secteur):
     Output("map-chantier", "figure"),
     [Input('affichage_plan','value'),
     Input('mode', 'value'),
+    Input('preset_slider', 'value'),
     State('chantier-store', 'data')
     ])
-def affichage_map(plan, mode, chantier_store):
+def affichage_map(plan, mode, preset, chantier_store):
     if plan == [1]:
-        return affichage_map_chantier(chantier_store, mode, True)
+        return affichage_map_chantier(chantier_store, mode, preset, True)
     else:
-        return affichage_map_chantier(chantier_store, mode)
+        return affichage_map_chantier(chantier_store, mode, preset)
 
 ##### STOCKE LA VALEUR DU SECTEUR ####
 @app.callback(
@@ -286,25 +317,25 @@ def secteur_store(clickData, mode):
 ### AFFICHE LA COURBE CORRESPONDANT AU CAPTEUR SELECTIONNÉ ####
 @app.callback(
     [Output('titre_graph', 'children'),
-    Output("courbe_capteur", "figure")],
+    Output("courbe_capteur", "figure"),
+    Output('sous_titre_graph', 'children')],
     [Input("map-chantier", "clickData"),
     Input('mode', 'value')],
     State('chantier-store', 'data'),
     )
 def affichage_courbe_capteur(clickData, mode, chantier):
     if mode != 1:
-        return '', empty_figure()
+        return '', empty_figure(), ''
     else:
         try:
             customdata = clickData['points'][0]['customdata'][0]
             text = clickData['points'][0]['text']
             if customdata not in ['cible', 'inclino', 'tirant','jauge','piezo']:
-                return '', empty_figure()
+                return '' , empty_figure(), ''
             else:
-                return f'{customdata} : {text}', selection_affichage(chantier, customdata, text)
+                return f'{customdata} {text}', selection_affichage(chantier, customdata, text), sous_titre(customdata)
         except:
-            return '', empty_figure()
-
+            return '', empty_figure(), ''
 
 
 ### RENVOIE LA METHODE D'AFFICHAGE DE LA COURBE EN FONCTION DU TYPE DE CAPTEUR ####
@@ -321,6 +352,20 @@ def selection_affichage(chantier, customdata, text):
         return utils_piezo.graph_piezo(chantier, text)
     else:
         return empty_figure()
+
+def sous_titre(customdata):
+    if customdata == 'cible':
+        return 'Déplacements N, T, Z (mm)'
+    elif customdata == 'inclino':
+        return ''
+    elif customdata == 'tirant':
+        return 'Charge brute tirant (kN)'
+    elif customdata == 'jauge':
+        return 'Evolution brute des fissures (Ecarts, mm)'
+    elif customdata == 'piezo':
+        return 'Niveau piezométrique (mm)'
+    else:
+        return ''
 
 
 @app.callback(
