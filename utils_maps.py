@@ -3,7 +3,7 @@ import plotly.express as px
 import plotly.graph_objects as go
 from config import engine
 import pandas as pd
-from data import download_image, get_data
+from data import download_image, query_data
 import numpy as np
 from datetime import timedelta
 
@@ -58,87 +58,86 @@ def affichage_map_geo():
     return fig
 
 def affichage_map_chantier(chantier, mode,  preset = 3, affichage_plan = False):
-    try:
-        with engine.connect() as con:
-            query="select * from capteur where chantier ='%s'"%chantier
-            df = pd.read_sql_query(query, con=con)
+    # try:
+    with engine.connect() as con:
+        query="select * from capteur where chantier ='%s'"%chantier
+        df = pd.read_sql_query(query, con=con)
+        dff = query_data(chantier, 'actif', 'topographie.csv', sep=False)
 
-        if mode == 1:
-            fig = positions_GPS_capteur(df)
+    if mode == 1:
+        fig = positions_GPS_capteur(df)
 
-        if mode ==  2:
-            fig = positions_GPS_secteur(df)
+    if mode ==  2:
+        fig = positions_GPS_secteur(df)
 
-        if mode == 3:
-            if preset==3:
-                dff = get_data(chantier, 'actif', 'topographie.csv', sep=False)
-            else:
-                dff = get_data(chantier, 'actif', 'topographie.csv', sep=False)
-                dff.date = pd.to_datetime(dff.date, format="%d/%m/%Y")
-                last_date = dff.date.iloc[-1]
-                dff = dff[dff.date > last_date - timedelta(30*preset)]
+    if mode == 3:
+        if preset==1 or preset==2:
+            dff = query_data(chantier, 'actif', 'topographie.csv', sep=False)
+            dff.date = pd.to_datetime(dff.date, format="%d/%m/%Y")
+            last_date = dff.date.iloc[-1]
+            dff = dff[dff.date > last_date - timedelta(30*preset)]
 
-            fig = create_quiver(dff.drop(columns=["date"]).dropna(axis=1, how="all"), scale=750//preset)
-            X = 2055229.22647546
-            Y = 3179752.70410855
-            x_size = 2055406.7254806 - 2055229.22647546
-            y_size = 3179752.70410855 - 3179618.20410255
-            fig.add_layout_image(
-                dict(
-                    source=download_image(chantier, 'plan.jpeg'),
-                    xref="x",
-                    yref="y",
-                    x=X,
-                    y=Y,
-                    sizex=x_size,
-                    sizey=y_size,
-                    sizing="stretch",
-                    layer="below",
-                )
+        fig = create_quiver(dff.drop(columns=["date"]).dropna(axis=1, how="all"), scale=750//preset)
+        X = 2055229.22647546
+        Y = 3179752.70410855
+        x_size = 2055406.7254806 - 2055229.22647546
+        y_size = 3179752.70410855 - 3179618.20410255
+        fig.add_layout_image(
+            dict(
+                source=download_image(chantier, 'plan.jpeg'),
+                xref="x",
+                yref="y",
+                x=X,
+                y=Y,
+                sizex=x_size,
+                sizey=y_size,
+                sizing="stretch",
+                layer="below",
             )
-            fig.update_xaxes(visible=False, range=[X, X + x_size])
-            fig.update_yaxes(visible=False, range=[Y - y_size, Y])
-
-        if affichage_plan:
-            plan = download_image(chantier, 'plan.jpeg')
-            layers = [
-                dict(
-                    below ='traces',
-                    minzoom=16,
-                    maxzoom=21,
-                    opacity=0.7,
-                    source = plan,
-                    sourcetype= "image",
-                    coordinates =  [
-                        [7.4115104, 43.7321406],
-                        [7.4137998, 43.7321406],
-                        [7.4137998, 43.7310171],
-                        [7.4115104, 43.7310171]
-                    ],
-                )
-            ]
-        else:
-            layers = None
-
-        mapbox = dict(
-            zoom= 17.6,
-            center=dict(
-                lon=7.4126551,
-                lat=43.7315788),
-            layers=layers
         )
+        fig.update_xaxes(visible=False, range=[X, X + x_size])
+        fig.update_yaxes(visible=False, range=[Y - y_size, Y])
 
-        fig.update_layout(
-            mapbox=mapbox,
-            plot_bgcolor=colors['background'],
-            paper_bgcolor=colors['background'],
-            font_color=colors['text'],
-            margin=dict(l=20, r=20, t=10, b=0)
-        )
+    if affichage_plan:
+        plan = download_image(chantier, 'plan.jpeg')
+        layers = [
+            dict(
+                below ='traces',
+                minzoom=16,
+                maxzoom=21,
+                opacity=0.7,
+                source = plan,
+                sourcetype= "image",
+                coordinates =  [
+                    [7.4115104, 43.7321406],
+                    [7.4137998, 43.7321406],
+                    [7.4137998, 43.7310171],
+                    [7.4115104, 43.7310171]
+                ],
+            )
+        ]
+    else:
+        layers = None
 
-        return fig
-    except:
-        return empty_figure()
+    mapbox = dict(
+        zoom= 17.6,
+        center=dict(
+            lon=7.4126551,
+            lat=43.7315788),
+        layers=layers
+    )
+
+    fig.update_layout(
+        mapbox=mapbox,
+        plot_bgcolor=colors['background'],
+        paper_bgcolor=colors['background'],
+        font_color=colors['text'],
+        margin=dict(l=20, r=20, t=10, b=0)
+    )
+
+    return fig
+    # except:
+    #     return empty_figure()
 
 
 def positions_GPS_capteur(df):

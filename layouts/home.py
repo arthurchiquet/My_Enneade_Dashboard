@@ -41,6 +41,7 @@ layout = html.Div(
     Input('map-geo', 'clickData'))
 def select_chantier(clickData):
     try:
-        return clickData['points'][0]['hovertext'], '/chantier'
+        chantier = clickData['points'][0]['hovertext']
+        return chantier, '/chantier'
     except:
         return None, '/'

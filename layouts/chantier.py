@@ -9,7 +9,6 @@ import warnings
 
 from server import app
 from config import engine
-from data import get_data
 from utils_maps import affichage_map_chantier, empty_figure
 import utils_topo, utils_inclino, utils_jauge, utils_tirant, utils_piezo
 
@@ -397,7 +396,7 @@ def return_tabs_content(mode, tab, chantier, secteur):
     ])
 def title_secteur(mode, secteur):
     if mode == 2 and secteur !={}:
-        return f'Bilan secteur : {secteur}'
+        return f'Secteur {secteur}'
     elif mode == 2:
         return 'Veuillez selectionner un secteur sur la carte'
     else:

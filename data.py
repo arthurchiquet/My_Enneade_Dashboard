@@ -1,6 +1,6 @@
 import pandas as pd
 from PIL import Image
-# from server import app, TIMEOUT, cache
+from server import app, TIMEOUT, cache
 from server import app
 from google.cloud import storage
 from google.oauth2 import service_account
@@ -24,20 +24,23 @@ def get_credentials(local=False):
     creds_gcp = service_account.Credentials.from_service_account_info(creds_json)
     return creds_gcp
 
-# @cache.memoize(timeout=TIMEOUT)
-# def query_data(chantier, path, filename, bucket = BUCKET_NAME, project_id = PROJECT_ID, sep = True):
-#     creds = get_credentials()
-#     client = storage.Client(credentials=creds, project=project_id)
-#     bucket = client.get_bucket(BUCKET_NAME)
-#     blob = bucket.blob(f'{chantier}/{path}/{filename}')
-#     data = blob.download_as_string()
-#     if sep:
-#         return pd.read_csv(io.BytesIO(data), encoding = 'utf-8', sep=';')
-#     else:
-#         return pd.read_csv(io.BytesIO(data), encoding = 'utf-8')
+@cache.memoize(timeout=TIMEOUT)
+def memoized_data(chantier, path, filename, bucket = BUCKET_NAME, project_id = PROJECT_ID, sep = True):
+    creds = get_credentials()
+    client = storage.Client(credentials=creds, project=project_id)
+    bucket = client.get_bucket(BUCKET_NAME)
+    blob = bucket.blob(f'{chantier}/{path}/{filename}')
+    data = blob.download_as_string()
+    if sep:
+        return pd.read_csv(io.BytesIO(data), encoding = 'utf-8', sep=';')
+    else:
+        return pd.read_csv(io.BytesIO(data), encoding = 'utf-8')
 
-def memoized_df(chantier, path, filename, bucket = BUCKET_NAME, project_id = PROJECT_ID , sep = False):
-    return query_data(chantier, path, filename, bucket, project_id, sep)
+def query_data(chantier, path, filename, bucket = BUCKET_NAME, project_id = PROJECT_ID , sep = False, memo = True):
+    if memo:
+        return memoized_data(chantier, path, filename, bucket, project_id, sep)
+    else:
+        return get_data(chantier, path, filename, bucket, project_id, sep)
 
 def get_data(chantier, path, filename, bucket = BUCKET_NAME, project_id = PROJECT_ID, sep=True):
     creds = get_credentials()

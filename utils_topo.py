@@ -10,7 +10,7 @@ import plotly.express as px
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 from math import radians, cos, sin
-from data import get_data, memoized_df
+from data import query_data
 
 colors = {
     'background': '#222222',
@@ -103,11 +103,8 @@ def format_df(df, list_capteur, angle):
     df["Cible"] = df["level_1"].map(remove_xyz)
     return df.rename(columns={0: "delta"}).drop(columns="level_1")
 
-def graph_topo(chantier, cible, angle, height = 700, memo = False, spacing = 0.08):
-    if memo :
-        df = memoized_df(chantier, 'actif', 'topographie.csv', sep=False)
-    else :
-        df = get_data(chantier, 'actif', 'topographie.csv', sep=False)
+def graph_topo(chantier, cible, angle, height = 700, memo = True, spacing = 0.08):
+    df = query_data(chantier, 'actif', 'topographie.csv', sep=False, memo=memo)
     dff = format_df(df, cible, angle)
     fig = px.line(
         dff,
