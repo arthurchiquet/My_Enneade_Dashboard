@@ -63,7 +63,6 @@ def update_graph_meteo(chantier, relayout_data):
             paper_bgcolor=colors['background'],
             font_color=colors['text']
         )
-        fig.update_yaxes(showgrid=False)
         fig.update_xaxes(showgrid=False)
         try:
             fig['layout']["xaxis"]["range"] = [relayout_data['xaxis.range[0]'], relayout_data['xaxis.range[1]']]
@@ -103,6 +102,5 @@ def graph_piezo(chantier, piezo):
         plot_bgcolor=colors['background'],
         paper_bgcolor=colors['background'],
         font_color=colors['text'])
-    fig.update_yaxes(showgrid=False)
     fig.update_xaxes(showgrid=False)
     return fig

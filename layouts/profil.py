@@ -16,7 +16,7 @@ layout = html.Div(
         dbc.Row(
             justify="center",
             children = [
-                dbc.Button('Accueil', id= 'accueil', className="mr-1", href='/home'),
+                dbc.Button('Chantier', id= 'chantier', className="mr-1", href='/chantier'),
                 dbc.Button('Déconnexion', id='logout', className="mr-1", href='/logout')]
         ),
         html.Br(),

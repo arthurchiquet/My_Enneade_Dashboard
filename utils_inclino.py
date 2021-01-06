@@ -29,6 +29,7 @@ def graph_inclino(chantier, inclino):
             rows=2,
             cols=1,
             shared_xaxes=True,
+            shared_yaxes=True,
             vertical_spacing=0.1,
             subplot_titles=["Déplacements normaux (mm)", "Déplacements tangentiels (mm)"],
         )
@@ -36,8 +37,8 @@ def graph_inclino(chantier, inclino):
     fig.add_trace(go.Scatter(name=f'{last_col} vs {past_last_col}', x=dfnorm[f'{last_col} vs {past_last_col}'], y=dfnorm.profondeur), row=2, col=1)
     fig.add_trace(go.Scatter(name=last_col, x=dftan[last_col], y=dftan.profondeur), row=2, col=1)
     fig.add_trace(go.Scatter(name=f'{last_col} vs {past_last_col}', x=dftan[f'{last_col} vs {past_last_col}'], y=dftan.profondeur), row=1, col=1)
-    fig.update_xaxes(range=[-10, 25], showgrid=False)
-    fig.update_yaxes(autorange="reversed", matches=None, showgrid=False)
+    # fig.update_xaxes(range=[-10, 25])
+    fig.update_yaxes(autorange="reversed")
     fig.update_layout(
         legend_title_text=None,
         yaxis_title="Profondeur (m)",
@@ -175,9 +176,9 @@ table_norm = dt.DataTable(
     style_cell={
         'backgroundColor': 'rgb(50, 50, 50)',
         'color': 'white',
-        'minWidth': '150px',
-        'width': '150px',
-        'maxWidth': '150px',
+        # 'minWidth': '150px',
+        # 'width': '150px',
+        # 'maxWidth': '150px',
         'textAlign': 'center'
     },
     style_header={
@@ -192,9 +193,9 @@ table_tan = dt.DataTable(
     style_cell={
         'backgroundColor': 'rgb(50, 50, 50)',
         'color': 'white',
-        'minWidth': '150px',
-        'width': '150px',
-        'maxWidth': '150px',
+        # 'minWidth': '150px',
+        # 'width': '150px',
+        # 'maxWidth': '150px',
         'textAlign': 'center'
     },
     style_header={

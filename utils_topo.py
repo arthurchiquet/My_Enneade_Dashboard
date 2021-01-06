@@ -81,7 +81,7 @@ def facet_name(string):
     elif 'y' in string:
         return 'Tangent'
     elif 'z' in string:
-        return 'vertical'
+        return 'Vertical'
 
 def remove_xyz(string):
     return string[:-2]
@@ -102,7 +102,7 @@ def format_df(df, list_capteur, angle):
     df["Cible"] = df["level_1"].map(remove_xyz)
     return df.rename(columns={0: "delta"}).drop(columns="level_1")
 
-def graph_topo(chantier, cible, angle, height = 700, memo = False):
+def graph_topo(chantier, cible, angle, height = 700, memo = False, spacing = 0.08):
     if memo :
         df = memoized_df(chantier, 'actif', 'topographie.csv', sep=False)
     else :
@@ -114,17 +114,17 @@ def graph_topo(chantier, cible, angle, height = 700, memo = False):
         y="delta",
         facet_row="Axe",
         color="Cible",
-        facet_row_spacing=0.03,
+        facet_row_spacing=spacing,
     )
-    fig.update_yaxes(matches=None, showgrid=False)
-    fig.update_xaxes(showgrid=False)
-    # fig.update_xaxes(range=range_date)
+    fig.update_xaxes(showgrid=False, title=dict(text=None))
+    fig.update_yaxes(mirror='allticks', title=dict(text=None))
     fig.update_traces(hovertemplate=None)
     fig.update_layout(
+        showlegend=False,
         height=height,
         plot_bgcolor=colors['background'],
         paper_bgcolor=colors['background'],
         font_color=colors['text'],
-        margin={"r":0,"t":0,"l":0,"b":0})
+        margin={"r":10,"t":10,"l":0,"b":0})
     fig.for_each_annotation(lambda a: a.update(text=a.text.split("=")[-1]))
     return fig

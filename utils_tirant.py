@@ -102,8 +102,6 @@ def graph_tirant(chantier, list_tirants, height=500):
         plot_bgcolor=colors['background'],
         paper_bgcolor=colors['background'],
         font_color=colors['text'],)
-    fig1.update_yaxes(showgrid=False)
     fig1.update_xaxes(showgrid=False)
-    fig2.update_yaxes(showgrid=False)
     fig2.update_xaxes(showgrid=False)
     return fig1, fig2

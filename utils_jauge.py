@@ -70,6 +70,5 @@ def graph_jauge(chantier, jauge):
         paper_bgcolor=colors['background'],
         font_color=colors['text'],
         margin={"r":10,"t":0,"l":0,"b":0})
-    fig.update_yaxes(showgrid=False)
     fig.update_xaxes(showgrid=False)
     return fig

@@ -40,7 +40,7 @@ def affichage_map_geo():
                 'lon':False,
             },
             color_discrete_sequence=["#FF8C00"],
-            height=550,
+            height=800,
             zoom=4
         )
         fig.update_layout(
@@ -51,7 +51,7 @@ def affichage_map_geo():
             plot_bgcolor=colors['background'],
             paper_bgcolor=colors['background'],
             font_color=colors['text'],
-            margin=dict(l=100, r=100, t=20, b=15)
+            margin=dict(l=0, r=0, t=0, b=0)
         )
 
     return fig
@@ -163,7 +163,7 @@ def positions_GPS_secteur(df):
         mapbox_accesstoken=mapbox_token,
         showlegend=False
     )
-    fig.update_traces(marker=dict(size=50))
+    fig.update_traces(marker=dict(size=50, opacity=0.6))
     return fig
 
 def empty_figure():

@@ -12,8 +12,6 @@ import warnings
 
 warnings.filterwarnings("ignore")
 
-profil=1
-
 colors = {
     'background': '#222222',
     'text': '#FF8C00'
@@ -21,46 +19,16 @@ colors = {
 
 layout = html.Div(
     [
-        html.Br(),
-        dbc.Row(
-            id='options-buttons',
-            children=[],
-            justify='center'
-        ),
-        html.Hr(),
-        dbc.Container(
-            id='zone-map',
-            children=[
-            dcc.Loading(
-                id = "loading-map-geo",
-                color='#FF8C00',
-                type="cube",
-                children = dcc.Graph(
-                    id='map-geo',
-                    config={'displayModeBar': False},
-                    figure=affichage_map_geo(),
-                    clear_on_unhover=True)
-                )
-            ], fluid=True
-        ),
-        html.Hr(),
-        dbc.Container(
-            dt.DataTable(
-                id="table_param_chantier",
-                editable=True,
-                style_data_conditional=[
-                    {"if": {"row_index": "odd"}, "backgroundColor": "rgb(248, 248, 248)"}
-                ],
-                style_header = {'display': 'none'},
-                style_cell={
-                    'backgroundColor': 'rgb(50, 50, 50)',
-                    'color': 'white',
-                    'minWidth': '180px',
-                    'width': '180px',
-                    'maxWidth': '180px',
-                    'textAlign': 'center'
-                    },
-                ),
+        dcc.Loading(
+            id = "loading-map-geo",
+            color='#FF8C00',
+            type="cube",
+            children = dcc.Graph(
+                id='map-geo',
+                config={'displayModeBar': False},
+                figure=affichage_map_geo(),
+                clear_on_unhover=True
+            )
         )
     ]
 )
@@ -76,36 +44,3 @@ def select_chantier(clickData):
         return clickData['points'][0]['hovertext'], '/chantier'
     except:
         return None, '/'
-
-
-##### MAJ TABLEAU PARAMETRES #####
-@app.callback(
-    Output("table_param_chantier", "data"),
-    Output("table_param_chantier", "columns"),
-    Input("map-geo", "hoverData"),
-)
-def update_table_chantier(hoverData):
-    try:
-        chantier = hoverData["points"][0]['hovertext']
-        with engine.connect() as con:
-            query="select * from chantier where nom_chantier='%s'"%chantier
-            parametres = pd.read_sql_query(query, con=con)
-        return parametres.to_dict("records"), [{"name": i, "id": i} for i in parametres.columns]
-    except:
-        return [],[]
-
-
-##### AFFICHE LES BOUTONS NAVIGATION EN FONCTION DU PROFIL #####
-@app.callback(
-    Output('options-buttons','children'),
-    Input('page-content', 'children'))
-def options_buttons(content):
-    if profil==1:
-        return [
-                dbc.Button('Profil', id= 'profil', color='dark', className="mr-1", href='profil'),
-                dbc.Button('Admin', id= 'profil', color='dark', className="mr-1", href='admin'),
-                dbc.Button('Déconnexion', id='logout', color='dark', className="mr-1", href='/logout')]
-    else :
-        return [
-                dbc.Button('Profil', id= 'profil', color='dark', className="mr-1", href='profil'),
-                dbc.Button('Déconnexion', id='logout', color='dark', className="mr-1", href='/logout')]

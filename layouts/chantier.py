@@ -21,6 +21,8 @@ colors = {
     'text': '#FF8C00'
 }
 
+profil=1
+
 tabs_content = html.Div(id='tabs_content')
 
 modes = dbc.RadioItems(
@@ -115,12 +117,9 @@ layout = html.Div(
     children=[
         html.Br(),
         dbc.Row(
-            children=[
-                dbc.Button('Vue générale', color = 'dark', className="mr-1", href='/'),
-                dbc.Button('Profil', color = 'dark', className="mr-1", href='/profil'),
-                dbc.Button('Export PDF', color = 'light', className="mr-1"),
-                dbc.Button('Déconnexion', color = 'dark', className="mr-1", href='/logout')
-            ], justify='center'
+            id='options-buttons',
+            children=[],
+            justify='center'
         ),
         html.Hr(),
         dbc.Row(
@@ -160,6 +159,24 @@ layout = html.Div(
         tabs_content,
     ]
 )
+
+@app.callback(
+    Output('options-buttons','children'),
+    Input('page-content', 'children'))
+def options_buttons(content):
+    if profil==1:
+        return [
+                dbc.Button('Vue générale', color = 'dark', className="mr-1", href='/'),
+                dbc.Button('Profil', color = 'dark', className="mr-1", href='/profil'),
+                dbc.Button('Admin', id= 'profil', color='dark', className="mr-1", href='admin'),
+                dbc.Button('Export PDF', color = 'light', className="mr-1"),
+                dbc.Button('Déconnexion', color = 'dark', className="mr-1", href='/logout')]
+    else :
+        return [
+                dbc.Button('Vue générale', color = 'dark', className="mr-1", href='/'),
+                dbc.Button('Profil', color = 'dark', className="mr-1", href='/profil'),
+                dbc.Button('Export PDF', color = 'light', className="mr-1"),
+                dbc.Button('Déconnexion', color = 'dark', className="mr-1", href='/logout')]
 
 
 @app.callback(
@@ -293,7 +310,7 @@ def affichage_courbe_capteur(clickData, mode, chantier):
 ### RENVOIE LA METHODE D'AFFICHAGE DE LA COURBE EN FONCTION DU TYPE DE CAPTEUR ####
 def selection_affichage(chantier, customdata, text):
     if customdata == 'cible':
-        return utils_topo.graph_topo(chantier, text, 0, height = 450)
+        return utils_topo.graph_topo(chantier, text, 0, height = 450, spacing=0.06)
     elif customdata == 'inclino':
         return utils_inclino.graph_inclino(chantier, text)
     elif customdata == 'tirant':
