@@ -103,7 +103,7 @@ def format_df(df, list_capteur, angle):
     df["Cible"] = df["level_1"].map(remove_xyz)
     return df.rename(columns={0: "delta"}).drop(columns="level_1")
 
-def graph_topo(chantier, cible, angle, height = 700, memo = True, spacing = 0.08):
+def graph_topo(chantier, cible, angle, height = 700, memo = False, spacing = 0.08):
     df = query_data(chantier, 'actif', 'topographie.csv', sep=False, memo=memo)
     dff = format_df(df, cible, angle)
     fig = px.line(

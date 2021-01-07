@@ -53,7 +53,7 @@ secteur_params = [
     dbc.Row(
         [
             dbc.Col(
-                dbc.Label('Paramètres secteur : ', size='lg'),
+                dbc.Label('Paramètres secteur ', size='lg'),
                 width={"size": 3.5, "offset": 3},
             ),
             dbc.Col(
@@ -265,7 +265,8 @@ def disabled_slider(mode):
 def return_tabs(mode, secteur):
     if mode == 2 and secteur !={}:
         return [
-            html.Hr(style=dict(width=500)),
+            dbc.Row(dbc.Button('Afficher / Modifier les parametres', href='/parametres'), justify='center'),
+            html.Br(),
             dbc.Row(
                 [
                     dbc.Tabs(
@@ -286,7 +287,7 @@ def return_tabs(mode, secteur):
             html.Div(id='tab_content')
         ]
     else:
-        return []
+        return [dbc.Row(html.H4('Veuillez selectionner un secteur sur la carte'), justify='center')]
 
 ##### AFFICHAGE LA CARTE DU CHANTIER SELECTIONNE #####
 @app.callback(
@@ -387,18 +388,4 @@ def return_tabs_content(mode, tab, chantier, secteur):
             return utils_jauge.layout
         elif tab == 5:
             return utils_piezo.layout
-
-
-@app.callback(
-    Output('title_secteur', 'children'),
-    [Input('mode', 'value'),
-     Input('secteur-store', 'data')
-    ])
-def title_secteur(mode, secteur):
-    if mode == 2 and secteur !={}:
-        return f'Secteur {secteur}'
-    elif mode == 2:
-        return 'Veuillez selectionner un secteur sur la carte'
-    else:
-        return ''
 

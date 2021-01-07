@@ -3,7 +3,7 @@ import dash_html_components as html
 from dash.dependencies import Input, Output, State
 from server import app
 from flask_login import logout_user, current_user
-from layouts import admin,conditions,error,login,login_fd,logout,profil,home,chantier
+from layouts import admin,conditions,error,login,login_fd,logout,profil,home,chantier,parametres
 
 
 
@@ -27,6 +27,8 @@ def display_page(pathname):
         return home.layout
     elif pathname == "/chantier":
         return chantier.layout
+    elif pathname == "/parametres":
+        return parametres.layout
     elif pathname == "/admin":
         return admin.layout
     elif pathname == "/profil":

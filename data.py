@@ -1,6 +1,6 @@
 import pandas as pd
 from PIL import Image
-from server import app, TIMEOUT, cache
+# from server import app, TIMEOUT, cache
 from server import app
 from google.cloud import storage
 from google.oauth2 import service_account
@@ -24,7 +24,7 @@ def get_credentials(local=False):
     creds_gcp = service_account.Credentials.from_service_account_info(creds_json)
     return creds_gcp
 
-@cache.memoize(timeout=TIMEOUT)
+# @cache.memoize(timeout=TIMEOUT)
 def memoized_data(chantier, path, filename, bucket = BUCKET_NAME, project_id = PROJECT_ID, sep = True):
     creds = get_credentials()
     client = storage.Client(credentials=creds, project=project_id)
@@ -32,11 +32,11 @@ def memoized_data(chantier, path, filename, bucket = BUCKET_NAME, project_id = P
     blob = bucket.blob(f'{chantier}/{path}/{filename}')
     data = blob.download_as_string()
     if sep:
-        return pd.read_csv(io.BytesIO(data), encoding = 'utf-8', sep=';')
+        return pd.read_csv(io.BytesIO(data), encoding = 'utf-8', sep=';', low_memory = True, memory_map = True)
     else:
-        return pd.read_csv(io.BytesIO(data), encoding = 'utf-8')
+        return pd.read_csv(io.BytesIO(data), encoding = 'utf-8', low_memory = True, memory_map = True)
 
-def query_data(chantier, path, filename, bucket = BUCKET_NAME, project_id = PROJECT_ID , sep = False, memo = True):
+def query_data(chantier, path, filename, bucket = BUCKET_NAME, project_id = PROJECT_ID , sep = False, memo = False):
     if memo:
         return memoized_data(chantier, path, filename, bucket, project_id, sep)
     else:
@@ -49,9 +49,9 @@ def get_data(chantier, path, filename, bucket = BUCKET_NAME, project_id = PROJEC
     blob = bucket.blob(f'{chantier}/{path}/{filename}')
     data = blob.download_as_string()
     if sep:
-        return pd.read_csv(io.BytesIO(data), encoding = 'utf-8', sep=';')
+        return pd.read_csv(io.BytesIO(data), encoding = 'utf-8', sep=';', low_memory = True, memory_map = True)
     else:
-        return pd.read_csv(io.BytesIO(data), encoding = 'utf-8')
+        return pd.read_csv(io.BytesIO(data), encoding = 'utf-8', low_memory = True, memory_map = True)
 
 def download_image(chantier, filename, bucket = BUCKET_NAME, project_id = PROJECT_ID, rm = True):
     creds = get_credentials()
@@ -64,10 +64,10 @@ def download_image(chantier, filename, bucket = BUCKET_NAME, project_id = PROJEC
         os.remove('plan.jpeg')
     return img
 
-# def export_data(df, chantier, path, filename, bucket = BUCKET_NAME, project_id = PROJECT_ID):
-#     creds = get_credentials()
-#     client = storage.Client(credentials=creds, project=project_id)
-#     bucket = client.get_bucket(BUCKET_NAME)
-#     blob = bucket.blob(f'{chantier}/{path}/{filename}')
-#     blob.upload_from_string(df.to_csv(index=False))
+def export_data(df, chantier, path, filename, bucket = BUCKET_NAME, project_id = PROJECT_ID):
+    creds = get_credentials()
+    client = storage.Client(credentials=creds, project=project_id)
+    bucket = client.get_bucket(BUCKET_NAME)
+    blob = bucket.blob(f'{chantier}/{path}/{filename}')
+    blob.upload_from_string(df.to_csv(index=False))
 
