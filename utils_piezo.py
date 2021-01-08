@@ -103,4 +103,5 @@ def graph_piezo(chantier, piezo):
         paper_bgcolor=colors['background'],
         font_color=colors['text'])
     fig.update_xaxes(showgrid=False)
+    fig.update_yaxes(gridcolor='grey')
     return fig

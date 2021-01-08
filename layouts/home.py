@@ -27,7 +27,6 @@ layout = html.Div(
                 id='map-geo',
                 config={'displayModeBar': False},
                 figure=affichage_map_geo(),
-                clear_on_unhover=True
             )
         )
     ]

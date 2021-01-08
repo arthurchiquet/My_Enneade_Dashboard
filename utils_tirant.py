@@ -76,12 +76,12 @@ def tension_blocage(df):
 
 def format_df(df, list_tirants):
     df.date = pd.to_datetime(df.date, format="%d/%m/%Y")
-    df = df.set_index("date")[list_tirants]
-    df_ratio = tension_blocage(df)
+    df = pd.DataFrame(df.set_index("date")[list_tirants])
+    df_ratio = tension_blocage(df)*100
     return df, df_ratio
 
 
-def graph_tirant(chantier, list_tirants, height=500):
+def graph_tirant(chantier, list_tirants, height=500, mode=1):
     df = get_data(chantier, 'actif', 'tirants.csv', sep=False)
     df, df_ratio = format_df(df, list_tirants)
     fig1 = px.line(df.reset_index(), x='date', y=list_tirants)
@@ -104,4 +104,9 @@ def graph_tirant(chantier, list_tirants, height=500):
         font_color=colors['text'],)
     fig1.update_xaxes(showgrid=False)
     fig2.update_xaxes(showgrid=False)
-    return fig1, fig2
+    fig1.update_yaxes(gridcolor='grey')
+    fig2.update_yaxes(gridcolor='grey')
+    if mode==1:
+        return fig1, fig2
+    else:
+        return fig2

@@ -345,7 +345,7 @@ def selection_affichage(chantier, customdata, text):
     elif customdata == 'inclino':
         return utils_inclino.graph_inclino(chantier, text)
     elif customdata == 'tirant':
-        return utils_tirant.graph_tirant(chantier, text)
+        return utils_tirant.graph_tirant(chantier, text, mode=2)
     elif customdata == 'jauge':
         return utils_jauge.graph_jauge(chantier, text)
     elif customdata == 'piezo':
@@ -359,7 +359,7 @@ def sous_titre(customdata):
     elif customdata == 'inclino':
         return ''
     elif customdata == 'tirant':
-        return 'Charge brute tirant (kN)'
+        return 'Evolution de la charge (%tb)'
     elif customdata == 'jauge':
         return 'Evolution brute des fissures (Ecarts, mm)'
     elif customdata == 'piezo':

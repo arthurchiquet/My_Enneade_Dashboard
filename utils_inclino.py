@@ -38,7 +38,8 @@ def graph_inclino(chantier, inclino):
     fig.add_trace(go.Scatter(name=last_col, x=dftan[last_col], y=dftan.profondeur), row=2, col=1)
     fig.add_trace(go.Scatter(name=f'{last_col} vs {past_last_col}', x=dftan[f'{last_col} vs {past_last_col}'], y=dftan.profondeur), row=1, col=1)
     # fig.update_xaxes(range=[-10, 25])
-    fig.update_yaxes(autorange="reversed")
+    fig.update_yaxes(autorange="reversed", gridcolor='grey')
+    fig.update_xaxes(gridcolor='grey')
     fig.update_layout(
         legend_title_text=None,
         yaxis_title="Profondeur (m)",

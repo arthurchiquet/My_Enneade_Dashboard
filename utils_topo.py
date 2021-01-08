@@ -115,7 +115,7 @@ def graph_topo(chantier, cible, angle, height = 700, memo = False, spacing = 0.0
         facet_row_spacing=spacing,
     )
     fig.update_xaxes(showgrid=False, title=dict(text=None))
-    fig.update_yaxes(mirror='allticks', title=dict(text=None))
+    fig.update_yaxes(mirror='allticks', title=dict(text=None), gridcolor='grey')
     fig.update_traces(hovertemplate=None)
     fig.update_layout(
         showlegend=False,

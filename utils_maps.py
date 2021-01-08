@@ -52,7 +52,7 @@ def affichage_map_geo():
             plot_bgcolor=colors['background'],
             paper_bgcolor=colors['background'],
             font_color=colors['text'],
-            margin=dict(l=0, r=0, t=0, b=0)
+            margin=dict(l=0, r=0, t=10, b=0)
         )
 
     return fig
