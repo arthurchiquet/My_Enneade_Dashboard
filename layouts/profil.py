@@ -13,13 +13,6 @@ warnings.filterwarnings("ignore")
 layout = html.Div(
     [
         html.Br(),
-        dbc.Row(
-            justify="center",
-            children = [
-                dbc.Button('Chantier', id= 'chantier', className="mr-1", href='/chantier'),
-                dbc.Button('Déconnexion', id='logout', className="mr-1", href='/logout')]
-        ),
-        html.Br(),
         dbc.Container(
             [
                 html.H3("Gestion du profil"),

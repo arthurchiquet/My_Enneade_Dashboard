@@ -150,27 +150,6 @@ controls4 = dcc.Slider(
     },
 )
 
-controls3D = dcc.Slider(
-    id="nb_curv3d",
-    min=1,
-    max=10,
-    step=1,
-    value=1,
-    dots=True,
-    marks={
-        1: "1",
-        2: "2",
-        3: "3",
-        4: "4",
-        5: "5",
-        6: "6",
-        7: "7",
-        8: "8",
-        9: "9",
-        10: "10",
-    },
-)
-
 table_norm = dt.DataTable(
     id="table_norm",
     columns=[{"name": i, "id": i} for i in profondeurs_table],
@@ -380,7 +359,6 @@ layout = html.Div(
         Input("nb_curv", "value"),
         Input("nb_curv2", "value"),
         Input("nb_curv3", "value"),
-        # Input("nb_curv3d", "value"),
         Input("prof", "value"),
         Input("chantier-store", "data"),
     ]
@@ -427,8 +405,8 @@ def create_graph_1(dfi, chantier, inclino, nb_courbes):
         paper_bgcolor=colors['background'],
         font_color=colors['text'],
         margin={"r":0,"t":20,"l":0,"b":0})
-    fig.update_xaxes(showgrid=False)
-    fig.update_yaxes(showgrid=False)
+    fig.update_xaxes(gridcolor='grey')
+    fig.update_yaxes(gridcolor='grey')
     return fig
 
 def create_graph_2(dfi, chantier, inclino, nb_courbes):
@@ -451,8 +429,8 @@ def create_graph_2(dfi, chantier, inclino, nb_courbes):
         paper_bgcolor=colors['background'],
         font_color=colors['text'],
         margin={"r":0,"t":20,"l":0,"b":0})
-    fig.update_xaxes(showgrid=False)
-    fig.update_yaxes(showgrid=False)
+    fig.update_xaxes(gridcolor='grey')
+    fig.update_yaxes(gridcolor='grey')
     return fig
 
 def create_graph_3(dfi, chantier, inclino, nb_courbes):
@@ -475,8 +453,8 @@ def create_graph_3(dfi, chantier, inclino, nb_courbes):
         paper_bgcolor=colors['background'],
         font_color=colors['text'],
         margin={"r":0,"t":20,"l":0,"b":0})
-    fig.update_xaxes(showgrid=False)
-    fig.update_yaxes(showgrid=False)
+    fig.update_xaxes(gridcolor='grey')
+    fig.update_yaxes(gridcolor='grey')
     return fig
 
 def create_graph_4(dfi, chantier, inclino, profondeur):
@@ -500,8 +478,8 @@ def create_graph_4(dfi, chantier, inclino, profondeur):
         paper_bgcolor=colors['background'],
         font_color=colors['text'],
         margin={"r":0,"t":20,"l":0,"b":0})
-    fig.update_xaxes(showgrid=False)
-    fig.update_yaxes(showgrid=False)
+    fig.update_xaxes(gridcolor='grey')
+    fig.update_yaxes(gridcolor='grey')
     return fig
 
 def create_3d_graph(dfnormi, dftani, chantier, inclino, nb_courbes):
@@ -519,15 +497,15 @@ def create_3d_graph(dfnormi, dftani, chantier, inclino, nb_courbes):
                     zaxis_title='Profondeur',
                     xaxis = dict(
                         backgroundcolor=colors['background'],
-                        showgrid=False,
+                        gridcolor='grey',
                         showbackground=False),
                     yaxis = dict(
                         backgroundcolor=colors['background'],
-                        showgrid=False,
+                        gridcolor='grey',
                         showbackground=False),
                     zaxis = dict(
                         backgroundcolor=colors['background'],
-                        showgrid=False,
+                        gridcolor='grey',
                         showbackground=False)),
                     margin=dict(l=0, r=0, t=0, b=0),
                     legend_orientation='h',

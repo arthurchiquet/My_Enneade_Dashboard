@@ -31,11 +31,12 @@ tab_content_param = dbc.Container([
                     "fontWeight": "bold"},
                 style_table={'height': '500px', 'overflowY': 'auto'}
                     ),
+            html.Br(),
             dbc.Button(
                 children="Mettre à jour les paramètres",
                 n_clicks=0,
                 id="update_params",
-                color="link",
+                color="dark",
                     ),
             html.Div(
                 id='update_success',
@@ -47,50 +48,28 @@ tab_content_param = dbc.Container([
 
 tabs_pram = html.Div(
     [
-        dbc.Row(
-            id='nav-buttons',
-            children=[],
-            justify='center'
-        ),
         html.Br(),
-        dbc.Tabs(
-            [
-                dbc.Tab(label='Secteur', tab_id='tab-secteur'),
-                dbc.Tab(label="Paramètres généraux", tab_id="tab-param"),
-                dbc.Tab(label="Cibles", tab_id="tab-topo"),
-                dbc.Tab(label="Inclinomètres", tab_id="tab-inclino"),
-                dbc.Tab(label="Tirants", tab_id="tab-tirant"),
-                dbc.Tab(label="Piezometres", tab_id="tab-piezo"),
-                dbc.Tab(label="Jauges", tab_id="tab-jauge"),
-                dbc.Tab(label="Butons", tab_id="tab-buton"),
-            ],
-            id="tabs_param",
-            active_tab="tab-param",
+        dbc.Row(
+            dbc.Tabs(
+                [
+                    dbc.Tab(label='Secteur', tab_id='tab-secteur'),
+                    dbc.Tab(label="Paramètres généraux", tab_id="tab-param"),
+                    dbc.Tab(label="Cibles", tab_id="tab-topo"),
+                    dbc.Tab(label="Inclinomètres", tab_id="tab-inclino"),
+                    dbc.Tab(label="Tirants", tab_id="tab-tirant"),
+                    dbc.Tab(label="Piezometres", tab_id="tab-piezo"),
+                    dbc.Tab(label="Jauges", tab_id="tab-jauge"),
+                    dbc.Tab(label="Butons", tab_id="tab-buton"),
+                ],
+                id="tabs_param",
+                active_tab="tab-param",
+            ), justify='center'
         ),
         tab_content_param,
     ]
 )
 
 layout = tabs_pram
-
-@app.callback(
-    Output('nav-buttons','children'),
-    Input('page-content', 'children'))
-def options_buttons(content):
-    if profil==1:
-        return [
-                dbc.Button('Chantier', color = 'dark', className="mr-1", href='/chantier'),
-                dbc.Button('Profil', color = 'dark', className="mr-1", href='/profil'),
-                dbc.Button('Admin', id= 'profil', color='dark', className="mr-1", href='admin'),
-                dbc.Button('Export PDF', color = 'light', className="mr-1"),
-                dbc.Button('Déconnexion', color = 'dark', className="mr-1", href='/logout')]
-    else :
-        return [
-                dbc.Button('Chantier', color = 'dark', className="mr-1", href='/chantier'),
-                dbc.Button('Profil', color = 'dark', className="mr-1", href='/profil'),
-                dbc.Button('Export PDF', color = 'light', className="mr-1"),
-                dbc.Button('Déconnexion', color = 'dark', className="mr-1", href='/logout')]
-
 
 @app.callback(
     [

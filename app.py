@@ -1,17 +1,19 @@
 import dash_core_components as dcc
 import dash_html_components as html
 from dash.dependencies import Input, Output, State
+import dash_bootstrap_components as dbc
 from server import app
 from flask_login import logout_user, current_user
 from layouts import admin,conditions,error,login,login_fd,logout,profil,home,chantier,parametres
 
-
+user_profil =1
 
 app.layout = html.Div(
     [
         dcc.Store(id='chantier-store', storage_type='session'),
         dcc.Store(id='secteur-store', storage_type='session'),
         dcc.Location(id="url", refresh=False),
+        html.Div(id='navBar'),
         html.Div(id="page-content")
         ]
 )
@@ -39,6 +41,51 @@ def display_page(pathname):
         return logout.layout
     else:
         return error.layout
+
+
+
+@app.callback(
+    Output("navBar", "children"),
+    [Input("page-content", "children"),
+    Input("url", "pathname")])
+def navBar(input1, url):
+    if url == '/':
+        return []
+    else:
+        if user_profil == 1:
+            navBarContents = [
+                dbc.Row(
+                    id='options-buttons',
+                    children=[
+                        dbc.Button('Vue générale', color = 'dark', className="mr-1", href='/'),
+                        dbc.Button('Chantier', color = 'dark', className="mr-1", href='/chantier'),
+                        dbc.Button('Profil', color = 'dark', className="mr-1", href='/profil'),
+                        dbc.Button('Admin', id= 'profil', color='dark', className="mr-1", href='admin'),
+                        dbc.Button('Déconnexion', color = 'dark', className="mr-1", href='/logout')
+                    ],
+                    no_gutters=True
+                )
+            ]
+        else:
+            navBarContents = [
+                dbc.Row(
+                    id='options-buttons',
+                    children=[
+                        dbc.Button('Vue générale', color = 'dark', className="mr-1", href='/'),
+                        dbc.Button('Chantier', color = 'dark', className="mr-1", href='/chantier'),
+                        dbc.Button('Profil', color = 'dark', className="mr-1", href='/profil'),
+                        dbc.Button('Déconnexion', color = 'dark', className="mr-1", href='/logout')
+                    ]
+                )
+            ]
+        return dbc.NavbarSimple(
+                children=navBarContents,
+                color='dark',
+                dark=True,
+                style=dict(height=40),
+                fluid=True
+            )
+
 
 if __name__ == "__main__":
     app.run_server(debug=True)

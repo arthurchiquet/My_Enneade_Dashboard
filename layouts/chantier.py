@@ -116,11 +116,6 @@ layout = html.Div(
     children=[
         html.Br(),
         # html.Img(src=app.get_asset_url('test.png')),
-        dbc.Row(
-            id='options-buttons',
-            children=[],
-            justify='center'
-        ),
         html.Hr(),
         dbc.Row(
             [
@@ -178,25 +173,6 @@ layout = html.Div(
         tabs_content,
     ]
 )
-
-@app.callback(
-    Output('options-buttons','children'),
-    Input('page-content', 'children'))
-def options_buttons(content):
-    if profil==1:
-        return [
-                dbc.Button('Vue générale', color = 'dark', className="mr-1", href='/'),
-                dbc.Button('Profil', color = 'dark', className="mr-1", href='/profil'),
-                dbc.Button('Admin', id= 'profil', color='dark', className="mr-1", href='admin'),
-                dbc.Button('Export PDF', color = 'light', className="mr-1"),
-                dbc.Button('Déconnexion', color = 'dark', className="mr-1", href='/logout')]
-    else :
-        return [
-                dbc.Button('Vue générale', color = 'dark', className="mr-1", href='/'),
-                dbc.Button('Profil', color = 'dark', className="mr-1", href='/profil'),
-                dbc.Button('Export PDF', color = 'light', className="mr-1"),
-                dbc.Button('Déconnexion', color = 'dark', className="mr-1", href='/logout')]
-
 
 @app.callback(
     Output('right-content', 'children'),
