@@ -93,7 +93,8 @@ def graph_tirant(chantier, list_tirants, height=500, mode=1):
         xaxis_title=None,
         plot_bgcolor=colors['background'],
         paper_bgcolor=colors['background'],
-        font_color=colors['text'])
+        font_color=colors['text'],
+        margin={"r":10,"t":10,"l":0,"b":0})
     fig2.update_layout(
         height=height,
         legend_title_text=None,
@@ -101,7 +102,8 @@ def graph_tirant(chantier, list_tirants, height=500, mode=1):
         xaxis_title=None,
         plot_bgcolor=colors['background'],
         paper_bgcolor=colors['background'],
-        font_color=colors['text'],)
+        font_color=colors['text'],
+        margin={"r":10,"t":10,"l":0,"b":0})
     fig1.update_xaxes(showgrid=False)
     fig2.update_xaxes(showgrid=False)
     fig1.update_yaxes(gridcolor='grey')

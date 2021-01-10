@@ -9,6 +9,7 @@ import warnings
 
 from server import app
 from config import engine
+from data import get_data
 from utils_maps import affichage_map_chantier, empty_figure
 import utils_topo, utils_inclino, utils_jauge, utils_tirant, utils_piezo
 
@@ -46,6 +47,44 @@ options = dbc.Checklist(
     switch=True,
     persistence=True,
     persistence_type="local"
+)
+
+table_parametres = html.Div([
+            dt.DataTable(
+                id="table_parametres",
+                editable=True,
+                filter_action="native",
+                fixed_rows={'headers': True},
+                style_cell={
+                    'backgroundColor': 'rgb(50, 50, 50)',
+                    'color': 'white',
+                    'textAlign': 'center'
+                },
+                style_header={
+                    'backgroundColor': 'rgb(20, 20, 20)',
+                    'color': 'white',
+                    "fontWeight": "bold"},
+                style_table={'height': '500px', 'overflowY': 'auto'}
+                    )
+                ]
+
+            )
+
+collapse = html.Div(
+    [
+        dbc.Row(
+            dbc.Button(
+                "Afficher les paramètres",
+                id="collapse-secteur",
+                className="mb-3",
+                color="primary",
+            ), justify='center'
+        ),
+        dbc.Collapse(
+            dbc.Card(dbc.CardBody([table_parametres])),
+            id="card-secteur",
+        )
+    ]
 )
 
 secteur_params = [
@@ -175,6 +214,59 @@ layout = html.Div(
 )
 
 @app.callback(
+    Output("card-secteur", "is_open"),
+    [Input("collapse-secteur", "n_clicks")],
+    [State("card-secteur", "is_open")],
+)
+def collapse_parametres(n, is_open):
+    if n:
+        return not is_open
+    return is_open
+
+@app.callback(
+    [
+        Output("table_parametres", "data"),
+        Output("table_parametres", "columns"),
+        ],
+    [
+        Input("chantier-store", "data"),
+        Input("secteur-store", "data"),
+        Input("tabs_secteurs", "active_tab"),
+        ]
+)
+def update_table_parametres(chantier, secteur, tab):
+    df = get_data(chantier, 'paramètres', 'parametres_generaux.csv', sep=False)
+    params = df[(df.chantier==chantier) & (df.secteur==secteur)]
+    with engine.connect() as con:
+        query=f"select * from capteur where chantier='{chantier}' and secteur='{secteur}'"
+        params = pd.read_sql_query(query, con=con)
+        if tab == 1:
+            filtre_secteur = tuple(params[params.type=='cible'].capteur)
+            query=f'select * from cible_param where cible in {filtre_secteur}'
+            parametres = pd.read_sql_query(query, con=con)
+        if tab == 2:
+            filtre_secteur = tuple(params[params.type=='inclino'].capteur)
+            query=f'select * from inclino_param where cible in {filtre_secteur}'
+            parametres = pd.read_sql_query(query, con=con)
+        if tab == 3:
+            filtre_secteur = tuple(params[params.type=='tirant'].capteur)
+            query=f'select * from tirant_param where cible in {filtre_secteur}'
+            parametres = pd.read_sql_query(query, con=con)
+        if tab == 5:
+            filtre_secteur = tuple(params[params.type=='piezo'].capteur)
+            query=f'select * from piezo_param where cible in {filtre_secteur}'
+            parametres = pd.read_sql_query(query, con=con)
+        if tab == 4:
+            filtre_secteur = tuple(params[params.type=='jauge'].capteur)
+            query=f'select * from jauge_param where cible in {filtre_secteur}'
+            parametres = pd.read_sql_query(query, con=con)
+        if tab == 6:
+            filtre_secteur = tuple(params[params.type=='buton'].capteur)
+            query=f'select * from buton_param where cible in {filtre_secteur}'
+            parametres = pd.read_sql_query(query, con=con)
+    return parametres.to_dict("records"), [{"name": i, "id": i} for i in parametres.columns]
+
+@app.callback(
     Output('right-content', 'children'),
     [Input('mode', 'value'),
     Input("map-chantier", "clickData")])
@@ -241,7 +333,7 @@ def disabled_slider(mode):
 def return_tabs(mode, secteur):
     if mode == 2 and secteur !={}:
         return [
-            dbc.Row(dbc.Button('Afficher / Modifier les parametres', href='/parametres'), justify='center'),
+            dbc.Row(dbc.Button('Modifier les parametres', href='/parametres'), justify='center'),
             html.Br(),
             dbc.Row(
                 [
@@ -321,7 +413,7 @@ def selection_affichage(chantier, customdata, text):
     elif customdata == 'inclino':
         return utils_inclino.graph_inclino(chantier, text)
     elif customdata == 'tirant':
-        return utils_tirant.graph_tirant(chantier, text, mode=2)
+        return utils_tirant.graph_tirant(chantier, text, height = 450, mode=2)
     elif customdata == 'jauge':
         return utils_jauge.graph_jauge(chantier, text)
     elif customdata == 'piezo':
@@ -355,13 +447,13 @@ def return_tabs_content(mode, tab, chantier, secteur):
         return {}
     else:
         if tab == 1:
-            return utils_topo.layout
+            return collapse, html.Br(), utils_topo.layout
         elif tab == 2:
-            return utils_inclino.layout
+            return collapse, html.Br(), utils_inclino.layout
         elif tab == 3:
-            return utils_tirant.layout
+            return collapse, html.Br(), utils_tirant.layout
         elif tab == 4:
-            return utils_jauge.layout
+            return collapse, html.Br(), utils_jauge.layout
         elif tab == 5:
-            return utils_piezo.layout
+            return collapse, html.Br(), utils_piezo.layout
 

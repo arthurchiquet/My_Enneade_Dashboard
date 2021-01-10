@@ -6,7 +6,7 @@ from server import app
 from flask_login import logout_user, current_user
 from layouts import admin,conditions,error,login,login_fd,logout,profil,home,chantier,parametres
 
-user_profil =1
+user_profil=1
 
 app.layout = html.Div(
     [
@@ -52,45 +52,43 @@ def navBar(input1, url):
     if url == '/':
         return []
     else:
-        if user_profil == 1:
-            navBarContents = [
-                dbc.Row(
-                    id='options-buttons',
-                    children=[
-                        dbc.Button('Vue générale', color = 'dark', className="mr-1", href='/'),
-                        dbc.Button('Chantier', color = 'dark', className="mr-1", href='/chantier'),
-                        dbc.Button('Profil', color = 'dark', className="mr-1", href='/profil'),
-                        dbc.Button('Admin', id= 'profil', color='dark', className="mr-1", href='admin'),
-                        dbc.Button('Déconnexion', color = 'dark', className="mr-1", href='/logout')
-                    ],
-                    no_gutters=True
+        # if current_user.is_authenticated:
+        if True:
+            # if current_user.profil == 1:
+            if user_profil==1:
+                navBarContents = [
+                    dbc.Row(
+                        id='options-buttons',
+                        children=[
+                            dbc.Button('Vue générale', color = 'dark', className="mr-1", href='/'),
+                            dbc.Button('Chantier', color = 'dark', className="mr-1", href='/chantier'),
+                            dbc.Button('Profil', color = 'dark', className="mr-1", href='/profil'),
+                            dbc.Button('Admin', id= 'profil', color='dark', className="mr-1", href='admin'),
+                            dbc.Button('Déconnexion', color = 'dark', className="mr-1", href='/logout')
+                        ],
+                    )
+                ]
+            else:
+                navBarContents = [
+                    dbc.Row(
+                        id='options-buttons',
+                        children=[
+                            dbc.Button('Vue générale', color = 'dark', className="mr-1", href='/'),
+                            dbc.Button('Chantier', color = 'dark', className="mr-1", href='/chantier'),
+                            dbc.Button('Profil', color = 'dark', className="mr-1", href='/profil'),
+                            dbc.Button('Déconnexion', color = 'dark', className="mr-1", href='/logout')
+                        ]
+                    )
+                ]
+            return dbc.NavbarSimple(
+                    children=navBarContents,
+                    color='dark',
+                    dark=True,
+                    style=dict(height=40),
+                    fluid=True
                 )
-            ]
         else:
-            navBarContents = [
-                dbc.Row(
-                    id='options-buttons',
-                    children=[
-                        dbc.Button('Vue générale', color = 'dark', className="mr-1", href='/'),
-                        dbc.Button('Chantier', color = 'dark', className="mr-1", href='/chantier'),
-                        dbc.Button('Profil', color = 'dark', className="mr-1", href='/profil'),
-                        dbc.Button('Déconnexion', color = 'dark', className="mr-1", href='/logout')
-                    ]
-                )
-            ]
-        return dbc.NavbarSimple(
-                children=navBarContents,
-                color='dark',
-                dark=True,
-                style=dict(height=40),
-                fluid=True
-            )
-
-
-if __name__ == "__main__":
-    app.run_server(debug=True)
-
-
+            return []
 
 # @app.callback(
 #     Output("page-content", "children"),
@@ -108,6 +106,16 @@ if __name__ == "__main__":
 #     elif pathname == "/home":
 #         if current_user.is_authenticated:
 #             return home.layout
+#         else:
+#             return login_fd.layout
+#     elif pathname == "/chantier":
+#         if current_user.is_authenticated:
+#             return chantier.layout
+#         else:
+#             return login_fd.layout
+#     elif pathname == "/parametres":
+#         if current_user.is_authenticated:
+#             return parametres.layout
 #         else:
 #             return login_fd.layout
 #     elif pathname == "/admin":
@@ -134,5 +142,6 @@ if __name__ == "__main__":
 #     else:
 #         return error.layout
 
-
+if __name__ == "__main__":
+    app.run_server(debug=True)
 

@@ -188,7 +188,6 @@ layout = html.Div(
     [
         dbc.Container(
             [
-                dbc.Row(html.H4('Déplacements normaux et tangentiels (mm)'), justify='center'),
                 dbc.Row(
                     [
                         dbc.Col(
@@ -264,7 +263,6 @@ layout = html.Div(
         html.Br(),
         dbc.Container(
             [
-                dbc.Row(html.H4('Déplacements ponctuels normaux et tangentiels (mm)'), justify='center'),
                 dbc.Row(
                     [
                         dbc.Col(
@@ -295,7 +293,6 @@ layout = html.Div(
         html.Br(),
         dbc.Container(
             [
-                dbc.Row(html.H4('Evolution des déplacements normaux et tangentiels (mm)'), justify='center'),
                 dbc.Row(
                     [
                         dbc.Col(
@@ -364,35 +361,35 @@ layout = html.Div(
     ]
 )
 def update_graphs(secteur, nb_courbes, nb_courbes2, nb_courbes3, profondeur, chantier):
-    try:
-        with engine.connect() as con:
-            query=f"select * from capteur where secteur ='{secteur}' and type='inclino' and chantier='{chantier}'"
-            inclino = pd.read_sql_query(query, con=con).capteur.unique()[0]
-        dfnorm = get_data(chantier, 'actif', f'{inclino}_norm.csv', sep=False)
-        dftan = get_data(chantier, 'actif', f'{inclino}_tan.csv', sep=False)
-        fig1 = create_graph_1(dfnorm, chantier, inclino, nb_courbes3)
-        fig2 = create_graph_1(dftan, chantier, inclino, nb_courbes3)
-        fig3 = create_graph_2(dfnorm, chantier, inclino, nb_courbes)
-        fig4 = create_graph_2(dftan, chantier, inclino, nb_courbes)
-        fig5 = create_3d_graph(dfnorm, dftan, chantier, inclino, nb_courbes)
-        fig6 = create_graph_3(dfnorm, chantier, inclino, nb_courbes2)
-        fig7 = create_graph_3(dftan, chantier, inclino, nb_courbes2)
-        fig8 = create_graph_4(dfnorm, chantier, inclino, profondeur)
-        fig9 = create_graph_4(dftan, chantier, inclino, profondeur)
-        tablenorm = dfnorm.set_index("profondeur").T[[2, 5, 10, 20, 30, 40, 50, 60]].iloc[-15:, :]
-        tablenorm = tablenorm.reset_index().rename(columns={"index": "Date"})
-        tabletan = dftan.set_index("profondeur").T[[2, 5, 10, 20, 30, 40, 50, 60]].iloc[-15:, :]
-        tabletan = tabletan.reset_index().rename(columns={"index": "Date"})
-        return fig1, fig2, fig3, fig4, fig5,fig6, fig7, fig8, fig9, tablenorm.to_dict("rows"), tabletan.to_dict("rows")
-    except:
-        return {}, {}, {}, {}, {}, {}, {}, {}, {}, [],[]
+    # try:
+    with engine.connect() as con:
+        query=f"select * from capteur where secteur ='{secteur}' and type='inclino' and chantier='{chantier}'"
+        inclino = pd.read_sql_query(query, con=con).capteur.unique()[0]
+    dfnorm = get_data(chantier, 'actif', f'{inclino}_norm.csv', sep=False)
+    dftan = get_data(chantier, 'actif', f'{inclino}_tan.csv', sep=False)
+    fig1 = create_graph_1(dfnorm, chantier, inclino, nb_courbes3, 'normal')
+    fig2 = create_graph_1(dftan, chantier, inclino, nb_courbes3, 'tangentiel')
+    fig3 = create_graph_2(dfnorm, chantier, inclino, nb_courbes, 'normal')
+    fig4 = create_graph_2(dftan, chantier, inclino, nb_courbes, 'tangentiel')
+    fig5 = create_3d_graph(dfnorm, dftan, chantier, inclino, nb_courbes)
+    fig6 = create_graph_3(dfnorm, chantier, inclino, nb_courbes2, 'normal')
+    fig7 = create_graph_3(dftan, chantier, inclino, nb_courbes2, 'tangentiel')
+    fig8 = create_graph_4(dfnorm, chantier, inclino, profondeur, 'normal')
+    fig9 = create_graph_4(dftan, chantier, inclino, profondeur, 'tangentiel')
+    tablenorm = dfnorm.set_index("profondeur").T[[2, 5, 10, 20, 30, 40, 50, 60]].iloc[-15:, :]
+    tablenorm = tablenorm.reset_index().rename(columns={"index": "Date"})
+    tabletan = dftan.set_index("profondeur").T[[2, 5, 10, 20, 30, 40, 50, 60]].iloc[-15:, :]
+    tabletan = tabletan.reset_index().rename(columns={"index": "Date"})
+    return fig1, fig2, fig3, fig4, fig5,fig6, fig7, fig8, fig9, tablenorm.to_dict("rows"), tabletan.to_dict("rows")
+    # except:
+    #     return {}, {}, {}, {}, {}, {}, {}, {}, {}, [],[]
 
-def create_graph_1(dfi, chantier, inclino, nb_courbes):
+def create_graph_1(dfi, chantier, inclino, nb_courbes, title):
     df = dfi.copy()
     last_col = df.columns[-1]
     n_col = df.columns[-(1+nb_courbes)]
     df[f'{last_col} vs {n_col}'] = df[last_col] - df[n_col]
-    fig = px.line(df, y='profondeur', x=[last_col, f'{last_col} vs {n_col}'], color_discrete_sequence=['red','green'])
+    fig = px.line(df, y='profondeur', x=[last_col, f'{last_col} vs {n_col}'], color_discrete_sequence=['red','green'], title= f'Deplacement {title} (mm)')
     fig.update_xaxes(range=[-10, 25])
     fig.update_yaxes(autorange="reversed")
     fig.update_traces(hovertemplate=None)
@@ -404,18 +401,18 @@ def create_graph_1(dfi, chantier, inclino, nb_courbes):
         plot_bgcolor=colors['background'],
         paper_bgcolor=colors['background'],
         font_color=colors['text'],
-        margin={"r":0,"t":20,"l":0,"b":0})
+        margin={"r":0,"t":40,"l":0,"b":0})
     fig.update_xaxes(gridcolor='grey')
     fig.update_yaxes(gridcolor='grey')
     return fig
 
-def create_graph_2(dfi, chantier, inclino, nb_courbes):
+def create_graph_2(dfi, chantier, inclino, nb_courbes, title):
     df = dfi.copy()
     first = df.iloc[:,1]
     cols = df.columns[-nb_courbes:]
     for col in cols:
         df[col] = df[col] - first
-    fig = px.line(df, y='profondeur', x=cols)
+    fig = px.line(df, y='profondeur', x=cols, title= f'Deplacement {title} (mm)')
     fig.update_xaxes(range=[-10, 25])
     fig.update_yaxes(autorange="reversed")
     fig.update_traces(hovertemplate=None)
@@ -428,17 +425,17 @@ def create_graph_2(dfi, chantier, inclino, nb_courbes):
         plot_bgcolor=colors['background'],
         paper_bgcolor=colors['background'],
         font_color=colors['text'],
-        margin={"r":0,"t":20,"l":0,"b":0})
+        margin={"r":0,"t":40,"l":0,"b":0})
     fig.update_xaxes(gridcolor='grey')
     fig.update_yaxes(gridcolor='grey')
     return fig
 
-def create_graph_3(dfi, chantier, inclino, nb_courbes):
+def create_graph_3(dfi, chantier, inclino, nb_courbes, title):
     df = dfi.copy()
     cols = df.columns[-nb_courbes:]
     for col in cols:
         df[col] = [0] + [df[col].iloc[i+1]-df[col].iloc[i] for i in range(df.shape[0]-1)]
-    fig = px.line(df.reset_index(), y='profondeur', x=cols)
+    fig = px.line(df.reset_index(), y='profondeur', x=cols, title= f'Deplacement ponctuel {title} (mm)')
     fig.update_xaxes(range=[-10, 25])
     fig.update_yaxes(autorange="reversed")
     fig.update_traces(hovertemplate=None)
@@ -452,12 +449,12 @@ def create_graph_3(dfi, chantier, inclino, nb_courbes):
         plot_bgcolor=colors['background'],
         paper_bgcolor=colors['background'],
         font_color=colors['text'],
-        margin={"r":0,"t":20,"l":0,"b":0})
+        margin={"r":0,"t":40,"l":0,"b":0})
     fig.update_xaxes(gridcolor='grey')
     fig.update_yaxes(gridcolor='grey')
     return fig
 
-def create_graph_4(dfi, chantier, inclino, profondeur):
+def create_graph_4(dfi, chantier, inclino, profondeur, title):
     df = dfi.copy().set_index('profondeur').T
     df['Max'] = df.max(axis=1)
     df['Min'] = df.min(axis=1)
@@ -465,7 +462,7 @@ def create_graph_4(dfi, chantier, inclino, profondeur):
     df[f'{profondeur}m']=df[profondeur]
     df = df.reset_index().rename(columns={'index' :'Date'})
     df.Date = pd.to_datetime(df.Date, format='%d/%m/%Y')
-    fig = px.line(df, y=['Tête', 'Min', 'Max',f'{profondeur}m'], x='Date')
+    fig = px.line(df, y=['Tête', 'Min', 'Max',f'{profondeur}m'], x='Date', title= f'Evolution du déplacement {title} (mm)')
     fig.update_yaxes(range=[-10, 25])
     fig.update_traces(hovertemplate=None)
     fig.update_layout(
@@ -477,7 +474,7 @@ def create_graph_4(dfi, chantier, inclino, profondeur):
         plot_bgcolor=colors['background'],
         paper_bgcolor=colors['background'],
         font_color=colors['text'],
-        margin={"r":0,"t":20,"l":0,"b":0})
+        margin={"r":0,"t":40,"l":0,"b":0})
     fig.update_xaxes(gridcolor='grey')
     fig.update_yaxes(gridcolor='grey')
     return fig
