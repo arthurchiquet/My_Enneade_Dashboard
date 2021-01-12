@@ -24,34 +24,22 @@ def get_credentials(local=True):
     creds_gcp = service_account.Credentials.from_service_account_info(creds_json)
     return creds_gcp
 
-# @cache.memoize(timeout=TIMEOUT)
-def memoized_data(chantier, path, filename, bucket = BUCKET_NAME, project_id = PROJECT_ID, sep = True):
+def get_data(chantier, path, filename, json = False, bucket = BUCKET_NAME, project_id = PROJECT_ID, sep=True):
     creds = get_credentials()
     client = storage.Client(credentials=creds, project=project_id)
     bucket = client.get_bucket(BUCKET_NAME)
     blob = bucket.blob(f'{chantier}/{path}/{filename}')
     data = blob.download_as_string()
     if sep:
-        return pd.read_csv(io.BytesIO(data), encoding = 'utf-8', sep=';', low_memory = True, memory_map = True)
+        if json:
+            return pd.read_json(io.BytesIO(data), sep=';', compression='bz2')
+        else:
+            return pd.read_csv(io.BytesIO(data), encoding = 'utf-8', sep=';', memory_map = True)
     else:
-        return pd.read_csv(io.BytesIO(data), encoding = 'utf-8', low_memory = True, memory_map = True)
-
-def query_data(chantier, path, filename, bucket = BUCKET_NAME, project_id = PROJECT_ID , sep = False, memo = False):
-    if memo:
-        return memoized_data(chantier, path, filename, bucket, project_id, sep)
-    else:
-        return get_data(chantier, path, filename, bucket, project_id, sep)
-
-def get_data(chantier, path, filename, bucket = BUCKET_NAME, project_id = PROJECT_ID, sep=True):
-    creds = get_credentials()
-    client = storage.Client(credentials=creds, project=project_id)
-    bucket = client.get_bucket(BUCKET_NAME)
-    blob = bucket.blob(f'{chantier}/{path}/{filename}')
-    data = blob.download_as_string()
-    if sep:
-        return pd.read_csv(io.BytesIO(data), encoding = 'utf-8', sep=';', low_memory = True, memory_map = True)
-    else:
-        return pd.read_csv(io.BytesIO(data), encoding = 'utf-8', low_memory = True, memory_map = True)
+        if json:
+            return pd.read_json(io.BytesIO(data), compression='bz2')
+        else:
+            return pd.read_csv(io.BytesIO(data), encoding = 'utf-8', memory_map = True)
 
 def download_image(chantier, filename, bucket = BUCKET_NAME, project_id = PROJECT_ID, rm = True):
     creds = get_credentials()

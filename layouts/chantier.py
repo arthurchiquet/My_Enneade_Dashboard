@@ -6,6 +6,7 @@ import plotly.graph_objects as go
 import pandas as pd
 import dash_table as dt
 import warnings
+import json
 
 from server import app
 from config import engine
@@ -164,15 +165,11 @@ layout = html.Div(
                             dbc.Container(
                                 children=[
                                     dbc.Row([modes, options], justify='center'),
-                                    dcc.Loading(
-                                        color='#FF8C00',
-                                        type="graph",
-                                        children=dcc.Graph(
-                                            id='map-chantier',
-                                            config={ "scrollZoom": True},
-                                            clear_on_unhover=True,
-                                            figure = empty_figure()
-                                        )
+                                    dcc.Graph(
+                                        id='map-chantier',
+                                        config={ "scrollZoom": True},
+                                        clear_on_unhover=True,
+                                        figure = empty_figure()
                                     )
                                 ]
                             ), justify='center'
@@ -212,6 +209,7 @@ layout = html.Div(
         tabs_content,
     ]
 )
+
 
 @app.callback(
     Output("card-secteur", "is_open"),
@@ -333,7 +331,6 @@ def disabled_slider(mode):
 def return_tabs(mode, secteur):
     if mode == 2 and secteur !={}:
         return [
-            dbc.Row(dbc.Button('Modifier les parametres', href='/parametres'), justify='center'),
             html.Br(),
             dbc.Row(
                 [
@@ -363,13 +360,14 @@ def return_tabs(mode, secteur):
     [Input('affichage_plan','value'),
     Input('mode', 'value'),
     Input('preset_slider', 'value'),
-    State('chantier-store', 'data')
+    State('chantier-store', 'data'),
+    State('files-store', 'data'),
     ])
-def affichage_map(plan, mode, preset, chantier_store):
+def affichage_map(plan, mode, preset, chantier_store, data):
     if plan == [1]:
-        return affichage_map_chantier(chantier_store, mode, preset, True)
+        return affichage_map_chantier(data, chantier_store, mode, preset, True)
     else:
-        return affichage_map_chantier(chantier_store, mode, preset)
+        return affichage_map_chantier(data, chantier_store, mode, preset)
 
 ##### STOCKE LA VALEUR DU SECTEUR ####
 @app.callback(
@@ -382,6 +380,9 @@ def secteur_store(clickData, mode):
     else:
         return {}
 
+
+conv = {0:'Cible',1:'Inclinometre',2:'Tirant',3:'Jauge',4:'Piezometre',5:'Buton'}
+
 ### AFFICHE LA COURBE CORRESPONDANT AU CAPTEUR SELECTIONNÉ ####
 @app.callback(
     [Output('titre_graph', 'children'),
@@ -390,47 +391,48 @@ def secteur_store(clickData, mode):
     [Input("map-chantier", "clickData"),
     Input('mode', 'value')],
     State('chantier-store', 'data'),
+    State('files-store', 'data')
     )
-def affichage_courbe_capteur(clickData, mode, chantier):
+def affichage_courbe_capteur(clickData, mode, chantier, data):
     if mode != 1:
         return '', empty_figure(), ''
     else:
         try:
-            customdata = clickData['points'][0]['customdata'][0]
+            curveNumber = clickData['points'][0]['curveNumber']
             text = clickData['points'][0]['text']
-            if customdata not in ['cible', 'inclino', 'tirant','jauge','piezo']:
+            if curveNumber > 6 :
                 return '' , empty_figure(), ''
             else:
-                return f'{customdata} {text}', selection_affichage(chantier, customdata, text), sous_titre(customdata)
+                return f'{conv[curveNumber]} {text}', selection_affichage(data, chantier, curveNumber, text), sous_titre(curveNumber)
         except:
             return '', empty_figure(), ''
 
 
 ### RENVOIE LA METHODE D'AFFICHAGE DE LA COURBE EN FONCTION DU TYPE DE CAPTEUR ####
-def selection_affichage(chantier, customdata, text):
-    if customdata == 'cible':
-        return utils_topo.graph_topo(chantier, text, 0, height = 450, spacing=0.06)
-    elif customdata == 'inclino':
+def selection_affichage(data, chantier, curveNumber, text):
+    if curveNumber == 0:
+        return utils_topo.graph_topo(data['topo'], chantier, text, 0, height = 450, spacing=0.06)
+    elif curveNumber == 1:
         return utils_inclino.graph_inclino(chantier, text)
-    elif customdata == 'tirant':
+    elif curveNumber == 2:
         return utils_tirant.graph_tirant(chantier, text, height = 450, mode=2)
-    elif customdata == 'jauge':
+    elif curveNumber == 3:
         return utils_jauge.graph_jauge(chantier, text)
-    elif customdata == 'piezo':
+    elif curveNumber == 4:
         return utils_piezo.graph_piezo(chantier, text)
     else:
         return empty_figure()
 
-def sous_titre(customdata):
-    if customdata == 'cible':
+def sous_titre(curveNumber):
+    if curveNumber == 1:
         return 'Déplacements N, T, Z (mm)'
-    elif customdata == 'inclino':
+    elif curveNumber == 2:
         return ''
-    elif customdata == 'tirant':
+    elif curveNumber == 3:
         return 'Evolution de la charge (%tb)'
-    elif customdata == 'jauge':
+    elif curveNumber == 4:
         return 'Evolution brute des fissures (Ecarts, mm)'
-    elif customdata == 'piezo':
+    elif curveNumber == 5:
         return 'Niveau piezométrique (mm)'
     else:
         return ''

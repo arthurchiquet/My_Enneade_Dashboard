@@ -3,7 +3,7 @@ import plotly.express as px
 import plotly.graph_objects as go
 from config import engine
 import pandas as pd
-from data import download_image, query_data
+from data import download_image, get_data
 import numpy as np
 from datetime import timedelta
 
@@ -19,10 +19,23 @@ coeff_Lamb_GPS = [[1.23952112e-05, 6.63800392e-07], [-4.81267332e-07,  8.9881638
 intercept_Lamb_GPS = [-20.17412175, 16.14120241]
 
 def changement_repere(df, coef, intercept):
-    lon = df.lat * coef[0][0] + df.lon * coef[0][1] + intercept[0]
-    lat = df.lat * coef[1][0] + df.lon * coef[1][1] + intercept[1]
-    df.lat, df.lon = lat, lon
+    lon = df.x * coef[0][0] + df.y * coef[0][1] + intercept[0]
+    lat = df.x * coef[1][0] + df.y * coef[1][1] + intercept[1]
+    df.x, df.y = lat, lon
     return df
+
+def remove_xyz(string):
+    return string.replace('.x','').replace('.y', '')
+
+def first(col):
+    i = 0
+    for j in col:
+        if not np.isnan(j) & (i == 0):
+            i = j
+            break
+    return i
+
+#######################  AFFICHAGE MAP GLOBALE   ######################################################
 
 def affichage_map_geo():
     with engine.connect() as con:
@@ -57,20 +70,32 @@ def affichage_map_geo():
 
     return fig
 
-def affichage_map_chantier(chantier, mode,  preset = 3, affichage_plan = False):
+
+#######################  AFFICHAGE MAP CHANTIER   ######################################################
+
+def affichage_map_chantier(data, chantier, mode,  preset = 1, affichage_plan = False):
     try:
-        with engine.connect() as con:
-            query="select * from capteur where chantier ='%s'"%chantier
-            df = pd.read_sql_query(query, con=con)
+        # with engine.connect() as con:
+        #     query="select * from capteur where chantier ='%s'"%chantier
+        #     df = pd.read_sql_query(query, con=con)
+
+        df = pd.read_json(data['topo']).drop(columns=['date'])
+        df = pd.DataFrame(df.apply(first)).T
+        dfx = df[[col for col in df.columns if '.x' in col]].stack().reset_index().drop(columns=['level_0']).rename(columns={'level_1':'cible',0:'x'})
+        dfy = df[[col for col in df.columns if '.y' in col]].stack().reset_index().drop(columns=['level_0']).rename(columns={'level_1':'cible',0:'y'})
+        dfx.cible = dfx.cible.map(remove_xyz)
+        dfy.cible = dfy.cible.map(remove_xyz)
+        df2 = dfx.merge(dfy)
+        df2 = changement_repere(df2, coeff_Lamb_GPS, intercept_Lamb_GPS)
 
         if mode == 1:
-            fig = positions_GPS_capteur(df)
+            fig = positions_GPS_capteur(df2)
 
         if mode ==  2:
-            fig = positions_GPS_secteur(df)
+            fig = positions_GPS_secteur(df2)
 
         if mode == 3:
-            dff = query_data(chantier, 'actif', 'topographie.csv', sep=False)
+            dff = pd.read_json(data['topo'])
             if preset==1 or preset==2:
                 dff.date = pd.to_datetime(dff.date, format="%d/%m/%Y")
                 last_date = dff.date.iloc[-1]
@@ -138,20 +163,22 @@ def affichage_map_chantier(chantier, mode,  preset = 3, affichage_plan = False):
     except:
         return empty_figure()
 
+#######################  CALCUL DES POSITIONS DES CAPTEURS  ######################################################
 
 def positions_GPS_capteur(df):
-    df = changement_repere(df, coeff_Lamb_GPS, intercept_Lamb_GPS)
-    fig = px.scatter_mapbox(
-        df,
-        lat="lat",
-        lon="lon",
-        color='type',
-        text='capteur',
-        hover_data={
-            'type':True,
-        },
+    fig=go.Figure()
+    fig.add_trace(go.Scattermapbox(
+        name='cible',
+        mode='markers+text',
+        lat=df.x,
+        lon=df.y,
+        text=df.cible,
+    ))
+
+    fig.update_layout(
+        mapbox_style="dark",
+        mapbox_accesstoken=mapbox_token
     )
-    fig.update_layout(mapbox_style="dark", mapbox_accesstoken=mapbox_token)
     fig.update_layout(
         plot_bgcolor=colors['background'],
         paper_bgcolor=colors['background'],
@@ -164,8 +191,12 @@ def positions_GPS_capteur(df):
         ),
         legend_title_text=None,
     )
-    fig.update_traces(hovertemplate='%{text}')
+    fig.update_traces(
+        hovertemplate='%{text}',
+        textfont_size=11)
     return fig
+
+#######################  POSITIONNEMENT DES SECTEURS  ######################################################
 
 def positions_GPS_secteur(df):
     df = changement_repere(df, coeff_Lamb_GPS, intercept_Lamb_GPS)
@@ -201,6 +232,9 @@ def empty_figure():
     fig.update_xaxes(visible=False)
     fig.update_yaxes(visible=False)
     return fig
+
+
+#######################  CALCUL DES VECTEURS  ######################################################
 
 
 def create_quiver(df, scale):

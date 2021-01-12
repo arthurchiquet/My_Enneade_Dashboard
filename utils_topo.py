@@ -10,7 +10,7 @@ import plotly.express as px
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 from math import radians, cos, sin
-from data import query_data
+from data import get_data
 
 colors = {
     'background': '#222222',
@@ -35,15 +35,16 @@ layout = html.Div(
     Output("time-series", "figure"),
     Input("secteur-store", "data"),
     State("chantier-store", "data"),
+    State("files-store", "data")
 )
-def update_timeseries(secteur, chantier):
+def update_timeseries(secteur, chantier, data):
     try:
         with engine.connect() as con:
             query1="select * from capteur where secteur ='%s' and type='cible'"%secteur
             query2="select * from secteur where secteur ='%s'"%secteur
             list_capteur = pd.read_sql_query(query1, con=con).capteur.unique()
             angle=pd.read_sql_query(query2, con= con).angle[0]
-        return graph_topo(chantier, list_capteur, angle)
+        return graph_topo(data['topo'], chantier, list_capteur, angle)
     except:
         return {}
 
@@ -51,7 +52,7 @@ def update_timeseries(secteur, chantier):
 def first(col):
     i = 0
     for j in col:
-        if (not np.isnan(j)) & (i == 0):
+        if not np.isnan(j) & (i == 0):
             i = j
             break
     return i
@@ -88,8 +89,8 @@ def remove_xyz(string):
     return string[:-2]
 
 def format_df(df, list_capteur, angle):
-    df.date = pd.to_datetime(df.date, format="%d/%m/%Y")
-    # range_date = [df.date.tolist()[-60], df.date.tolist()[-1]]
+    df.date = df.date.dt.strftime("%d/%m/%y")
+    df.date = pd.to_datetime(df.date)
     list_colonnes = select_columns(df, list_capteur)
     df = df.set_index("date")[list_colonnes]
     df = delta(df)
@@ -103,8 +104,9 @@ def format_df(df, list_capteur, angle):
     df["Cible"] = df["level_1"].map(remove_xyz)
     return df.rename(columns={0: "delta"}).drop(columns="level_1")
 
-def graph_topo(chantier, cible, angle, height = 700, memo = False, spacing = 0.08):
-    df = query_data(chantier, 'actif', 'topographie.csv', sep=False, memo=memo)
+def graph_topo(data, chantier, cible, angle, height = 700, memo = False, spacing = 0.08):
+    df = pd.read_json(data)
+    # df = get_data(chantier, 'actif', 'topographie.json', json=True, sep=False)
     dff = format_df(df, cible, angle)
     fig = px.line(
         dff,
