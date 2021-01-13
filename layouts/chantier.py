@@ -21,9 +21,12 @@ colors = {
     'text': '#FF8C00'
 }
 
-profil=1
-
-tabs_content = html.Div(id='tabs_content')
+styles = {
+    'pre': {
+        'border': 'thin lightgrey solid',
+        'overflowX': 'scroll'
+    }
+}
 
 modes = dbc.RadioItems(
     options=[
@@ -48,44 +51,6 @@ options = dbc.Checklist(
     switch=True,
     persistence=True,
     persistence_type="local"
-)
-
-table_parametres = html.Div([
-            dt.DataTable(
-                id="table_parametres",
-                editable=True,
-                filter_action="native",
-                fixed_rows={'headers': True},
-                style_cell={
-                    'backgroundColor': 'rgb(50, 50, 50)',
-                    'color': 'white',
-                    'textAlign': 'center'
-                },
-                style_header={
-                    'backgroundColor': 'rgb(20, 20, 20)',
-                    'color': 'white',
-                    "fontWeight": "bold"},
-                style_table={'height': '500px', 'overflowY': 'auto'}
-                    )
-                ]
-
-            )
-
-collapse = html.Div(
-    [
-        dbc.Row(
-            dbc.Button(
-                "Afficher les paramètres",
-                id="collapse-secteur",
-                className="mb-3",
-                color="primary",
-            ), justify='center'
-        ),
-        dbc.Collapse(
-            dbc.Card(dbc.CardBody([table_parametres])),
-            id="card-secteur",
-        )
-    ]
 )
 
 secteur_params = [
@@ -155,8 +120,7 @@ secteur_params = [
 layout = html.Div(
     children=[
         html.Br(),
-        # html.Img(src=app.get_asset_url('test.png')),
-        html.Hr(),
+        # html.Img(src=app.get_asset_url('test.png'))
         dbc.Row(
             [
                 dbc.Col(
@@ -168,7 +132,6 @@ layout = html.Div(
                                     dcc.Graph(
                                         id='map-chantier',
                                         config={ "scrollZoom": True},
-                                        clear_on_unhover=True,
                                         figure = empty_figure()
                                     )
                                 ]
@@ -204,65 +167,61 @@ layout = html.Div(
             ]
         ),
         html.Br(),
-        html.Hr(),
-        dbc.Row(html.H4(id='title_secteur'), justify='center'),
-        tabs_content,
+        html.Div([
+            dcc.Markdown("""
+                **Hover Data**
+            """),
+            html.Pre(id='hover-data', style=styles['pre'])
+        ], className='three columns'),
+
+        html.Div([
+            dcc.Markdown("""
+                **Click Data**
+            """),
+            html.Pre(id='click-data', style=styles['pre']),
+        ], className='three columns'),
+
+        html.Div([
+            dcc.Markdown("""
+                **Selection Data**
+            """),
+            html.Pre(id='selected-data', style=styles['pre']),
+        ], className='three columns'),
     ]
 )
 
+##### AFFICHAGE LA CARTE DU CHANTIER SELECTIONNE #####
+@app.callback(
+    Output("map-chantier", "figure"),
+    [Input('affichage_plan','value'),
+    Input('mode', 'value'),
+    Input('preset_slider', 'value'),
+    State('chantier-store', 'data'),
+    State('files-store', 'data'),
+    ])
+def affichage_map(plan, mode, preset, chantier_store, data):
+    return affichage_map_chantier(data, chantier_store, mode, preset, plan)
 
 @app.callback(
-    Output("card-secteur", "is_open"),
-    [Input("collapse-secteur", "n_clicks")],
-    [State("card-secteur", "is_open")],
-)
-def collapse_parametres(n, is_open):
-    if n:
-        return not is_open
-    return is_open
+    Output('hover-data', 'children'),
+    Input('map-chantier', 'hoverData'))
+def display_hover_data(hoverData):
+    return json.dumps(hoverData, indent=2)
+
 
 @app.callback(
-    [
-        Output("table_parametres", "data"),
-        Output("table_parametres", "columns"),
-        ],
-    [
-        Input("chantier-store", "data"),
-        Input("secteur-store", "data"),
-        Input("tabs_secteurs", "active_tab"),
-        ]
-)
-def update_table_parametres(chantier, secteur, tab):
-    df = get_data(chantier, 'paramètres', 'parametres_generaux.csv', sep=False)
-    params = df[(df.chantier==chantier) & (df.secteur==secteur)]
-    with engine.connect() as con:
-        query=f"select * from capteur where chantier='{chantier}' and secteur='{secteur}'"
-        params = pd.read_sql_query(query, con=con)
-        if tab == 1:
-            filtre_secteur = tuple(params[params.type=='cible'].capteur)
-            query=f'select * from cible_param where cible in {filtre_secteur}'
-            parametres = pd.read_sql_query(query, con=con)
-        if tab == 2:
-            filtre_secteur = tuple(params[params.type=='inclino'].capteur)
-            query=f'select * from inclino_param where cible in {filtre_secteur}'
-            parametres = pd.read_sql_query(query, con=con)
-        if tab == 3:
-            filtre_secteur = tuple(params[params.type=='tirant'].capteur)
-            query=f'select * from tirant_param where cible in {filtre_secteur}'
-            parametres = pd.read_sql_query(query, con=con)
-        if tab == 5:
-            filtre_secteur = tuple(params[params.type=='piezo'].capteur)
-            query=f'select * from piezo_param where cible in {filtre_secteur}'
-            parametres = pd.read_sql_query(query, con=con)
-        if tab == 4:
-            filtre_secteur = tuple(params[params.type=='jauge'].capteur)
-            query=f'select * from jauge_param where cible in {filtre_secteur}'
-            parametres = pd.read_sql_query(query, con=con)
-        if tab == 6:
-            filtre_secteur = tuple(params[params.type=='buton'].capteur)
-            query=f'select * from buton_param where cible in {filtre_secteur}'
-            parametres = pd.read_sql_query(query, con=con)
-    return parametres.to_dict("records"), [{"name": i, "id": i} for i in parametres.columns]
+    Output('click-data', 'children'),
+    Input('map-chantier', 'clickData'))
+def display_click_data(clickData):
+    return json.dumps(clickData, indent=2)
+
+
+@app.callback(
+    Output('selected-data', 'children'),
+    Input('map-chantier', 'selectedData'))
+def display_selected_data(selectedData):
+    return json.dumps(selectedData, indent=2)
+
 
 @app.callback(
     Output('right-content', 'children'),
@@ -323,51 +282,9 @@ def disabled_slider(mode):
     else:
         return True
 
-@app.callback(
-    Output('tabs_content', 'children'),
-    [Input('mode', 'value'),
-    Input('secteur-store', 'data')]
-    )
-def return_tabs(mode, secteur):
-    if mode == 2 and secteur !={}:
-        return [
-            html.Br(),
-            dbc.Row(
-                [
-                    dbc.Tabs(
-                        [
-                            dbc.Tab(label="Cibles", tab_id=1),
-                            dbc.Tab(label="Inclinomètres", tab_id=2),
-                            dbc.Tab(label="Tirants", tab_id=3),
-                            dbc.Tab(label="Piezometres", tab_id=5),
-                            dbc.Tab(label="Jauges", tab_id=4),
-                            dbc.Tab(label="Butons", tab_id=6),
-                        ],
-                        id="tabs_secteurs",
-                        active_tab="tab-topo",
-                    )
-                ], justify='center'
-            ),
-            html.Br(),
-            html.Div(id='tab_content')
-        ]
-    else:
-        return [dbc.Row(html.H4('Veuillez selectionner un secteur sur la carte'), justify='center')]
 
-##### AFFICHAGE LA CARTE DU CHANTIER SELECTIONNE #####
-@app.callback(
-    Output("map-chantier", "figure"),
-    [Input('affichage_plan','value'),
-    Input('mode', 'value'),
-    Input('preset_slider', 'value'),
-    State('chantier-store', 'data'),
-    State('files-store', 'data'),
-    ])
-def affichage_map(plan, mode, preset, chantier_store, data):
-    if plan == [1]:
-        return affichage_map_chantier(data, chantier_store, mode, preset, True)
-    else:
-        return affichage_map_chantier(data, chantier_store, mode, preset)
+
+
 
 ##### STOCKE LA VALEUR DU SECTEUR ####
 @app.callback(
@@ -438,24 +355,5 @@ def sous_titre(curveNumber):
         return ''
 
 
-@app.callback(
-    Output('tab_content', 'children'),
-    [Input('mode', 'value'),
-    Input('tabs_secteurs', 'active_tab')],
-    [State('chantier-store', 'data'),
-    State('secteur-store', 'data')])
-def return_tabs_content(mode, tab, chantier, secteur):
-    if secteur=={} or mode !=2:
-        return {}
-    else:
-        if tab == 1:
-            return collapse, html.Br(), utils_topo.layout
-        elif tab == 2:
-            return collapse, html.Br(), utils_inclino.layout
-        elif tab == 3:
-            return collapse, html.Br(), utils_tirant.layout
-        elif tab == 4:
-            return collapse, html.Br(), utils_jauge.layout
-        elif tab == 5:
-            return collapse, html.Br(), utils_piezo.layout
+
 

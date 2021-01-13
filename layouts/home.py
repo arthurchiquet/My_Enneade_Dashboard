@@ -20,7 +20,7 @@ colors = {
 
 layout = html.Div(
     [
-        html.Div(id='progress-bar'),
+        html.Div(id = 'progress-bar'),
         dcc.Graph(
             id='map-geo',
             config={'displayModeBar': False},
@@ -28,6 +28,29 @@ layout = html.Div(
         )
     ]
 )
+
+@app.callback(
+    Output("progress-bar", "children"),
+    Input('map-geo', 'clickData')
+)
+def display_progress(clickdata):
+    if clickdata:
+        return dcc.Interval(id="progress-interval", n_intervals=0, interval=1000),dbc.Progress(id="progress", color="warning")
+    else:
+        return []
+
+@app.callback(
+    [Output("progress", "value"),
+    Output("progress", "children")],
+    [Input('map-geo', 'clickData'),
+     Input("progress-interval", "n_intervals")],
+)
+def update_progress(clickdata, n):
+    if clickdata:
+        progress = min(15*n , 100)
+        return progress, f"{progress} %" if progress >= 5 else ""
+    else:
+        return 0, ''
 
 ##### SELECTIONNE CHANTIER #####
 @app.callback(
@@ -45,23 +68,4 @@ def select_chantier(clickData, data):
         return None, '/', data
 
 
-@app.callback(
-    Output("progress-bar", "children"),
-    Input('map-geo', 'clickData'),
-)
-def update_progress(clickData):
-    if clickData:
-        return [dcc.Interval(id="progress-interval", n_intervals=0, interval=1000),dbc.Progress(id="progress", color="warning")]
-    else:
-        return []
 
-@app.callback(
-    [Output("progress", "value"), Output("progress", "children")],
-    [Input("progress-interval", "n_intervals")],
-)
-def update_progress(n):
-    # check progress of some background process, in this example we'll just
-    # use n_intervals constrained to be in 0-100
-    progress = min(20*n , 100)
-    # only add text after 5% progress to ensure text isn't squashed too much
-    return progress, f"{progress} %" if progress >= 5 else ""

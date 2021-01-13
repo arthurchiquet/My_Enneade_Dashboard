@@ -4,9 +4,9 @@ from dash.dependencies import Input, Output, State
 import dash_bootstrap_components as dbc
 from server import app
 from flask_login import logout_user, current_user
-from layouts import admin,conditions,error,login,login_fd,logout,profil,home,chantier,parametres
+from layouts import admin,conditions,error,login,login_fd,logout,profil,home,chantier,parametres, secteur
 
-user_profil=1
+user_profil=2
 
 app.layout = html.Div(
     [
@@ -30,6 +30,8 @@ def display_page(pathname):
         return home.layout
     elif pathname == "/chantier":
         return chantier.layout
+    elif pathname == "/secteur":
+        return secteur.layout
     elif pathname == "/parametres":
         return parametres.layout
     elif pathname == "/admin":

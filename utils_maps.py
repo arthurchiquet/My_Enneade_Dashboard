@@ -73,7 +73,7 @@ def affichage_map_geo():
 
 #######################  AFFICHAGE MAP CHANTIER   ######################################################
 
-def affichage_map_chantier(data, chantier, mode,  preset = 1, affichage_plan = False):
+def affichage_map_chantier(data, chantier, mode,  preset = 1, affichage_plan = [1]):
     try:
         # with engine.connect() as con:
         #     query="select * from capteur where chantier ='%s'"%chantier
@@ -122,7 +122,7 @@ def affichage_map_chantier(data, chantier, mode,  preset = 1, affichage_plan = F
             fig.update_xaxes(visible=False, range=[X, X + x_size])
             fig.update_yaxes(visible=False, range=[Y - y_size, Y])
 
-        if affichage_plan:
+        if affichage_plan==[1]:
             plan = download_image(chantier, 'plan.jpeg')
             layers = [
                 dict(
@@ -153,6 +153,7 @@ def affichage_map_chantier(data, chantier, mode,  preset = 1, affichage_plan = F
 
         fig.update_layout(
             mapbox=mapbox,
+            clickmode='event+select',
             plot_bgcolor=colors['background'],
             paper_bgcolor=colors['background'],
             font_color=colors['text'],
