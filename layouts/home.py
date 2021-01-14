@@ -47,7 +47,7 @@ def display_progress(clickdata):
 )
 def update_progress(clickdata, n):
     if clickdata:
-        progress = min(15*n , 100)
+        progress = min(30*n , 100)
         return progress, f"{progress} %" if progress >= 5 else ""
     else:
         return 0, ''
@@ -56,14 +56,15 @@ def update_progress(clickdata, n):
 @app.callback(
     [Output('chantier-store', 'data'),
     Output('url', 'pathname'),
-    Output('files-store', 'data')],
+    # Output('files-store', 'data')
+    ],
     Input('map-geo', 'clickData'),
-    State('files-store', 'data'))
-def store_chantier(clickData, data):
+    # State('files-store', 'data')
+    )
+def store_chantier(clickData):
     try:
         chantier = clickData['points'][0]['hovertext']
-        data['topo'] = get_data(chantier, 'actif', 'topographie.json', json=True, sep=False).to_json()
-        return chantier, '/chantier', data
+        return chantier, '/chantier'
     except:
-        return None, '/', data
+        return None, '/'
 

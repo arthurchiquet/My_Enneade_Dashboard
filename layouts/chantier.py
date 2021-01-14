@@ -61,11 +61,11 @@ layout = html.Div(
     Output("map-chantier", "figure"),
     [Input('chantier-store', 'data'),
     State('secteur-store', 'data'),
-    State('files-store', 'data'),
+    # State('files-store', 'data'),
     State('map-chantier', 'figure')
     ])
-def affichage_map(chantier_store, secteur_store, data, fig):
-    return update_map_chantier(fig, data, chantier_store, secteur_store)
+def affichage_map(chantier_store, secteur_store, fig):
+    return update_map_chantier(fig, chantier_store, secteur_store)
 
 @app.callback(
     Output('secteur-store', 'data'),
