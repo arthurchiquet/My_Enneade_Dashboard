@@ -59,3 +59,22 @@ def export_data(df, chantier, path, filename, bucket = BUCKET_NAME, project_id =
     blob = bucket.blob(f'{chantier}/{path}/{filename}')
     blob.upload_from_string(df.to_csv(index=False))
 
+def save_json(file, chantier, path, filename, bucket = BUCKET_NAME, project_id = PROJECT_ID):
+    creds = get_credentials()
+    client = storage.Client(credentials=creds, project=project_id)
+    bucket = client.get_bucket(BUCKET_NAME)
+    blob = bucket.blob(f'{chantier}/{path}/{filename}')
+    blob.upload_from_string(json.dumps(file))
+
+def download_json(chantier, path, filename, bucket = BUCKET_NAME, project_id = PROJECT_ID, rm=True):
+    creds = get_credentials()
+    client = storage.Client(credentials=creds, project=project_id)
+    bucket = client.get_bucket(BUCKET_NAME)
+    blob = bucket.blob(f'{chantier}/{path}/{filename}')
+    data = blob.download_to_filename(f'{filename}.json')
+    with open(f'{filename}.json') as json_file:
+        data = json.load(json_file)
+    if rm:
+        os.remove(f'{filename}.json')
+    return data
+

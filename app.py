@@ -10,8 +10,8 @@ user_profil=2
 
 app.layout = html.Div(
     [
-        dcc.Store(id='chantier-store', storage_type='session'),
-        dcc.Store(id='secteur-store', storage_type='session'),
+        dcc.Store(id='chantier-store', data={}, storage_type='session'),
+        dcc.Store(id='secteur-store', data={}, storage_type='session'),
         dcc.Store(id='files-store', data={}, storage_type='session'),
         dcc.Location(id="url", refresh=False),
         html.Div(id='navBar'),

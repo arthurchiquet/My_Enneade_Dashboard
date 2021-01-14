@@ -6,7 +6,7 @@ from server import app
 import dash_table as dt
 from flask_login import current_user
 from utils_maps import affichage_map_geo
-from data import get_data
+from data import get_data, download_json
 from config import engine
 import pandas as pd
 import warnings
@@ -59,13 +59,11 @@ def update_progress(clickdata, n):
     Output('files-store', 'data')],
     Input('map-geo', 'clickData'),
     State('files-store', 'data'))
-def select_chantier(clickData, data):
+def store_chantier(clickData, data):
     try:
         chantier = clickData['points'][0]['hovertext']
         data['topo'] = get_data(chantier, 'actif', 'topographie.json', json=True, sep=False).to_json()
         return chantier, '/chantier', data
     except:
         return None, '/', data
-
-
 
