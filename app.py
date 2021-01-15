@@ -12,7 +12,7 @@ app.layout = html.Div(
     [
         dcc.Store(id='options-store', data={}, storage_type='session'),
         dcc.Store(id='params-store', data={}, storage_type='session'),
-        dcc.Store(id='files-store', data={}, storage_type='session'),
+        # dcc.Store(id='files-store', data={}, storage_type='session'),
         dcc.Location(id="url", refresh=False),
         html.Div(id='navBar'),
         html.Div(id="page-content")

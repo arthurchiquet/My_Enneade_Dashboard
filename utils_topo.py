@@ -10,7 +10,7 @@ import plotly.express as px
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 from math import radians, cos, sin
-from data import get_data
+from data import memoized_data
 
 colors = {
     'background': '#222222',
@@ -89,8 +89,7 @@ def remove_xyz(string):
     return string[:-2]
 
 def format_df(df, list_capteur, angle):
-    df.date = df.date.dt.strftime("%d/%m/%y")
-    df.date = pd.to_datetime(df.date)
+    df.date = pd.to_datetime(df.date, format="%d/%m/%Y")
     list_colonnes = select_columns(df, list_capteur)
     df = df.set_index("date")[list_colonnes]
     df = delta(df)
@@ -104,9 +103,8 @@ def format_df(df, list_capteur, angle):
     df["Cible"] = df["level_1"].map(remove_xyz)
     return df.rename(columns={0: "delta"}).drop(columns="level_1")
 
-def graph_topo(data, chantier, cible, angle, height = 700, memo = False, spacing = 0.08):
-    df = pd.read_json(data)
-    # df = get_data(chantier, 'actif', 'topographie.json', json=True, sep=False)
+def graph_topo(chantier, cible, angle, height = 700, memo = False, spacing = 0.08):
+    df = memoized_data(chantier, 'actif', 'topographie.csv')
     dff = format_df(df, cible, angle)
     fig = px.line(
         dff,

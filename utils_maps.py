@@ -87,9 +87,9 @@ def affichage_map_geo():
 
 #######################  AFFICHAGE MAP CHANTIER   ######################################################
 
-def update_map_chantier(fig, data, options, params):
+def update_map_chantier(fig, df, options, params):
     # try:
-    df = pd.read_json(data['topo']).drop(columns=['date'])
+    df = df.drop(columns=['date'])
     df = pd.DataFrame(df.apply(first)).T
     dfx = df[[col for col in df.columns if '.x' in col]].stack().reset_index().drop(columns=['level_0']).rename(columns={'level_1':'cible',0:'x'})
     dfy = df[[col for col in df.columns if '.y' in col]].stack().reset_index().drop(columns=['level_0']).rename(columns={'level_1':'cible',0:'y'})

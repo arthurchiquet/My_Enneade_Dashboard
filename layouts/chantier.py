@@ -8,7 +8,7 @@ import dash_table as dt
 import warnings
 from server import app
 from config import engine
-from data import get_data, save_json, download_json
+from data import get_data, save_json, download_json, memoized_data
 from utils_maps import update_map_chantier, empty_figure
 import utils_topo, utils_inclino, utils_jauge, utils_tirant, utils_piezo
 
@@ -61,10 +61,10 @@ layout = html.Div(
     Output("map-chantier", "figure"),
     [Input('options-store', 'data'),
     State('params-store', 'data'),
-    State('files-store', 'data'),
     State('map-chantier', 'figure')
     ])
-def affichage_map(options, params, data, fig):
+def affichage_map(options, params, fig):
+    data = memoized_data(options['chantier'], 'actif', 'topographie.csv')
     return update_map_chantier(fig, data, options, params)
 
 @app.callback(
@@ -117,25 +117,24 @@ conv = {0:'Cible',1:'Inclinometre',2:'Tirant',3:'Jauge',4:'Piezometre',5:'Buton'
     Output("courbe_capteur", "figure"),
     Output('sous_titre_graph', 'children')],
     [Input("map-chantier", "selectedData"),
-    State('options-store', 'data'),
-    State('files-store', 'data')]
+    State('options-store', 'data')]
     )
-def affichage_courbe_capteur(selectedData, options, data):
-    try:
-        curveNumber = selectedData['points'][0]['curveNumber']
-        text = selectedData['points'][0]['text']
-        if curveNumber > 6 :
-            return '' , empty_figure(), ''
-        else:
-            return f'{conv[curveNumber]} {text}', selection_affichage(data, options['chantier'], curveNumber, text), sous_titre(curveNumber)
-    except:
-        return '', empty_figure(), ''
+def affichage_courbe_capteur(selectedData, options):
+    # try:
+    curveNumber = selectedData['points'][0]['curveNumber']
+    text = selectedData['points'][0]['text']
+    if curveNumber > 6 :
+        return '' , empty_figure(), ''
+    else:
+        return f'{conv[curveNumber]} {text}', selection_affichage(options['chantier'], curveNumber, text), sous_titre(curveNumber)
+    # except:
+    #     return '', empty_figure(), ''
 
 
 ### RENVOIE LA METHODE D'AFFICHAGE DE LA COURBE EN FONCTION DU TYPE DE CAPTEUR ####
-def selection_affichage(data, chantier, curveNumber, text):
+def selection_affichage(chantier, curveNumber, text):
     if curveNumber == 0:
-        return utils_topo.graph_topo(data['topo'], chantier, text, 0, height = 450, spacing=0.06)
+        return utils_topo.graph_topo(chantier, text, 0, height = 450, spacing=0.06)
     elif curveNumber == 1:
         return utils_inclino.graph_inclino(chantier, text)
     elif curveNumber == 2:
