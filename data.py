@@ -24,7 +24,7 @@ def get_credentials(local=False):
     creds_gcp = service_account.Credentials.from_service_account_info(creds_json)
     return creds_gcp
 
-def get_data(chantier, path, filename, json = False, bucket = BUCKET_NAME, project_id = PROJECT_ID, sep=True):
+def get_data(chantier, path, filename, json = False, bucket = BUCKET_NAME, project_id = PROJECT_ID, sep=False):
     creds = get_credentials()
     client = storage.Client(credentials=creds, project=project_id)
     bucket = client.get_bucket(BUCKET_NAME)
@@ -32,12 +32,12 @@ def get_data(chantier, path, filename, json = False, bucket = BUCKET_NAME, proje
     data = blob.download_as_string()
     if sep:
         if json:
-            return pd.read_json(io.BytesIO(data), sep=';', compression='bz2')
+            return pd.read_json(io.BytesIO(data), sep=';', compression='zip')
         else:
             return pd.read_csv(io.BytesIO(data), encoding = 'utf-8', sep=';', memory_map = True)
     else:
         if json:
-            return pd.read_json(io.BytesIO(data), compression='bz2')
+            return pd.read_json(io.BytesIO(data), compression='zip')
         else:
             return pd.read_csv(io.BytesIO(data), encoding = 'utf-8', memory_map = True)
 

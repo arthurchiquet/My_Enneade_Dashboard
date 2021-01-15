@@ -59,23 +59,23 @@ layout = html.Div(
 #### AFFICHAGE LA CARTE DU CHANTIER SELECTIONNE #####
 @app.callback(
     Output("map-chantier", "figure"),
-    [Input('chantier-store', 'data'),
-    State('secteur-store', 'data'),
-    # State('files-store', 'data'),
+    [Input('options-store', 'data'),
+    State('params-store', 'data'),
+    State('files-store', 'data'),
     State('map-chantier', 'figure')
     ])
-def affichage_map(chantier_store, secteur_store, fig):
-    return update_map_chantier(fig, chantier_store, secteur_store)
+def affichage_map(options, params, data, fig):
+    return update_map_chantier(fig, data, options, params)
 
 @app.callback(
-    Output('secteur-store', 'data'),
-    Input('chantier-store', 'data'),
-    State('secteur-store','data')
+    Output('params-store', 'data'),
+    Input('options-store', 'data'),
+    State('params-store','data')
     )
-def update_secteur(chantier, secteur_store):
-    if secteur_store == {}:
+def update_secteur(options, params):
+    if params == {}:
         try:
-            secteur_store = download_json(chantier, 'paramètres', 'secteurs.json')
+            params = download_json(options['chantier'], 'paramètres', 'secteurs.json')
         except:
             pass
     else:
@@ -87,7 +87,7 @@ def update_secteur(chantier, secteur_store):
     #         save_json(secteur_store, chantier, 'paramètres', 'secteurs.json')
     #         return secteur_store
     # else:
-    return secteur_store
+    return params
 
 @app.callback(
     Output('right-content', 'children'),
@@ -117,17 +117,17 @@ conv = {0:'Cible',1:'Inclinometre',2:'Tirant',3:'Jauge',4:'Piezometre',5:'Buton'
     Output("courbe_capteur", "figure"),
     Output('sous_titre_graph', 'children')],
     [Input("map-chantier", "selectedData"),
-    State('chantier-store', 'data'),
+    State('options-store', 'data'),
     State('files-store', 'data')]
     )
-def affichage_courbe_capteur(selectedData, chantier, data):
+def affichage_courbe_capteur(selectedData, options, data):
     try:
         curveNumber = selectedData['points'][0]['curveNumber']
         text = selectedData['points'][0]['text']
         if curveNumber > 6 :
             return '' , empty_figure(), ''
         else:
-            return f'{conv[curveNumber]} {text}', selection_affichage(data, chantier, curveNumber, text), sous_titre(curveNumber)
+            return f'{conv[curveNumber]} {text}', selection_affichage(data, options['chantier'], curveNumber, text), sous_titre(curveNumber)
     except:
         return '', empty_figure(), ''
 

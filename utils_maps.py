@@ -87,10 +87,9 @@ def affichage_map_geo():
 
 #######################  AFFICHAGE MAP CHANTIER   ######################################################
 
-def update_map_chantier(fig, chantier, secteurs):
+def update_map_chantier(fig, data, options, params):
     # try:
-
-    df = get_data(chantier, 'actif', 'topographie.csv').drop(columns=['date'])
+    df = pd.read_json(data['topo']).drop(columns=['date'])
     df = pd.DataFrame(df.apply(first)).T
     dfx = df[[col for col in df.columns if '.x' in col]].stack().reset_index().drop(columns=['level_0']).rename(columns={'level_1':'cible',0:'x'})
     dfy = df[[col for col in df.columns if '.y' in col]].stack().reset_index().drop(columns=['level_0']).rename(columns={'level_1':'cible',0:'y'})
@@ -111,6 +110,7 @@ def update_map_chantier(fig, chantier, secteurs):
         mapbox_accesstoken=mapbox_token
     )
     fig.update_layout(
+        height=600,
         plot_bgcolor=colors['background'],
         paper_bgcolor=colors['background'],
         font_color=colors['text'],
@@ -126,8 +126,8 @@ def update_map_chantier(fig, chantier, secteurs):
         hovertemplate='%{text}',
         textfont_size=11)
 
-    for secteur in secteurs:
-        coords=secteurs[secteur]
+    for secteur in params:
+        coords=params[secteur]
         fig.add_trace(go.Scattermapbox(
             name=secteur,
             mode='lines',
@@ -137,7 +137,7 @@ def update_map_chantier(fig, chantier, secteurs):
             )
         )
         fig.update_traces(hovertemplate='Secteur', selector={'name':secteur})
-    plan = download_image(chantier, 'plan.jpeg')
+    plan = download_image(options['chantier'], 'plan.jpeg')
     layers = [
         dict(
             below ='traces',
@@ -167,7 +167,7 @@ def update_map_chantier(fig, chantier, secteurs):
         plot_bgcolor=colors['background'],
         paper_bgcolor=colors['background'],
         font_color=colors['text'],
-        margin=dict(l=20, r=20, t=10, b=0)
+        margin=dict(l=20, r=20, t=0, b=0)
     )
 
     fig.update_layout(
@@ -184,13 +184,13 @@ def update_map_chantier(fig, chantier, secteurs):
                 buttons=list([
                     dict(label="Capteurs",
                          method="update",
-                         args=[{"visible": [True]+[False for i in range(len(secteurs))]}]),
+                         args=[{"visible": [True]+[False for i in range(len(params))]}]),
                     dict(label="Secteurs",
                          method="update",
-                         args=[{"visible": [False]+[True for i in range(len(secteurs))]}]),
+                         args=[{"visible": [False]+[True for i in range(len(params))]}]),
                     dict(label="Tous",
                          method="update",
-                         args=[{"visible": [True]+[True for i in range(len(secteurs))]}]),
+                         args=[{"visible": [True]+[True for i in range(len(params))]}]),
                 ]),
             ),
             dict(
