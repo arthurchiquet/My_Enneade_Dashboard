@@ -52,15 +52,12 @@ def diff_jauge(df):
         df[col] = (df[col] / first(df[col]))*100
     return df
 
-def format_df(df):
-    df.Date = pd.to_datetime(df.Date, format="%d/%m/%Y")
-    df = df.set_index("Date")
-    df = diff_jauge(df)
-    return df
-
 def graph_jauge(chantier, jauge):
     df = get_data(chantier, 'actif', 'jauges.csv', sep=False)
-    df = format_df(get_data(chantier, 'actif', 'jauges.csv', sep=False)[['Date',jauge]])
+    df.Date = pd.to_datetime(df.Date, format="%d/%m/%Y")
+    liste_jauges = ['Date']+[col for col in df.columns if jauge in col[-1].lower()]
+    df = df[liste_jauges].set_index("Date")
+    df = diff_jauge(df)
     fig = px.line(df.reset_index(), x="Date", y=df.columns, line_shape='spline')
     fig.update_layout(
         showlegend=False,

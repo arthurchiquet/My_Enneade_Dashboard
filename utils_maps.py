@@ -33,9 +33,9 @@ def empty_figure():
 
 
 def changement_repere(df, coef, intercept):
-    lon = df.x * coef[0][0] + df.y * coef[0][1] + intercept[0]
-    lat = df.x * coef[1][0] + df.y * coef[1][1] + intercept[1]
-    df.x, df.y = lat, lon
+    lon = df.lat * coef[0][0] + df.lon * coef[0][1] + intercept[0]
+    lat = df.lat * coef[1][0] + df.lon * coef[1][1] + intercept[1]
+    df.lat, df.lon = lat, lon
     return df
 
 def remove_xyz(string):
@@ -85,49 +85,38 @@ def affichage_map_geo():
     return fig
 
 
-#######################  AFFICHAGE MAP CHANTIER   ######################################################
-
-def update_map_chantier(fig, df, options, params):
-    # try:
+def extract_position(df):
     df = df.drop(columns=['date'])
     df = pd.DataFrame(df.apply(first)).T
-    dfx = df[[col for col in df.columns if '.x' in col]].stack().reset_index().drop(columns=['level_0']).rename(columns={'level_1':'cible',0:'x'})
-    dfy = df[[col for col in df.columns if '.y' in col]].stack().reset_index().drop(columns=['level_0']).rename(columns={'level_1':'cible',0:'y'})
+    dfx = df[[col for col in df.columns if '.x' in col]].stack().reset_index().drop(columns=['level_0']).rename(columns={'level_1':'cible',0:'lat'})
+    dfy = df[[col for col in df.columns if '.y' in col]].stack().reset_index().drop(columns=['level_0']).rename(columns={'level_1':'cible',0:'lon'})
     dfx.cible = dfx.cible.map(remove_xyz)
     dfy.cible = dfy.cible.map(remove_xyz)
     df2 = dfx.merge(dfy)
     df2 = changement_repere(df2, coeff_Lamb_GPS, intercept_Lamb_GPS)
-    fig=go.Figure(fig)
-    fig.add_trace(go.Scattermapbox(
-        name='cible',
-        mode='markers+text',
-        lat=df2.x,
-        lon=df2.y,
-        text=df2.cible
-    ))
-    fig.update_layout(
-        mapbox_style="dark",
-        mapbox_accesstoken=mapbox_token
+    return df2
+
+#######################  AFFICHAGE MAP CHANTIER   ######################################################
+
+def update_map_chantier(chantier, secteurs, capteurs):
+    # try:
+    df = pd.concat({k: pd.DataFrame.from_dict(v, 'index') for k, v in capteurs.items()},axis=0).reset_index().rename(columns={'level_0':'type','level_1':'capteur'})
+
+    fig = px.scatter_mapbox(
+        df,
+        lat='lat',
+        lon='lon',
+        color='type',
+        text='capteur',
+        hover_data={'type':True}
     )
-    fig.update_layout(
-        height=600,
-        plot_bgcolor=colors['background'],
-        paper_bgcolor=colors['background'],
-        font_color=colors['text'],
-        legend=dict(
-            yanchor="top",
-            y=0.99,
-            xanchor="left",
-            x=0.01
-        ),
-        legend_title_text=None,
-    )
+
     fig.update_traces(
         hovertemplate='%{text}',
         textfont_size=11)
 
-    for secteur in params:
-        coords=params[secteur]
+    for secteur in secteurs:
+        coords=secteurs[secteur]
         fig.add_trace(go.Scattermapbox(
             name=secteur,
             mode='lines',
@@ -137,7 +126,9 @@ def update_map_chantier(fig, df, options, params):
             )
         )
         fig.update_traces(hovertemplate='Secteur', selector={'name':secteur})
-    plan = download_image(options['chantier'], 'plan.jpeg')
+
+    plan = download_image(chantier, 'plan.jpeg')
+
     layers = [
         dict(
             below ='traces',
@@ -163,14 +154,21 @@ def update_map_chantier(fig, df, options, params):
 
     fig.update_layout(
         mapbox=mapbox,
+        mapbox_style="dark",
+        mapbox_accesstoken=mapbox_token,
         clickmode='event+select',
         plot_bgcolor=colors['background'],
         paper_bgcolor=colors['background'],
         font_color=colors['text'],
-        margin=dict(l=20, r=20, t=0, b=0)
-    )
-
-    fig.update_layout(
+        margin=dict(l=20, r=20, t=0, b=0),
+        height=600,
+        legend=dict(
+            yanchor="top",
+            y=0.99,
+            xanchor="left",
+            x=0.01
+        ),
+        legend_title_text=None,
         updatemenus=[
             dict(
                 type="buttons",
@@ -179,18 +177,18 @@ def update_map_chantier(fig, df, options, params):
                 showactive=False,
                 x=0,
                 xanchor="left",
-                y=1.2,
+                y=1.1,
                 yanchor="top",
                 buttons=list([
                     dict(label="Capteurs",
                          method="update",
-                         args=[{"visible": [True]+[False for i in range(len(params))]}]),
+                         args=[{"visible": [True]+[False for i in range(len(secteurs))]}]),
                     dict(label="Secteurs",
                          method="update",
-                         args=[{"visible": [False]+[True for i in range(len(params))]}]),
+                         args=[{"visible": [False]+[True for i in range(len(secteurs))]}]),
                     dict(label="Tous",
                          method="update",
-                         args=[{"visible": [True]+[True for i in range(len(params))]}]),
+                         args=[{"visible": [True]+[True for i in range(len(secteurs))]}]),
                 ]),
             ),
             dict(
@@ -200,7 +198,7 @@ def update_map_chantier(fig, df, options, params):
                 showactive=False,
                 x=1,
                 xanchor="right",
-                y=1.2,
+                y=1.1,
                 yanchor="top",
                 buttons=list([
                     dict(label='Afficher plan',

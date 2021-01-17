@@ -10,7 +10,6 @@ from data import get_data, download_json
 from config import engine
 import pandas as pd
 import warnings
-import json
 
 warnings.filterwarnings("ignore")
 
@@ -19,17 +18,8 @@ colors = {
     'text': '#FF8C00'
 }
 
-styles = {
-    'pre': {
-        'border': 'thin lightgrey solid',
-        'overflowX': 'scroll'
-    }
-}
-
 layout = html.Div(
     [
-        html.Div(id = 'progress-bar'),
-        html.Pre(id='click-data', style=styles['pre']),
         dcc.Graph(
             id='map-geo',
             config={'displayModeBar': False},
@@ -37,12 +27,6 @@ layout = html.Div(
         )
     ]
 )
-
-@app.callback(
-    Output('click-data', 'children'),
-    Input('files-store', 'data'))
-def display_click_data(clickData):
-    return json.dumps(clickData)
 
 # @app.callback(
 #     Output("progress-bar", "children"),
@@ -69,17 +53,14 @@ def display_click_data(clickData):
 
 ##### SELECTIONNE CHANTIER #####
 @app.callback(
-    Output('options-store', 'data'),
+    Output('chantier-select', 'data'),
     Output('url', 'pathname'),
-    [Input('map-geo', 'clickData'),
-    State('options-store', 'data')]
+    Input('map-geo', 'clickData')
     )
-def store_chantier(clickData, options):
-    # try:
-    data={}
-    chantier = clickData['points'][0]['hovertext']
-    options['chantier']=chantier
-    return options, '/chantier'
-    # except:
-    #     return options, '/', {}
+def store_chantier(clickData):
+    try:
+        chantier = clickData['points'][0]['hovertext']
+        return chantier, '/chantier'
+    except:
+        return {}, '/'
 
