@@ -12,9 +12,8 @@ app.layout = html.Div(
     [
         dcc.Store(id='chantier-select', data={}, storage_type='session'),
         dcc.Store(id='secteur-select', data={}, storage_type='session'),
-        dcc.Store(id='secteurs-params', data={}, storage_type='session'),
-        dcc.Store(id='capteurs-params', data={}, storage_type='session'),
-        # dcc.Store(id='files-store', data={}, storage_type='session'),
+        dcc.Store(id='global-params', data={}, storage_type='session'),
+        dcc.Store(id='provis-params', data={}, storage_type='session'),
         dcc.Location(id="url", refresh=False),
         html.Div(id='navBar'),
         html.Div(id="page-content")

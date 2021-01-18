@@ -352,37 +352,36 @@ layout = html.Div(
         Output("table_tan", "data"),
     ],
     [
-        Input("secteur-store", "data"),
+        Input("secteur-select", "data"),
         Input("nb_curv", "value"),
         Input("nb_curv2", "value"),
         Input("nb_curv3", "value"),
         Input("prof", "value"),
-        Input("chantier-store", "data"),
+        Input("chantier-select", "data"),
     ]
 )
-def update_graphs(secteur, nb_courbes, nb_courbes2, nb_courbes3, profondeur, chantier):
-    # try:
-    with engine.connect() as con:
-        query=f"select * from capteur where secteur ='{secteur}' and type='inclino' and chantier='{chantier}'"
-        inclino = pd.read_sql_query(query, con=con).capteur.unique()[0]
-    dfnorm = get_data(chantier, 'actif', f'{inclino}_norm.csv', sep=False)
-    dftan = get_data(chantier, 'actif', f'{inclino}_tan.csv', sep=False)
-    fig1 = create_graph_1(dfnorm, chantier, inclino, nb_courbes3, 'normal')
-    fig2 = create_graph_1(dftan, chantier, inclino, nb_courbes3, 'tangentiel')
-    fig3 = create_graph_2(dfnorm, chantier, inclino, nb_courbes, 'normal')
-    fig4 = create_graph_2(dftan, chantier, inclino, nb_courbes, 'tangentiel')
-    fig5 = create_3d_graph(dfnorm, dftan, chantier, inclino, nb_courbes)
-    fig6 = create_graph_3(dfnorm, chantier, inclino, nb_courbes2, 'normal')
-    fig7 = create_graph_3(dftan, chantier, inclino, nb_courbes2, 'tangentiel')
-    fig8 = create_graph_4(dfnorm, chantier, inclino, profondeur, 'normal')
-    fig9 = create_graph_4(dftan, chantier, inclino, profondeur, 'tangentiel')
-    tablenorm = dfnorm.set_index("profondeur").T[[2, 5, 10, 20, 30, 40, 50, 60]].iloc[-15:, :]
-    tablenorm = tablenorm.reset_index().rename(columns={"index": "Date"})
-    tabletan = dftan.set_index("profondeur").T[[2, 5, 10, 20, 30, 40, 50, 60]].iloc[-15:, :]
-    tabletan = tabletan.reset_index().rename(columns={"index": "Date"})
-    return fig1, fig2, fig3, fig4, fig5,fig6, fig7, fig8, fig9, tablenorm.to_dict("rows"), tabletan.to_dict("rows")
-    # except:
-    #     return {}, {}, {}, {}, {}, {}, {}, {}, {}, [],[]
+def update_graphs(secteur_selected, nb_courbes, nb_courbes2, nb_courbes3, profondeur, chantier):
+    try:
+        secteur = list(secteur_selected.keys())[0]
+        inclino = secteur_selected[secteur]['inclino'][0]
+        dfnorm = get_data(chantier, 'actif', f'{inclino}_norm.csv', sep=False)
+        dftan = get_data(chantier, 'actif', f'{inclino}_tan.csv', sep=False)
+        fig1 = create_graph_1(dfnorm, chantier, inclino, nb_courbes3, 'normal')
+        fig2 = create_graph_1(dftan, chantier, inclino, nb_courbes3, 'tangentiel')
+        fig3 = create_graph_2(dfnorm, chantier, inclino, nb_courbes, 'normal')
+        fig4 = create_graph_2(dftan, chantier, inclino, nb_courbes, 'tangentiel')
+        fig5 = create_3d_graph(dfnorm, dftan, chantier, inclino, nb_courbes)
+        fig6 = create_graph_3(dfnorm, chantier, inclino, nb_courbes2, 'normal')
+        fig7 = create_graph_3(dftan, chantier, inclino, nb_courbes2, 'tangentiel')
+        fig8 = create_graph_4(dfnorm, chantier, inclino, profondeur, 'normal')
+        fig9 = create_graph_4(dftan, chantier, inclino, profondeur, 'tangentiel')
+        tablenorm = dfnorm.set_index("profondeur").T[[2, 5, 10, 20, 30, 40, 50, 60]].iloc[-15:, :]
+        tablenorm = tablenorm.reset_index().rename(columns={"index": "Date"})
+        tabletan = dftan.set_index("profondeur").T[[2, 5, 10, 20, 30, 40, 50, 60]].iloc[-15:, :]
+        tabletan = tabletan.reset_index().rename(columns={"index": "Date"})
+        return fig1, fig2, fig3, fig4, fig5,fig6, fig7, fig8, fig9, tablenorm.to_dict("rows"), tabletan.to_dict("rows")
+    except:
+        return {}, {}, {}, {}, {}, {}, {}, {}, {}, [],[]
 
 def create_graph_1(dfi, chantier, inclino, nb_courbes, title):
     df = dfi.copy()

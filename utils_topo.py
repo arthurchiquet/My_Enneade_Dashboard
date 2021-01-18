@@ -33,20 +33,16 @@ layout = html.Div(
 
 @app.callback(
     Output("time-series", "figure"),
-    Input("secteur-store", "data"),
-    State("chantier-store", "data"),
-    State("files-store", "data")
+    Input("secteur-select", "data"),
+    State("chantier-select", "data"),
 )
-def update_timeseries(secteur, chantier, data):
-    try:
-        with engine.connect() as con:
-            query1="select * from capteur where secteur ='%s' and type='cible'"%secteur
-            query2="select * from secteur where secteur ='%s'"%secteur
-            list_capteur = pd.read_sql_query(query1, con=con).capteur.unique()
-            angle=pd.read_sql_query(query2, con= con).angle[0]
-        return graph_topo(data['topo'], chantier, list_capteur, angle)
-    except:
-        return {}
+def update_timeseries(secteur_selected, chantier):
+    # try:
+    secteur = list(secteur_selected.keys())[0]
+    list_capteur = secteur_selected[secteur]['cible']
+    return graph_topo(chantier, list_capteur, 0)
+    # except:
+    #     return {}
 
 
 def first(col):
@@ -69,12 +65,12 @@ def get_columns(df):
     return [col[i] for i in range(0, df.shape[1] - 1, 3)]
 
 
-def clean_col(str):
-    return str.replace("Auto-", "").replace("Manu-", "").replace("Sd-", "")
+# def clean_col(str):
+#     return str.replace("Auto-", "").replace("Manu-", "").replace("Sd-", "")
 
 
 def select_columns(df, liste):
-    return [col for col in df.columns if clean_col(col)[:-2] in liste]
+    return [col for col in df.columns if col[:-2] in liste]
 
 
 def facet_name(string):
@@ -88,10 +84,10 @@ def facet_name(string):
 def remove_xyz(string):
     return string[:-2]
 
-def format_df(df, list_capteur, angle):
+def format_df(df, list_cibles, angle):
     df.date = pd.to_datetime(df.date, format="%d/%m/%Y")
-    list_colonnes = select_columns(df, list_capteur)
-    df = df.set_index("date")[list_colonnes]
+    liste_colonnes = select_columns(df, list_cibles)
+    df = df.set_index("date")[liste_colonnes]
     df = delta(df)
     for i in range(df.shape[1]//3):
         norm = df.iloc[:,3*i]*cos(radians(angle)) - df.iloc[:,3*i+1]*sin(radians(angle))
@@ -103,9 +99,9 @@ def format_df(df, list_capteur, angle):
     df["Cible"] = df["level_1"].map(remove_xyz)
     return df.rename(columns={0: "delta"}).drop(columns="level_1")
 
-def graph_topo(chantier, cible, angle, height = 700, memo = False, spacing = 0.08):
+def graph_topo(chantier, list_cibles, angle, height = 700, memo = False, spacing = 0.08, showlegend=True):
     df = memoized_data(chantier, 'actif', 'topographie.csv')
-    dff = format_df(df, cible, angle)
+    dff = format_df(df, list_cibles, angle)
     fig = px.line(
         dff,
         x="date",
@@ -118,7 +114,7 @@ def graph_topo(chantier, cible, angle, height = 700, memo = False, spacing = 0.0
     fig.update_yaxes(mirror='allticks', title=dict(text=None), gridcolor='grey')
     fig.update_traces(hovertemplate=None)
     fig.update_layout(
-        showlegend=False,
+        showlegend=showlegend,
         height=height,
         plot_bgcolor=colors['background'],
         paper_bgcolor=colors['background'],

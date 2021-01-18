@@ -98,9 +98,13 @@ def extract_position(df):
 
 #######################  AFFICHAGE MAP CHANTIER   ######################################################
 
-def update_map_chantier(chantier, secteurs, capteurs):
-    # try:
-    df = pd.concat({k: pd.DataFrame.from_dict(v, 'index') for k, v in capteurs.items()},axis=0).reset_index().rename(columns={'level_0':'type','level_1':'capteur'})
+def update_map_chantier(chantier, params):
+    try:
+        secteurs = params['secteur']
+        del params['secteur']
+    except:
+        secteurs = []
+    df = pd.concat({k: pd.DataFrame.from_dict(v, 'index') for k, v in params.items()},axis=0).reset_index().rename(columns={'level_0':'type','level_1':'capteur'})
 
     fig = px.scatter_mapbox(
         df,

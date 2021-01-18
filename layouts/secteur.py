@@ -85,54 +85,54 @@ def collapse_parametres(n, is_open):
         return not is_open
     return is_open
 
-@app.callback(
-    [
-        Output("table_parametres", "data"),
-        Output("table_parametres", "columns"),
-        ],
-    [
-        Input("chantier-store", "data"),
-        Input("secteur-store", "data"),
-        Input("tabs_secteurs", "active_tab"),
-        ]
-)
-def update_table_parametres(chantier, secteur, tab):
-    df = get_data(chantier, 'paramètres', 'parametres_generaux.csv', sep=False)
-    params = df[(df.chantier==chantier) & (df.secteur==secteur)]
-    with engine.connect() as con:
-        query=f"select * from capteur where chantier='{chantier}' and secteur='{secteur}'"
-        params = pd.read_sql_query(query, con=con)
-        if tab == 1:
-            filtre_secteur = tuple(params[params.type=='cible'].capteur)
-            query=f'select * from cible_param where cible in {filtre_secteur}'
-            parametres = pd.read_sql_query(query, con=con)
-        if tab == 2:
-            filtre_secteur = tuple(params[params.type=='inclino'].capteur)
-            query=f'select * from inclino_param where cible in {filtre_secteur}'
-            parametres = pd.read_sql_query(query, con=con)
-        if tab == 3:
-            filtre_secteur = tuple(params[params.type=='tirant'].capteur)
-            query=f'select * from tirant_param where cible in {filtre_secteur}'
-            parametres = pd.read_sql_query(query, con=con)
-        if tab == 5:
-            filtre_secteur = tuple(params[params.type=='piezo'].capteur)
-            query=f'select * from piezo_param where cible in {filtre_secteur}'
-            parametres = pd.read_sql_query(query, con=con)
-        if tab == 4:
-            filtre_secteur = tuple(params[params.type=='jauge'].capteur)
-            query=f'select * from jauge_param where cible in {filtre_secteur}'
-            parametres = pd.read_sql_query(query, con=con)
-        if tab == 6:
-            filtre_secteur = tuple(params[params.type=='buton'].capteur)
-            query=f'select * from buton_param where cible in {filtre_secteur}'
-            parametres = pd.read_sql_query(query, con=con)
-    return parametres.to_dict("records"), [{"name": i, "id": i} for i in parametres.columns]
+# @app.callback(
+#     [
+#         Output("table_parametres", "data"),
+#         Output("table_parametres", "columns"),
+#         ],
+#     [
+#         Input("chantier-store", "data"),
+#         Input("secteur-store", "data"),
+#         Input("tabs_secteurs", "active_tab"),
+#         ]
+# )
+# def update_table_parametres(chantier, secteur, tab):
+#     df = get_data(chantier, 'paramètres', 'parametres_generaux.csv', sep=False)
+#     params = df[(df.chantier==chantier) & (df.secteur==secteur)]
+#     with engine.connect() as con:
+#         query=f"select * from capteur where chantier='{chantier}' and secteur='{secteur}'"
+#         params = pd.read_sql_query(query, con=con)
+#         if tab == 1:
+#             filtre_secteur = tuple(params[params.type=='cible'].capteur)
+#             query=f'select * from cible_param where cible in {filtre_secteur}'
+#             parametres = pd.read_sql_query(query, con=con)
+#         if tab == 2:
+#             filtre_secteur = tuple(params[params.type=='inclino'].capteur)
+#             query=f'select * from inclino_param where cible in {filtre_secteur}'
+#             parametres = pd.read_sql_query(query, con=con)
+#         if tab == 3:
+#             filtre_secteur = tuple(params[params.type=='tirant'].capteur)
+#             query=f'select * from tirant_param where cible in {filtre_secteur}'
+#             parametres = pd.read_sql_query(query, con=con)
+#         if tab == 5:
+#             filtre_secteur = tuple(params[params.type=='piezo'].capteur)
+#             query=f'select * from piezo_param where cible in {filtre_secteur}'
+#             parametres = pd.read_sql_query(query, con=con)
+#         if tab == 4:
+#             filtre_secteur = tuple(params[params.type=='jauge'].capteur)
+#             query=f'select * from jauge_param where cible in {filtre_secteur}'
+#             parametres = pd.read_sql_query(query, con=con)
+#         if tab == 6:
+#             filtre_secteur = tuple(params[params.type=='buton'].capteur)
+#             query=f'select * from buton_param where cible in {filtre_secteur}'
+#             parametres = pd.read_sql_query(query, con=con)
+#     return parametres.to_dict("records"), [{"name": i, "id": i} for i in parametres.columns]
 
 @app.callback(
     Output('tab_content', 'children'),
     [Input('tabs_secteurs', 'active_tab')],
-    [State('chantier-store', 'data'),
-    State('secteur-store', 'data')])
+    [State('chantier-select', 'data'),
+    State('secteur-select', 'data')])
 def return_tabs_content(tab, chantier, secteur):
     if tab == 1:
         return collapse, html.Br(), utils_topo.layout

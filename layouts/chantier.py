@@ -42,7 +42,8 @@ layout = html.Div(
                                         id='map-chantier',
                                         config={ "scrollZoom": True, 'modeBarButtonsToRemove':['lasso2d']},
                                         figure=empty_figure()),
-                                    html.Pre(id='hover-data', style=styles['pre']),
+                                    # html.Pre(id='hover-data', style=styles['pre']),
+                                    html.Br(),
                                     dbc.Row(
                                         [
                                             dbc.RadioItems(
@@ -58,7 +59,6 @@ layout = html.Div(
                                         ]
                                             , justify='center'
                                     ),
-                                    dbc.Row(id='button-secteur')
                                 ]
                             ), justify='center'
                         )
@@ -66,6 +66,7 @@ layout = html.Div(
                 ),
                 dbc.Col(
                     [
+                        html.Br(),
                         dbc.Row(
                             dbc.Container(
                                 id='right-content',
@@ -79,64 +80,87 @@ layout = html.Div(
     ]
 )
 
-@app.callback(
-    Output('hover-data', 'children'),
-    Input('map-chantier', 'clickData'))
-def display_hover_data(hoverData):
-    return json.dumps(hoverData, indent=2)
+# @app.callback(
+#     Output('hover-data', 'children'),
+#     Input('global-params', 'data'))
+# def display_hover_data(selectedData):
+#     return json.dumps(selectedData, indent=2)
 
-#### AFFICHAGE LA CARTE DU CHANTIER SELECTIONNE #####
+
+
+### AFFICHAGE LA CARTE DU CHANTIER SELECTIONNE #####
 @app.callback(
     Output("map-chantier", "figure"),
     [Input('chantier-select', 'data'),
-    Input('secteurs-params', 'data'),
-    State('capteurs-params', 'data'),
-    # State('map-chantier', 'figure')
+    Input('global-params', 'data'),
     ])
-def affichage_map(chantier, secteurs, capteurs):
-    return update_map_chantier(chantier, secteurs, capteurs)
+def affichage_map(chantier, params):
+    return update_map_chantier(chantier, params)
+
 
 @app.callback(
-    Output('secteurs-params', 'data'),
-    Output('capteurs-params', 'data'),
-    Input('chantier-select', 'data'),
-    # State('secteurs-params','data'),
-    # State('capteurs-params','data')
+    Output('global-params', 'data'),
+    Input('provis-params', 'data'),
+    Input('chantier-select', 'data')
     )
-def update_params(chantier):
+def update_params(params, chantier):
     if chantier == {}:
-        return {}, {}
+        return {}
     else:
-        secteurs = download_json(chantier, 'paramètres', 'secteurs.json')
-        capteurs_sup = download_json(chantier, 'paramètres', 'capteurs.json')
-        data = memoized_data(chantier, 'actif', 'topographie.csv')
-        data_positions = extract_position(data).set_index('cible')
-        capteurs = {'cible' : data_positions.to_dict('index')}
-        capteurs.update(capteurs_sup)
-        return secteurs, capteurs
+        if params == {}:
+            try:
+                params = download_json(chantier, 'paramètres', 'positions.json')
+            except:
+                params = {}
+            data = memoized_data(chantier, 'actif', 'topographie.csv')
+            data_positions = extract_position(data).set_index('cible')
+            capteurs = {'cible' : data_positions.to_dict('index')}
+            params.update(capteurs)
+        else:
+            pass
+        return params
 
 
-# @app.callback(
-#     Output('secteur-select', 'data'),
-#     Input('map-chantier', 'clickData'),
-#     State('secteurs-params', 'data'),
-#     State('capteurs-params', 'data')
-#     # State('button','n_clicks'),
-#     )
-# def select_secteur(selection, secteurs_params, capteurs_params):
+help_text = html.Div(
+    [
+        dcc.Markdown('''
+## **AIDE**
+        ''')
+    ]
+)
 
-#     secteur = secteurs_params[selection]
-#     df = pd.concat({k: pd.DataFrame.from_dict(v, 'index') for k, v in capteurs_params.items()},axis=0).reset_index().rename(columns={'level_0':'type','level_1':'capteur'})
-#     capteurs = df[(df.lon > s[0][0]) & (df.lon < s[1][0]) & (df.lat < s[0][1]) &(df.lat > s[1][1])]
-#     return {secteur: {t: capteurs[capteurs['type']==t]['capteur'].tolist() for t in capteurs['type'].unique()}}
+collapse = html.Div(
+    [
+        dbc.Row(
+            dbc.Button(
+                "Aide",
+                id="help",
+                color='link'
+            ), justify='center'
+        ),
+        dbc.Collapse(
+            dbc.Card(dbc.CardBody([help_text])),
+            id="card-help",
+        )
+    ]
+)
 
-
+@app.callback(
+    Output("card-help", "is_open"),
+    [Input("help", "n_clicks")],
+    [State("card-help", "is_open")],
+)
+def collapse_parametres(n, is_open):
+    if n:
+        return not is_open
+    return is_open
 
 @app.callback(
     Output('right-content', 'children'),
     [Input('options-map', 'value'),
-    Input("map-chantier", "clickData")])
-def display_right_content(option, clickData):
+    Input("map-chantier", "clickData"),
+    State('global-params', 'data')])
+def display_right_content(option, clickData, params):
     if option == 1:
         if clickData:
             return [
@@ -152,29 +176,180 @@ def display_right_content(option, clickData):
         else:
             return []
     elif option == 2:
-        return [
-            # dbc.Row()
-            dbc.Row(
-                dcc.Dropdown(
-                    id="type_modif",
-                    style={"width": "50%", 'color':'black'},
-                    options=[
-                        {"label": "Secteur", "value": 1},
-                        {"label": "Sous-secteur", "value": 2},
-                        {"label": "Inclinomètre", "value": 3},
-                        {"label": "Tirant", "value": 4},
-                        {"label": "Jauge", "value": 5},
-                        {"label": "Piezomètre", "value": 6},
-                    ],
-                    clearable=False,
-                ), justify='center'
-            )
-        ]
+        return dbc.Card(
+            [
+                dbc.CardHeader(dbc.Row(html.H4("Ajouter ou modifier"), justify='center')),
+                collapse,
+                dbc.CardBody(
+                    [
+                        dcc.Dropdown(
+                            id="type_option",
+                            style={'color':'black'},
+                            options=[
+                                {"label": "Ajouter / Modifier", "value": 1},
+                                {"label": "Supprimer", "value": 2},
+                            ],
+                            placeholder='Options',
+                            clearable=False,
+                        ),
+                        html.Br(),
+                        dcc.Dropdown(
+                            id="type_param",
+                            style={'color':'black'},
+                            options=[
+                                {"label": "Secteur", "value": 1},
+                                {"label": "Sous-secteur", "value": 2},
+                                {"label": "Inclinomètre", "value": 3},
+                                {"label": "Tirant", "value": 4},
+                                {"label": "Jauge", "value": 5},
+                                {"label": "Piezomètre", "value": 6},
+                            ],
+                            placeholder='Choix du paramètre',
+                            clearable=False,
+                        ),
+                        html.Br(),
+                        dbc.Input(placeholder='Nom du paramètre', id='nom_param'),
+
+                        html.Br(),
+                        dbc.Row(dbc.Button('Enregister les modifications', id='save-update', href='/chantier', n_clicks=0), justify='center'),
+                        html.Br(),
+                        dbc.Row(html.Div(id='update-success', className="text-success"), justify='center')
+
+                    ]
+                )
+            ],  style={"width": "41rem"},
+        )
 
     elif option == 3:
-        return [
+        return dbc.Card(
+            [
+                dbc.CardHeader(dbc.Row(html.H4("Sélectionner un secteur"), justify='center')),
+                dbc.CardBody(
+                    [
+                        dbc.Row(dbc.Label('Choix du secteur'), justify='center'),
+                        dbc.Row(
+                            dcc.Dropdown(
+                                id="secteur-selection",
+                                style={'color':'black'},
+                                options=[
+                                    {"label": secteur, "value": secteur} for secteur in params['secteur']
+                                ],
+                                # multi=True,
+                            ), justify='center'
+                        ),
+                        html.Br(),
+                        dbc.Row(dbc.Button('Accéder au bilan', id='go-secteur', href='/secteur', n_clicks=0), justify='center')
+                    ]
+                )
+            ], style={"width": "41rem"},
+        )
 
-        ]
+
+
+
+@app.callback(
+    Output('secteur-select', 'data'),
+    [Input('go-secteur', 'n_clicks'),
+    State('secteur-selection', 'value'),
+    State('global-params', 'data')]
+    )
+def select_secteur(n_clicks, secteur_selected, params):
+    if n_clicks >0:
+        secteurs_params=params['secteur']
+        secteur = secteurs_params[secteur_selected]
+        del params['secteur']
+        df = pd.concat({k: pd.DataFrame.from_dict(v, 'index') for k, v in params.items()},axis=0).reset_index().rename(columns={'level_0':'type','level_1':'capteur'})
+        capteurs = df[(df.lon > secteur[0][0]) & (df.lon < secteur[1][0]) & (df.lat < secteur[0][1]) &(df.lat > secteur[1][1])]
+        return {secteur_selected: {t: capteurs[capteurs['type']==t]['capteur'].tolist() for t in capteurs['type'].unique()}}
+    else:
+        return {}
+
+
+@app.callback(
+    Output('update-success', 'children'),
+    Output('provis-params', 'data'),
+    [Input('save-update', 'n_clicks'),
+    State('type_option', 'value'),
+    State('type_param', 'value'),
+    State('nom_param', 'value'),
+    State('map-chantier', 'selectedData'),
+    State('global-params', 'data'),
+    State('chantier-select', 'data')]
+    )
+def add_modif_param(n_clicks, option, param, nom_param, selectedData, params, chantier):
+    if option == 1:
+        if selectedData:
+            range_selection = selectedData['range']['mapbox']
+            lat = (range_selection[0][1]+range_selection[1][1])/2
+            lon = (range_selection[0][0]+range_selection[1][0])/2
+            if param == 1:
+                try:
+                    params['secteur'][nom_param]=range_selection
+                except:
+                    params['secteur']={nom_param : range_selection}
+                save_json(params, chantier, 'paramètres', 'positions.json'), params
+                return 'Les paramètres ont bien été enregistrés', params
+            elif param ==2:
+                return '', params
+            elif param ==3:
+                try:
+                    params['inclino'][nom_param]={'lat' : lat, 'lon' :lon}
+                except:
+                    params['inclino']={nom_param : {'lat' : lat, 'lon' :lon}}
+                save_json(params, chantier, 'paramètres', 'positions.json')
+                return 'Les paramètres ont bien été enregistrés', params
+            elif param ==4:
+                try:
+                    params['tirant'][nom_param]={'lat' : lat, 'lon' :lon}
+                except:
+                    params['tirant']={nom_param : {'lat' : lat, 'lon' :lon}}
+                save_json(params, chantier, 'paramètres', 'positions.json')
+                return 'Les paramètres ont bien été enregistrés', params
+            elif param ==5:
+                try:
+                    params['jauge'][nom_param]={'lat' : lat, 'lon' :lon}
+                except:
+                    params['jauge']={nom_param : {'lat' : lat, 'lon' :lon}}
+                save_json(params, chantier, 'paramètres', 'positions.json')
+                return 'Les paramètres ont bien été enregistrés', params
+            elif param ==6:
+                try:
+                    params['piezo'][nom_param]={'lat' : lat, 'lon' :lon}
+                except:
+                    params['piezo']={nom_param : {'lat' : lat, 'lon' :lon}}
+                save_json(params, chantier, 'paramètres', 'positions.json')
+                return 'Les paramètres ont bien été enregistrés', params
+            else:
+                return '', params
+
+    elif option ==2:
+        if param == 1:
+            del params['secteur'][nom_param]
+            save_json(params, chantier, 'paramètres', 'positions.json')
+            return 'Le secteur a bien été supprimé', params
+        elif param ==2:
+            return '', params
+        elif param == 3:
+            del params['inclino'][nom_param]
+            save_json(params, chantier, 'paramètres', 'positions.json')
+            return 'L\'inclinomètre a bien été supprimé', params
+        elif param == 4:
+            del params['tirant'][nom_param]
+            save_json(params, chantier, 'paramètres', 'positions.json')
+            return 'Le tirant a bien été supprimé', params
+        elif param == 5:
+            del params['jauge'][nom_param]
+            save_json(params, chantier, 'paramètres', 'positions.json')
+            return 'La jauge a bien été supprimé', params
+        elif param == 6:
+            del params['piezo'][nom_param]
+            save_json(params, chantier, 'paramètres', 'positions.json')
+            return 'Le piezomètre a bien été supprimé', params
+        else:
+            return '', params
+    else:
+        return '', params
+
 
 ### AFFICHE LA COURBE CORRESPONDANT AU CAPTEUR SELECTIONNÉ ####
 @app.callback(
@@ -196,7 +371,7 @@ def affichage_courbe_capteur(selectedData, chantier):
 ### RENVOIE LA METHODE D'AFFICHAGE DE LA COURBE EN FONCTION DU TYPE DE CAPTEUR ####
 def selection_affichage(chantier, customdata, text):
     if customdata == 'cible':
-        return utils_topo.graph_topo(chantier, text, 0, height = 550, spacing=0.06)
+        return utils_topo.graph_topo(chantier, text, 0, height = 550, spacing=0.06, showlegend=False)
     elif customdata == 'inclino':
         return utils_inclino.graph_inclino(chantier, text)
     elif customdata == 'tirant':
