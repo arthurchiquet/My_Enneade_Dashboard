@@ -28,13 +28,12 @@ layout = html.Div([
 
 @app.callback(
     Output("courbe_jauge", "figure"),
-    [Input("chantier-store", "data"),
-     Input("secteur-store", 'data')])
-def update_graph_jauges(chantier, secteur):
+    [Input("chantier-select", "data"),
+     Input("secteur-select", 'data')])
+def update_graph_jauges(chantier, secteurselected):
     try:
-        with engine.connect() as con:
-            query=f"select * from capteur where chantier='{chantier}' and secteur ='{secteur}' and type='jauge'"
-            liste_jauges = pd.read_sql_query(query, con=con).capteur.unique()
+        secteur = list(secteurselected.keys())[0]
+        liste_jauges = secteurselected[secteur]['jauge']
         return graph_jauge(chantier, liste_jauges)
     except:
         return {}
@@ -52,14 +51,19 @@ def diff_jauge(df):
         df[col] = (df[col] / first(df[col]))*100
     return df
 
-def graph_jauge(chantier, jauge):
+def graph_jauge(chantier, jauges, height=None):
     df = get_data(chantier, 'actif', 'jauges.csv', sep=False)
     df.Date = pd.to_datetime(df.Date, format="%d/%m/%Y")
-    liste_jauges = ['Date']+[col for col in df.columns if jauge in col[-1].lower()]
-    df = df[liste_jauges].set_index("Date")
+    liste_colonnes=[]
+    for jauge in jauges:
+        for col in df.columns[1:]:
+            if jauge.lower() in col.lower().replace('jauge',''):
+                liste_colonnes.append(col)
+    df = df.set_index("Date")[liste_colonnes]
     df = diff_jauge(df)
     fig = px.line(df.reset_index(), x="Date", y=df.columns, line_shape='spline')
     fig.update_layout(
+        height=height,
         showlegend=False,
         yaxis_title="% Jauges",
         xaxis_title=None,

@@ -104,6 +104,7 @@ def update_map_chantier(chantier, params):
         del params['secteur']
     except:
         secteurs = []
+
     df = pd.concat({k: pd.DataFrame.from_dict(v, 'index') for k, v in params.items()},axis=0).reset_index().rename(columns={'level_0':'type','level_1':'capteur'})
 
     fig = px.scatter_mapbox(
@@ -118,6 +119,17 @@ def update_map_chantier(chantier, params):
     fig.update_traces(
         hovertemplate='%{text}',
         textfont_size=11)
+
+    # fig.update_traces(marker=dict(color='#DCDCDC'), selector=dict(name="cible"))
+    fig.update_traces(marker=dict(size=20, color='#FF6347'), selector=dict(name="inclino"))
+    fig.update_traces(marker=dict(size=20, color='#FF8C00'),selector=dict(name="tirant"))
+    fig.update_traces(marker=dict(size=20, color='#7CFC00'),selector=dict(name="piezo"))
+    fig.update_traces(marker=dict(size=20, color='#9370DB'),selector=dict(name="button"))
+
+
+    # fig.for_each_trace(
+    #     lambda trace: trace.update(marker=dict(size=20)) if trace.name == "inclino" else (),
+    # )
 
     for secteur in secteurs:
         coords=secteurs[secteur]
@@ -186,13 +198,13 @@ def update_map_chantier(chantier, params):
                 buttons=list([
                     dict(label="Capteurs",
                          method="update",
-                         args=[{"visible": [True]+[False for i in range(len(secteurs))]}]),
+                         args=[{"visible": [True for i in range(df.type.nunique())]+[False for i in range(len(secteurs))]}]),
                     dict(label="Secteurs",
                          method="update",
-                         args=[{"visible": [False]+[True for i in range(len(secteurs))]}]),
+                         args=[{"visible": [False for i in range(df.type.nunique())]+[True for i in range(len(secteurs))]}]),
                     dict(label="Tous",
                          method="update",
-                         args=[{"visible": [True]+[True for i in range(len(secteurs))]}]),
+                         args=[{"visible": [True for i in range(df.type.nunique())]+[True for i in range(len(secteurs))]}]),
                 ]),
             ),
             dict(

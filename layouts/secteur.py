@@ -33,8 +33,49 @@ table_parametres = html.Div([
 
             )
 
+table_secteur = html.Div([
+            dt.DataTable(
+                id="table_secteur",
+                editable=True,
+                filter_action="native",
+                fixed_rows={'headers': True},
+                style_cell={
+                    'backgroundColor': 'rgb(50, 50, 50)',
+                    'color': 'white',
+                    'textAlign': 'center'
+                },
+                style_header={
+                    'backgroundColor': 'rgb(20, 20, 20)',
+                    'color': 'white',
+                    "fontWeight": "bold"},
+                style_table={'height': '500px', 'overflowY': 'auto'}
+                    )
+                ]
+
+            )
+
+
+collapse_secteur = html.Div(
+    [
+        dbc.Row(
+            dbc.Button(
+                'Paramètres secteur',
+                id="collapse-secteur",
+                className="mb-3",
+                color="dark",
+            ), justify='center'
+        ),
+        dbc.Collapse(
+            dbc.Card(dbc.CardBody([table_secteur])),
+            id="card-secteur",
+        )
+    ]
+)
+
 layout=html.Div(
     [
+        html.Br(),
+        collapse_secteur,
         html.Br(),
         dbc.Row(
             [
@@ -47,40 +88,51 @@ layout=html.Div(
                         dbc.Tab(label="Jauges", tab_id=4),
                         dbc.Tab(label="Butons", tab_id=6),
                     ],
-                    id="tabs_secteurs",
+                    id="tabs_type",
                     active_tab="tab-topo",
                 )
             ], justify='center'
         ),
         html.Br(),
-        html.Div(id='tab_content')
+        html.Div(id='tab_type_content')
     ]
 )
 
-collapse = html.Div(
+
+collapse_type = html.Div(
     [
         dbc.Row(
             dbc.Button(
                 "Afficher les paramètres",
-                id="collapse-secteur",
-                className="mb-3",
-                color="primary",
+                id="collapse-type",
+                # className="mb-3",
+                style={'fontColor':'white'},
             ), justify='center'
         ),
         dbc.Collapse(
             dbc.Card(dbc.CardBody([table_parametres])),
-            id="card-secteur",
+            id="card-type",
         )
     ]
 )
 
 
 @app.callback(
+    Output("card-type", "is_open"),
+    [Input("collapse-type", "n_clicks")],
+    [State("card-type", "is_open")],
+)
+def collapse_parametres(n, is_open):
+    if n:
+        return not is_open
+    return is_open
+
+@app.callback(
     Output("card-secteur", "is_open"),
     [Input("collapse-secteur", "n_clicks")],
     [State("card-secteur", "is_open")],
 )
-def collapse_parametres(n, is_open):
+def collapse_secteur(n, is_open):
     if n:
         return not is_open
     return is_open
@@ -129,18 +181,18 @@ def collapse_parametres(n, is_open):
 #     return parametres.to_dict("records"), [{"name": i, "id": i} for i in parametres.columns]
 
 @app.callback(
-    Output('tab_content', 'children'),
-    [Input('tabs_secteurs', 'active_tab')],
+    Output('tab_type_content', 'children'),
+    [Input('tabs_type', 'active_tab')],
     [State('chantier-select', 'data'),
     State('secteur-select', 'data')])
 def return_tabs_content(tab, chantier, secteur):
     if tab == 1:
-        return collapse, html.Br(), utils_topo.layout
+        return collapse_type, html.Br(), utils_topo.layout
     elif tab == 2:
-        return collapse, html.Br(), utils_inclino.layout
+        return collapse_type, html.Br(), utils_inclino.layout
     elif tab == 3:
-        return collapse, html.Br(), utils_tirant.layout
+        return collapse_type, html.Br(), utils_tirant.layout
     elif tab == 4:
-        return collapse, html.Br(), utils_jauge.layout
+        return collapse_type, html.Br(), utils_jauge.layout
     elif tab == 5:
-        return collapse, html.Br(), utils_piezo.layout
+        return collapse_type, html.Br(), utils_piezo.layout

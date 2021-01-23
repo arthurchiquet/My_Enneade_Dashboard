@@ -30,7 +30,6 @@ styles = {
 layout = html.Div(
     children=[
         html.Br(),
-        # html.Img(src=app.get_asset_url('test.png'))
         dbc.Row(
             [
                 dbc.Col(
@@ -41,7 +40,8 @@ layout = html.Div(
                                     dcc.Graph(
                                         id='map-chantier',
                                         config={ "scrollZoom": True, 'modeBarButtonsToRemove':['lasso2d']},
-                                        figure=empty_figure()),
+                                        figure=empty_figure(),
+                                    ),
                                     # html.Pre(id='hover-data', style=styles['pre']),
                                     html.Br(),
                                     dbc.Row(
@@ -59,18 +59,18 @@ layout = html.Div(
                                         ]
                                             , justify='center'
                                     ),
-                                ]
+                                ],
                             ), justify='center'
                         )
                     ]
                 ),
                 dbc.Col(
                     [
-                        html.Br(),
+                        # html.Br(),
                         dbc.Row(
                             dbc.Container(
                                 id='right-content',
-                                children=[]
+                                children=[],
                             ), justify='center'
                         )
                     ]
@@ -133,7 +133,7 @@ collapse = html.Div(
     [
         dbc.Row(
             dbc.Button(
-                "Aide",
+                "?",
                 id="help",
                 color='link'
             ), justify='center'
@@ -164,7 +164,7 @@ def display_right_content(option, clickData, params):
     if option == 1:
         if clickData:
             return [
-                dbc.Row(dbc.Label(id='titre_graph', size='lg'), justify = 'center'),
+                dbc.Row(html.H3(id='titre_graph'), justify = 'center'),
                 dbc.Row(dbc.Label(id='sous_titre_graph'), justify = 'center'),
                 dcc.Loading(
                     id = "loading-graph",
@@ -186,8 +186,9 @@ def display_right_content(option, clickData, params):
                             id="type_option",
                             style={'color':'black'},
                             options=[
-                                {"label": "Ajouter / Modifier", "value": 1},
-                                {"label": "Supprimer", "value": 2},
+                                {"label": "Ajouter", "value": 1},
+                                {"label": "Modifier", "value": 2},
+                                {"label": "Supprimer", "value": 3},
                             ],
                             placeholder='Options',
                             clearable=False,
@@ -209,7 +210,6 @@ def display_right_content(option, clickData, params):
                         ),
                         html.Br(),
                         dbc.Input(placeholder='Nom du paramètre', id='nom_param'),
-
                         html.Br(),
                         dbc.Row(dbc.Button('Enregister les modifications', id='save-update', href='/chantier', n_clicks=0), justify='center'),
                         html.Br(),
@@ -277,7 +277,7 @@ def select_secteur(n_clicks, secteur_selected, params):
     State('chantier-select', 'data')]
     )
 def add_modif_param(n_clicks, option, param, nom_param, selectedData, params, chantier):
-    if option == 1:
+    if option == 1 or option ==2:
         if selectedData:
             range_selection = selectedData['range']['mapbox']
             lat = (range_selection[0][1]+range_selection[1][1])/2
@@ -322,7 +322,7 @@ def add_modif_param(n_clicks, option, param, nom_param, selectedData, params, ch
             else:
                 return '', params
 
-    elif option ==2:
+    elif option ==3:
         if param == 1:
             del params['secteur'][nom_param]
             save_json(params, chantier, 'paramètres', 'positions.json')
@@ -363,7 +363,7 @@ def affichage_courbe_capteur(selectedData, chantier):
     try:
         customdata = selectedData['points'][0]['customdata'][0]
         text = selectedData['points'][0]['text']
-        return f'{customdata} {text}', selection_affichage(chantier, customdata, text), sous_titre(customdata)
+        return text, selection_affichage(chantier, customdata, text), sous_titre(customdata)
     except:
         return '', empty_figure(), ''
 
@@ -373,11 +373,11 @@ def selection_affichage(chantier, customdata, text):
     if customdata == 'cible':
         return utils_topo.graph_topo(chantier, text, 0, height = 550, spacing=0.06, showlegend=False)
     elif customdata == 'inclino':
-        return utils_inclino.graph_inclino(chantier, text)
+        return utils_inclino.graph_inclino(chantier, text, height=550)
     elif customdata == 'tirant':
         return utils_tirant.graph_tirant(chantier, text, height = 550, mode=2)
     elif customdata == 'jauge':
-        return utils_jauge.graph_jauge(chantier, text)
+        return utils_jauge.graph_jauge(chantier, text, height=550)
     elif customdata == 'piezo':
         return utils_piezo.graph_piezo(chantier, text)
     else:

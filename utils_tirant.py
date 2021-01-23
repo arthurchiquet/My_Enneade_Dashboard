@@ -48,14 +48,13 @@ layout = dbc.Container([
         Output("evol_tirants%", "figure"),
     ],
     [
-        Input("secteur-store", "data"),
-        Input("chantier-store", "data")
+        Input("secteur-select", "data"),
+        Input("chantier-select", "data")
     ]
 )
-def update_graph_tirants(secteur, chantier):
-    with engine.connect() as con:
-        query=f"select * from capteur where chantier='{chantier}' and secteur ='{secteur}' and type='tirant'"
-        liste_tirants = pd.read_sql_query(query, con=con).capteur.unique()
+def update_graph_tirants(secteurselected, chantier):
+    secteur = list(secteurselected.keys())[0]
+    liste_tirants = secteurselected[secteur]['tirant']
     return graph_tirant(chantier, liste_tirants)
 
 
@@ -81,7 +80,7 @@ def format_df(df, list_tirants):
     return df, df_ratio
 
 
-def graph_tirant(chantier, list_tirants, height=500, mode=1):
+def graph_tirant(chantier, list_tirants, height=400, mode=1):
     df = get_data(chantier, 'actif', 'tirants.csv', sep=False)
     df, df_ratio = format_df(df, list_tirants)
     fig1 = px.line(df.reset_index(), x='date', y=list_tirants)

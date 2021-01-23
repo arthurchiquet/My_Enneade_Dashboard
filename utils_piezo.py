@@ -32,7 +32,7 @@ layout = html.Div(
 @app.callback(
     Output("graph_meteo", "figure"),
     [
-        Input("chantier-store", "data"),
+        Input("chantier-select", "data"),
         Input('graph_piezo', 'relayoutData'),
     ],
 )
@@ -76,18 +76,14 @@ def update_graph_meteo(chantier, relayout_data):
 
 @app.callback(
     Output("graph_piezo", "figure"),
-    [Input("chantier-store", "data"),
-     Input('secteur-store', 'data'),
+    [Input("chantier-select", "data"),
+     Input('secteur-select', 'data'),
      ]
     )
-def update_graph_piezos(chantier, secteur):
-    if secteur == None:
-        return {}
-    else:
-        with engine.connect() as con:
-            query=f"select * from capteur where chantier='{chantier}' and secteur ='{secteur}' and type='piezo'"
-            piezo = pd.read_sql_query(query, con=con).capteur.unique()[0]
-        return graph_piezo(chantier, piezo)
+def update_graph_piezos(chantier, secteurselected):
+    secteur = list(secteurselected.keys())[0]
+    piezo = secteurselected[secteur]['piezo'][0]
+    return graph_piezo(chantier, piezo)
 
 
 def graph_piezo(chantier, piezo):

@@ -65,10 +65,6 @@ def get_columns(df):
     return [col[i] for i in range(0, df.shape[1] - 1, 3)]
 
 
-# def clean_col(str):
-#     return str.replace("Auto-", "").replace("Manu-", "").replace("Sd-", "")
-
-
 def select_columns(df, liste):
     return [col for col in df.columns if col[:-2] in liste]
 

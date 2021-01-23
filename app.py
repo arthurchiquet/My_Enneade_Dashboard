@@ -4,9 +4,9 @@ from dash.dependencies import Input, Output, State
 import dash_bootstrap_components as dbc
 from server import app
 from flask_login import logout_user, current_user
-from layouts import admin,conditions,error,login,login_fd,logout,profil,home,chantier,parametres, secteur
+from layouts import admin,conditions,error,login,login_fd,logout,profil,home,chantier,parametres, secteur, export
 
-user_profil=2
+user_profil=1
 
 app.layout = html.Div(
     [
@@ -33,6 +33,8 @@ def display_page(pathname):
         return chantier.layout
     elif pathname == "/secteur":
         return secteur.layout
+    elif pathname == "/export":
+        return export.layout
     elif pathname == "/parametres":
         return parametres.layout
     elif pathname == "/admin":
@@ -46,6 +48,8 @@ def display_page(pathname):
     else:
         return error.layout
 
+
+PLOTLY_LOGO = "https://static.thenounproject.com/png/17592-200.png"
 
 
 @app.callback(
@@ -64,8 +68,10 @@ def navBar(input1, url):
                     dbc.Row(
                         id='options-buttons',
                         children=[
+                            html.A(html.Img(src=PLOTLY_LOGO, height="30px"), href='/'),
                             dbc.Button('Vue générale', color = 'dark', className="mr-1", href='/'),
                             dbc.Button('Chantier', color = 'dark', className="mr-1", href='/chantier'),
+                            dbc.Button('Exporter', color = 'dark', className="mr-1", href='/export'),
                             dbc.Button('Profil', color = 'dark', className="mr-1", href='/profil'),
                             dbc.Button('Admin', id= 'profil', color='dark', className="mr-1", href='admin'),
                             dbc.Button('Déconnexion', color = 'dark', className="mr-1", href='/logout')
@@ -77,10 +83,11 @@ def navBar(input1, url):
                     dbc.Row(
                         id='options-buttons',
                         children=[
-                            dbc.Button('Vue générale', color = 'dark', className="mr-1", href='/'),
-                            dbc.Button('Chantier', color = 'dark', className="mr-1", href='/chantier'),
-                            dbc.Button('Profil', color = 'dark', className="mr-1", href='/profil'),
-                            dbc.Button('Déconnexion', color = 'dark', className="mr-1", href='/logout')
+                            html.A(html.Img(src=PLOTLY_LOGO, height="30px"), href='/'),
+                            html.A(html.Img(src=app.get_asset_url('chantier.webp'), height="30px"),href='/chantier'),
+                            html.A(html.Img(src=app.get_asset_url('import.png'), height="30px"),href='/export'),
+                            html.A(html.Img(src=app.get_asset_url('profil.png'), height="30px"),href='/profil'),
+                            html.A(html.Img(src=app.get_asset_url('logout.png'), height="30px"),href='/logout'),
                         ]
                     )
                 ]
@@ -88,7 +95,7 @@ def navBar(input1, url):
                     children=navBarContents,
                     color='dark',
                     dark=True,
-                    style=dict(height=40),
+                    style=dict(height=50),
                     fluid=True
                 )
         else:

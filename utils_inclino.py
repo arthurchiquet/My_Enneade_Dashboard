@@ -18,7 +18,7 @@ colors = {
     'text': 'white'
 }
 
-def graph_inclino(chantier, inclino):
+def graph_inclino(chantier, inclino, height=None):
     dfnorm = get_data(chantier, 'actif', f'{inclino}_norm.csv', sep=False)
     dftan = get_data(chantier, 'actif', f'{inclino}_tan.csv', sep=False)
     last_col = dfnorm.columns[-1]
@@ -41,6 +41,7 @@ def graph_inclino(chantier, inclino):
     fig.update_yaxes(autorange="reversed", gridcolor='grey')
     fig.update_xaxes(gridcolor='grey')
     fig.update_layout(
+        height=height,
         legend_title_text=None,
         yaxis_title="Profondeur (m)",
         xaxis_title=None,
