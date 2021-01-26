@@ -42,7 +42,6 @@ layout = html.Div(
                                         config={ "scrollZoom": True, 'modeBarButtonsToRemove':['lasso2d']},
                                         figure=empty_figure(),
                                     ),
-                                    # html.Pre(id='hover-data', style=styles['pre']),
                                     html.Br(),
                                     dbc.Row(
                                         [
@@ -66,7 +65,6 @@ layout = html.Div(
                 ),
                 dbc.Col(
                     [
-                        # html.Br(),
                         dbc.Row(
                             dbc.Container(
                                 id='right-content',
@@ -79,14 +77,6 @@ layout = html.Div(
         )
     ]
 )
-
-# @app.callback(
-#     Output('hover-data', 'children'),
-#     Input('global-params', 'data'))
-# def display_hover_data(selectedData):
-#     return json.dumps(selectedData, indent=2)
-
-
 
 ### AFFICHAGE LA CARTE DU CHANTIER SELECTIONNE #####
 @app.callback(

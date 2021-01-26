@@ -7,7 +7,6 @@ from data import download_image, get_data
 import numpy as np
 from datetime import timedelta
 
-user='Vallicorp'
 mapbox_token = 'pk.eyJ1IjoiYXJ0aHVyY2hpcXVldCIsImEiOiJja2E1bDc3cjYwMTh5M2V0ZzdvbmF5NXB5In0.ETylJ3ztuDA-S3tQmNGpPQ'
 
 colors = {
@@ -48,42 +47,6 @@ def first(col):
             i = j
             break
     return i
-
-#######################  AFFICHAGE MAP GLOBALE   ######################################################
-
-def affichage_map_geo():
-    with engine.connect() as con:
-        query1="select * from chantier_utilisateur where utilisateur ='%s'"%user
-        liste_chantiers = pd.read_sql_query(query1, con=con).chantier.tolist()
-        query2='SELECT * FROM chantier WHERE nom_chantier IN {}'.format(tuple(liste_chantiers))
-        df = pd.read_sql_query(query2, con=con)
-
-        fig = px.scatter_mapbox(
-            df,
-            lat="lat",
-            lon="lon",
-            hover_name="nom_chantier",
-            hover_data={
-                'lat':False,
-                'lon':False,
-            },
-            color_discrete_sequence=["#FF8C00"],
-            height=800,
-            zoom=4
-        )
-        fig.update_layout(
-            mapbox_style="dark",
-            mapbox_accesstoken=mapbox_token
-        )
-        fig.update_layout(
-            plot_bgcolor=colors['background'],
-            paper_bgcolor=colors['background'],
-            font_color=colors['text'],
-            margin=dict(l=0, r=0, t=10, b=0)
-        )
-
-    return fig
-
 
 def extract_position(df):
     df = df.drop(columns=['date'])

@@ -5,51 +5,73 @@ import dash_bootstrap_components as dbc
 from server import app
 import dash_table as dt
 from flask_login import current_user
-from utils_maps import affichage_map_geo
 from data import get_data, download_json
+import plotly.express as px
 from config import engine
 import pandas as pd
 import warnings
 
 warnings.filterwarnings("ignore")
 
+user='Vallicorp'
+mapbox_token = 'pk.eyJ1IjoiYXJ0aHVyY2hpcXVldCIsImEiOiJja2E1bDc3cjYwMTh5M2V0ZzdvbmF5NXB5In0.ETylJ3ztuDA-S3tQmNGpPQ'
+
 colors = {
     'background': '#222222',
     'text': '#FF8C00'
 }
 
+def affichage_map_geo():
+    with engine.connect() as con:
+        query=f"SELECT * FROM chantier where username = '{current_user.username}'"
+        df = pd.read_sql_query(query, con=con)
+
+        fig = px.scatter_mapbox(
+            df,
+            lat="lat",
+            lon="lon",
+            hover_name="nom_chantier",
+            hover_data={
+                'lat':False,
+                'lon':False,
+            },
+            color_discrete_sequence=["#FF8C00"],
+            height=650,
+            zoom=4
+        )
+        fig.update_layout(
+            mapbox_style="dark",
+            mapbox_accesstoken=mapbox_token
+        )
+        fig.update_layout(
+            plot_bgcolor=colors['background'],
+            paper_bgcolor=colors['background'],
+            font_color=colors['text'],
+            margin=dict(l=0, r=0, t=10, b=0)
+        )
+
+    return fig
+
 layout = html.Div(
     [
-        dcc.Graph(
-            id='map-geo',
-            config={'displayModeBar': False},
-            figure=affichage_map_geo(),
-        )
+        html.Div(id='map-geo'),
+        html.Br(),
+        dbc.Row(dbc.Button('Definir un nouveau chantier', href='/creation', size="lg"), justify='center')
     ]
 )
 
-# @app.callback(
-#     Output("progress-bar", "children"),
-#     Input('map-geo', 'clickData')
-# )
-# def display_progress(clickdata):
-#     if clickdata:
-#         return dcc.Interval(id="progress-interval", n_intervals=0, interval=1000),dbc.Progress(id="progress", color="warning")
-#     else:
-#         return []
 
-# @app.callback(
-#     [Output("progress", "value"),
-#     Output("progress", "children")],
-#     [Input('map-geo', 'clickData'),
-#      Input("progress-interval", "n_intervals")],
-# )
-# def update_progress(clickdata, n):
-#     if clickdata:
-#         progress = min(10*n , 100)
-#         return progress, f"{progress} %" if progress >= 5 else ""
-#     else:
-#         return 0, ''
+@app.callback(
+    Output('map-geo', 'children'),
+    Input("page-content", "children"))
+def display_map_geo(page_content):
+    try:
+        return dcc.Graph(
+            id='map-geo',
+            config={'displayModeBar': False},
+            figure=affichage_map_geo())
+    except:
+        return []
 
 ##### SELECTIONNE CHANTIER #####
 @app.callback(
@@ -63,4 +85,5 @@ def store_chantier(clickData):
         return chantier, '/chantier'
     except:
         return {}, '/'
+
 

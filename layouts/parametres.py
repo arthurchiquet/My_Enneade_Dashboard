@@ -52,6 +52,7 @@ tabs_pram = html.Div(
         dbc.Row(
             dbc.Tabs(
                 [
+                    dbc.Tab(label='Chantier', tab_id='tab-chantier'),
                     dbc.Tab(label='Secteur', tab_id='tab-secteur'),
                     dbc.Tab(label="Paramètres généraux", tab_id="tab-param"),
                     dbc.Tab(label="Cibles", tab_id="tab-topo"),
@@ -77,8 +78,8 @@ layout = tabs_pram
         Output("table_params", "columns"),
         ],
     [
-        Input("chantier-store", "data"),
-        Input("secteur-store", "data"),
+        Input("chantier-select", "data"),
+        Input("secteur-select", "data"),
         Input("tabs_param", "active_tab"),
         ]
 )
@@ -90,6 +91,8 @@ def update_table(chantier, secteur, tab):
         params = pd.read_sql_query(query, con=con)
         if tab =='tab-param':
             parametres=params
+        if tab == 'tab-chantier':
+            parametres=[]
         if tab == 'tab-secteur':
             query=f"select * from secteur where chantier='{chantier}' and secteur='{secteur}'"
             parametres = pd.read_sql_query(query, con=con)
@@ -125,7 +128,7 @@ def update_table(chantier, secteur, tab):
     [
         Input("table_params", "data"),
         Input('update_params', 'n_clicks'),
-        Input("chantier-store", "data"),
+        Input("chantier-select", "data"),
     ]
 )
 def update_params(data, n_clicks, chantier):
