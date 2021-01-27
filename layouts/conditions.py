@@ -13,7 +13,8 @@ warnings.filterwarnings("ignore")
 
 conditions = html.Div(
     [
-        dcc.Markdown('''
+        dcc.Markdown(
+            """
 ## **Conditions générales d’utilisation du site MyEnneade**
 
 **Article 1 : Objet**
@@ -85,8 +86,10 @@ Le présent contrat est valable pour une durée définie contractuellement. Le d
 
 **Article 12 : Droit applicable et juridiction compétente**
 
-Le présent contrat est soumis à la législation française. L’absence de résolution à l’amiable des cas de litige entre les parties implique le recours aux tribunaux français compétents pour régler le contentieux.''')
-])
+Le présent contrat est soumis à la législation française. L’absence de résolution à l’amiable des cas de litige entre les parties implique le recours aux tribunaux français compétents pour régler le contentieux."""
+        )
+    ]
+)
 
 check = dbc.Checklist(
     options=[
@@ -365,7 +368,7 @@ def createUser(
                 if len(newPassword1) > 7:
                     try:
                         if check == [1]:
-                            add_user(newUser, newPassword1, newEmail, 4)
+                            add_user(newUser, newPassword1, newEmail, 2)
                             return html.Div(
                                 children=["Nouvel utilisateur crée"],
                                 className="text-success",

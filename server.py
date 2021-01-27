@@ -8,14 +8,14 @@ from flask_login import LoginManager, UserMixin
 from flask_caching import Cache
 from user_mgmt import db, User as base
 
-app = dash.Dash(__name__,
+app = dash.Dash(
+    __name__,
     external_stylesheets=[dbc.themes.DARKLY],
 )
 
-cache = Cache(app.server, config={
-    'CACHE_TYPE': 'filesystem',
-    'CACHE_DIR': 'cache-directory'
-})
+cache = Cache(
+    app.server, config={"CACHE_TYPE": "filesystem", "CACHE_DIR": "cache-directory"}
+)
 
 TIMEOUT = 1800
 
@@ -39,6 +39,7 @@ login_manager.login_view = "/"
 # Create User class with UserMixin
 class User(UserMixin, base):
     pass
+
 
 # callback to reload the user object
 @login_manager.user_loader

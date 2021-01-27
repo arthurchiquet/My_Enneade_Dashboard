@@ -12,67 +12,70 @@ import utils_topo, utils_inclino, utils_jauge, utils_tirant, utils_piezo
 
 warnings.filterwarnings("ignore")
 
-table_parametres = html.Div([
-            dt.DataTable(
-                id="table_parametres",
-                editable=True,
-                filter_action="native",
-                fixed_rows={'headers': True},
-                style_cell={
-                    'backgroundColor': 'rgb(50, 50, 50)',
-                    'color': 'white',
-                    'textAlign': 'center'
-                },
-                style_header={
-                    'backgroundColor': 'rgb(20, 20, 20)',
-                    'color': 'white',
-                    "fontWeight": "bold"},
-                style_table={'height': '500px', 'overflowY': 'auto'}
-                    )
-                ]
+table_parametres = html.Div(
+    [
+        dt.DataTable(
+            id="table_parametres",
+            editable=True,
+            filter_action="native",
+            fixed_rows={"headers": True},
+            style_cell={
+                "backgroundColor": "rgb(50, 50, 50)",
+                "color": "white",
+                "textAlign": "center",
+            },
+            style_header={
+                "backgroundColor": "rgb(20, 20, 20)",
+                "color": "white",
+                "fontWeight": "bold",
+            },
+            style_table={"height": "500px", "overflowY": "auto"},
+        )
+    ]
+)
 
-            )
-
-table_secteur = html.Div([
-            dt.DataTable(
-                id="table_secteur",
-                editable=True,
-                filter_action="native",
-                fixed_rows={'headers': True},
-                style_cell={
-                    'backgroundColor': 'rgb(50, 50, 50)',
-                    'color': 'white',
-                    'textAlign': 'center'
-                },
-                style_header={
-                    'backgroundColor': 'rgb(20, 20, 20)',
-                    'color': 'white',
-                    "fontWeight": "bold"},
-                style_table={'height': '500px', 'overflowY': 'auto'}
-                    )
-                ]
-
-            )
+table_secteur = html.Div(
+    [
+        dt.DataTable(
+            id="table_secteur",
+            editable=True,
+            filter_action="native",
+            fixed_rows={"headers": True},
+            style_cell={
+                "backgroundColor": "rgb(50, 50, 50)",
+                "color": "white",
+                "textAlign": "center",
+            },
+            style_header={
+                "backgroundColor": "rgb(20, 20, 20)",
+                "color": "white",
+                "fontWeight": "bold",
+            },
+            style_table={"height": "500px", "overflowY": "auto"},
+        )
+    ]
+)
 
 
 collapse_secteur = html.Div(
     [
         dbc.Row(
             dbc.Button(
-                'Paramètres secteur',
+                "Paramètres secteur",
                 id="collapse-secteur",
                 className="mb-3",
                 color="dark",
-            ), justify='center'
+            ),
+            justify="center",
         ),
         dbc.Collapse(
             dbc.Card(dbc.CardBody([table_secteur])),
             id="card-secteur",
-        )
+        ),
     ]
 )
 
-layout=html.Div(
+layout = html.Div(
     [
         html.Br(),
         collapse_secteur,
@@ -89,12 +92,13 @@ layout=html.Div(
                         dbc.Tab(label="Butons", tab_id=6),
                     ],
                     id="tabs_type",
-                    active_tab="tab-topo",
+                    active_tab=1,
                 )
-            ], justify='center'
+            ],
+            justify="center",
         ),
         html.Br(),
-        html.Div(id='tab_type_content')
+        html.Div(id="tab_type_content"),
     ]
 )
 
@@ -106,13 +110,14 @@ collapse_type = html.Div(
                 "Afficher les paramètres",
                 id="collapse-type",
                 # className="mb-3",
-                style={'fontColor':'white'},
-            ), justify='center'
+                style={"fontColor": "white"},
+            ),
+            justify="center",
         ),
         dbc.Collapse(
             dbc.Card(dbc.CardBody([table_parametres])),
             id="card-type",
-        )
+        ),
     ]
 )
 
@@ -127,6 +132,7 @@ def collapse_parametres(n, is_open):
         return not is_open
     return is_open
 
+
 @app.callback(
     Output("card-secteur", "is_open"),
     [Input("collapse-secteur", "n_clicks")],
@@ -136,6 +142,7 @@ def collapse_secteur(n, is_open):
     if n:
         return not is_open
     return is_open
+
 
 # @app.callback(
 #     [
@@ -180,11 +187,12 @@ def collapse_secteur(n, is_open):
 #             parametres = pd.read_sql_query(query, con=con)
 #     return parametres.to_dict("records"), [{"name": i, "id": i} for i in parametres.columns]
 
+
 @app.callback(
-    Output('tab_type_content', 'children'),
-    [Input('tabs_type', 'active_tab')],
-    [State('chantier-select', 'data'),
-    State('secteur-select', 'data')])
+    Output("tab_type_content", "children"),
+    [Input("tabs_type", "active_tab")],
+    [State("chantier-select", "data"), State("secteur-select", "data")],
+)
 def return_tabs_content(tab, chantier, secteur):
     if tab == 1:
         return collapse_type, html.Br(), utils_topo.layout

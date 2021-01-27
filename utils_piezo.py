@@ -14,31 +14,34 @@ from data import get_data
 
 warnings.filterwarnings("ignore")
 
-colors = {
-    'background': '#222222',
-    'text': 'white'
-}
+colors = {"background": "#222222", "text": "white"}
 
 layout = html.Div(
     [
-        dbc.Container([
-        dcc.Graph(id='graph_piezo', figure=empty_figure(), config={"scrollZoom": True}),
-        html.Hr(),
-        dcc.Graph(id="graph_meteo", figure=empty_figure()),
-    ], fluid=True)
+        dbc.Container(
+            [
+                dcc.Graph(
+                    id="graph_piezo", figure=empty_figure(), config={"scrollZoom": True}
+                ),
+                html.Hr(),
+                dcc.Graph(id="graph_meteo", figure=empty_figure()),
+            ],
+            fluid=True,
+        )
     ]
 )
+
 
 @app.callback(
     Output("graph_meteo", "figure"),
     [
         Input("chantier-select", "data"),
-        Input('graph_piezo', 'relayoutData'),
+        Input("graph_piezo", "relayoutData"),
     ],
 )
 def update_graph_meteo(chantier, relayout_data):
     try:
-        df = get_data(chantier, 'actif', 'temperature.csv')
+        df = get_data(chantier, "actif", "temperature.csv")
         df.Date = pd.to_datetime(df.Date, format="%d/%m/%Y")
         fig = make_subplots(
             rows=2,
@@ -59,16 +62,19 @@ def update_graph_meteo(chantier, relayout_data):
         )
         fig.update_layout(
             height=600,
-            plot_bgcolor=colors['background'],
-            paper_bgcolor=colors['background'],
-            font_color=colors['text']
+            plot_bgcolor=colors["background"],
+            paper_bgcolor=colors["background"],
+            font_color=colors["text"],
         )
         fig.update_xaxes(showgrid=False)
         try:
-            fig['layout']["xaxis"]["range"] = [relayout_data['xaxis.range[0]'], relayout_data['xaxis.range[1]']]
-            fig['layout']["xaxis"]["autorange"] = False
+            fig["layout"]["xaxis"]["range"] = [
+                relayout_data["xaxis.range[0]"],
+                relayout_data["xaxis.range[1]"],
+            ]
+            fig["layout"]["xaxis"]["autorange"] = False
         except (KeyError, TypeError):
-            fig['layout']["xaxis"]["autorange"] = True
+            fig["layout"]["xaxis"]["autorange"] = True
         return fig
     except:
         return empty_figure()
@@ -76,28 +82,35 @@ def update_graph_meteo(chantier, relayout_data):
 
 @app.callback(
     Output("graph_piezo", "figure"),
-    [Input("chantier-select", "data"),
-     Input('secteur-select', 'data'),
-     ]
-    )
+    [
+        Input("chantier-select", "data"),
+        Input("secteur-select", "data"),
+    ],
+)
 def update_graph_piezos(chantier, secteurselected):
-    secteur = list(secteurselected.keys())[0]
-    piezo = secteurselected[secteur]['piezo'][0]
-    return graph_piezo(chantier, piezo)
+    try:
+        secteur = list(secteurselected.keys())[0]
+        piezo = secteurselected[secteur]["piezo"][0]
+        return graph_piezo(chantier, piezo)
+    except:
+        return empty_figure()
 
 
 def graph_piezo(chantier, piezo):
-    df = get_data(chantier, 'actif', f'{piezo}.csv')
-    terrassement = get_data(chantier, 'actif', 'terrassement.csv')
+    df = get_data(chantier, "actif", f"{piezo}.csv")
+    terrassement = get_data(chantier, "actif", "terrassement.csv")
     df.date = pd.to_datetime(df.date, format="%d/%m/%Y")
     terrassement.Date = pd.to_datetime(terrassement.Date, format="%d/%m/%Y")
     fig = go.Figure()
-    fig.add_trace(go.Scatter(name="terrassement", x=terrassement.Date, y=terrassement['Coupe IJ']))
+    fig.add_trace(
+        go.Scatter(name="terrassement", x=terrassement.Date, y=terrassement["Coupe IJ"])
+    )
     fig.add_trace(go.Scatter(name="piezo", x=df.date, y=df.Niveau_eau))
     fig.update_layout(
-        plot_bgcolor=colors['background'],
-        paper_bgcolor=colors['background'],
-        font_color=colors['text'])
+        plot_bgcolor=colors["background"],
+        paper_bgcolor=colors["background"],
+        font_color=colors["text"],
+    )
     fig.update_xaxes(showgrid=False)
-    fig.update_yaxes(gridcolor='grey')
+    fig.update_yaxes(gridcolor="grey")
     return fig

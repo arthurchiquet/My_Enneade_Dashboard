@@ -5,6 +5,7 @@ import dash_table as dt
 from dash.dependencies import Input, Output, State
 from server import app
 from user_mgmt import show_users, update_profil, update_output, del_user
+from chantier_mgmt import afficher_chantier, del_chantier, update_output_chantier
 from config import engine
 import warnings
 
@@ -30,12 +31,12 @@ layout = html.Div(
                                         {"name": "Profil", "id": "profil"},
                                     ],
                                     data=show_users(),
-                                    style_header={'backgroundColor': 'rgb(30, 30, 30)'},
+                                    style_header={"backgroundColor": "rgb(30, 30, 30)"},
                                     style_cell={
-                                        'backgroundColor': 'rgb(50, 50, 50)',
-                                        'color': 'white'
-                                        },
-                                    ),
+                                        "backgroundColor": "rgb(50, 50, 50)",
+                                        "color": "white",
+                                    },
+                                ),
                             ],
                             md=12,
                         ),
@@ -56,13 +57,13 @@ layout = html.Div(
                                 dcc.Dropdown(
                                     id="user_list",
                                     options=update_output(),
-                                    style={"width": "90%", 'color':'black'},
+                                    style={"width": "90%", "color": "black"},
                                 ),
                                 html.Br(),
                                 dbc.Label("Type de profil: "),
                                 dcc.Dropdown(
                                     id="profil_select",
-                                    style={"width": "90%", 'color':'black'},
+                                    style={"width": "90%", "color": "black"},
                                     options=[
                                         {"label": "Basique", "value": 4},
                                         {"label": "Intermédiaire", "value": 3},
@@ -97,8 +98,71 @@ layout = html.Div(
             ],
             className="jumbotron",
         ),
-    ],
-    id="content",
+        html.Br(),
+        dbc.Container(
+            [
+                html.H3("Chantiers actifs"),
+                html.Hr(),
+                dbc.Row(
+                    [
+                        dbc.Col(
+                            [
+                                dt.DataTable(
+                                    id="chantiers",
+                                    columns=[
+                                        {"name": "Nom Chantier", "id": "nom_chantier"},
+                                        {"name": "Utilisateur", "id": "username"},
+                                        {"name": "Adresse", "id": "adresse"},
+                                    ],
+                                    data=afficher_chantier(),
+                                    style_header={"backgroundColor": "rgb(30, 30, 30)"},
+                                    style_cell={
+                                        "backgroundColor": "rgb(50, 50, 50)",
+                                        "color": "white",
+                                    },
+                                ),
+                            ],
+                            md=12,
+                        ),
+                    ]
+                ),
+            ],
+            className="jumbotron",
+        ),
+        html.Br(),
+        dbc.Container(
+            [
+                html.H3("Modifier un chantier"),
+                html.Hr(),
+                dbc.Row(
+                    [
+                        dbc.Col(
+                            [
+                                dbc.Label("Nom du chantier: "),
+                                dcc.Dropdown(
+                                    id="chantier_list",
+                                    options=update_output_chantier(),
+                                    style={"width": "90%", "color": "black"},
+                                ),
+                                html.Br(),
+                                html.Button(
+                                    children="Supprimer",
+                                    id="delete_chantier",
+                                    n_clicks=0,
+                                    type="submit",
+                                    className="btn btn-alert btn-lg",
+                                ),
+                                html.Br(),
+                                html.Div(id="del_chantier_success"),
+                            ],
+                            md=12,
+                        )
+                    ]
+                ),
+            ],
+            className="jumbotron",
+        ),
+    ]
 )
 
 
@@ -114,7 +178,26 @@ layout = html.Div(
 def modify_profil(n_clicks1, n_clicks2, user, profil):
     if (n_clicks1 > 0) and user != "":
         update_profil(user, profil)
-        return html.Div(children=["Le profil a été mis à jour"], className="text-success")
+        return html.Div(
+            children=["Le profil a été mis à jour"], className="text-success"
+        )
     if (n_clicks2 > 0) and user != "":
         del_user(user)
-        return html.Div(children=["L'utilisateur a été supprimé"], className="text-success")
+        return html.Div(
+            children=["L'utilisateur a été supprimé"], className="text-success"
+        )
+
+
+@app.callback(
+    Output("del_chantier_success", "children"),
+    [
+        Input("delete_chantier", "n_clicks"),
+        Input("chantier_list", "value"),
+    ],
+)
+def modify_chantier(n_clicks, chantier):
+    if n_clicks > 0 and chantier != "":
+        del_chantier(chantier)
+        return html.Div(
+            children=["Le chantier a bien été supprimé"], className="text-success"
+        )

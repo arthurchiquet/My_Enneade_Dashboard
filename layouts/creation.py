@@ -10,84 +10,111 @@ import plotly.express as px
 import requests
 from chantier_mgmt import add_chantier
 
-mapbox_token = 'pk.eyJ1IjoiYXJ0aHVyY2hpcXVldCIsImEiOiJja2E1bDc3cjYwMTh5M2V0ZzdvbmF5NXB5In0.ETylJ3ztuDA-S3tQmNGpPQ'
+mapbox_token = "pk.eyJ1IjoiYXJ0aHVyY2hpcXVldCIsImEiOiJja2E1bDc3cjYwMTh5M2V0ZzdvbmF5NXB5In0.ETylJ3ztuDA-S3tQmNGpPQ"
 
+user = "Vallicorp"
 
-colors = {
-    'background': '#222222',
-    'text': 'white'
-}
+colors = {"background": "#222222", "text": "white"}
 
-layout=html.Div(
+layout = html.Div(
     [
         dbc.Container(
             [
                 html.Br(),
-                dbc.Row(html.H4('Définition du nouveau chantier'), justify='center'),
+                dbc.Row(html.H4("Définition du nouveau chantier"), justify="center"),
                 html.Br(),
                 dbc.Container(
                     [
-                        dbc.Row(dbc.Input(id='nom_chantier', placeholder="Nom du chantier"), justify='center'),
+                        dbc.Row(
+                            dbc.Input(id="nom_chantier", placeholder="Nom du chantier"),
+                            justify="center",
+                        ),
                         html.Br(),
-                        dbc.Row(dbc.Input(id='adresse_chantier', placeholder="Adresse du chantier"), justify='center'),
+                        dbc.Row(
+                            dbc.Input(
+                                id="adresse_chantier", placeholder="Adresse du chantier"
+                            ),
+                            justify="center",
+                        ),
                         html.Br(),
-                        dbc.Row(dbc.Input(id='nom_prestataire',placeholder="Nom du prestataire"), justify='center'),
+                        dbc.Row(
+                            dbc.Input(
+                                id="nom_prestataire", placeholder="Nom du prestataire"
+                            ),
+                            justify="center",
+                        ),
                         html.Br(),
-                        dbc.Row(dbc.Input(placeholder="Nom du maître d'oeuvre"), justify='center'),
+                        dbc.Row(
+                            dbc.Input(placeholder="Nom du maître d'oeuvre"),
+                            justify="center",
+                        ),
                         html.Br(),
                         dbc.Row(
                             [
-                                dbc.Button('Créer le chantier', id='creation', className="mr-1"),
-                                html.Div(id='importer')
+                                dbc.Button(
+                                    "Créer le chantier", id="creation", className="mr-1", n_clicks=0
+                                ),
+                                html.Div(id="importer"),
                             ]
                         ),
                         html.Br(),
-                        html.Div(id='sucess_label' ,className="text-success"),
+                        html.Div(id="sucess_label", className="text-success"),
                         html.Br(),
-                        html.Div(id='geo_loc')
+                        html.Div(id="geo_loc"),
                     ]
-                )
+                ),
             ]
         )
     ]
 )
 
+
 @app.callback(
-    [Output('geo_loc', 'children'),
-    Output('importer', 'children'),
-    Output('sucess_label', 'children')],
-    [Input('creation', 'n_clicks'),
-    State('adresse_chantier', 'value'),
-    State('nom_chantier', 'value')]
-    )
+    [
+        Output("geo_loc", "children"),
+        Output("importer", "children"),
+        Output("sucess_label", "children"),
+    ],
+    [
+        Input("creation", "n_clicks"),
+        State("adresse_chantier", "value"),
+        State("nom_chantier", "value"),
+    ],
+)
 def display_geoloc(n_clicks, adresse, nom):
-    if n_clicks:
+    if n_clicks >0:
         url = f"https://api.mapbox.com/geocoding/v5/mapbox.places/{adresse}.json?access_token={mapbox_token}"
         response = requests.get(url).json()
-        result = response['features'][0]['geometry']['coordinates']
-        coords = {nom : result}
+        result = response["features"][0]["geometry"]["coordinates"]
+        coords = {nom: result}
         add_chantier(nom, current_user.username, adresse, result[1], result[0])
-        df=pd.DataFrame(coords).T.reset_index()
-        fig=px.scatter_mapbox(
+        df = pd.DataFrame(coords).T.reset_index()
+        fig = px.scatter_mapbox(
             df,
             lat=1,
             lon=0,
             zoom=14,
-            text = 'index',
-            height = 300,
-            hover_name='index',
-            )
-        fig.update_layout(
-            mapbox_style="dark",
-            mapbox_accesstoken=mapbox_token
+            text="index",
+            height=300,
+            hover_name="index",
         )
+        fig.update_layout(mapbox_style="dark", mapbox_accesstoken=mapbox_token)
         fig.update_layout(
-            plot_bgcolor=colors['background'],
-            paper_bgcolor=colors['background'],
-            font_color=colors['text'],
-            margin=dict(l=0, r=0, t=10, b=0)
+            plot_bgcolor=colors["background"],
+            paper_bgcolor=colors["background"],
+            font_color=colors["text"],
+            margin=dict(l=0, r=0, t=10, b=0),
         )
-        fig.update_traces(marker=dict(size=30, color='#FF8C00', opacity=0.5))
-        return dcc.Graph(figure=fig), dbc.Button('Importer des données', href='/export', color="primary", className="mr-1"), f'Le chantier {nom} a bien été créé'
+        fig.update_traces(marker=dict(size=30, color="#FF8C00", opacity=0.5))
+        return (
+            dcc.Graph(figure=fig),
+            dbc.Button(
+                "Importer des données",
+                href="/export",
+                color="primary",
+                className="mr-1",
+            ),
+            f"Le chantier {nom} a bien été créé",
+        )
     else:
-        return [], [], ''
+        return [], [], ""

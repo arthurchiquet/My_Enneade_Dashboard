@@ -45,7 +45,7 @@ layout = dbc.Container(
                                     children="Créer un compte",
                                     n_clicks=0,
                                     id="register",
-                                    color='link'
+                                    color="link",
                                 ),
                                 html.Br(),
                             ],
@@ -61,10 +61,8 @@ layout = dbc.Container(
 
 @app.callback(
     Output("url_login", "pathname"),
-    [Input("login-button", "n_clicks"),
-    Input("register", "n_clicks")],
-    [State("uname-box", "value"),
-    State("pwd-box", "value")],
+    [Input("login-button", "n_clicks"), Input("register", "n_clicks")],
+    [State("uname-box", "value"), State("pwd-box", "value")],
 )
 def sucess(n_click1, n_click2, input1, input2):
     if n_click2 > 0:

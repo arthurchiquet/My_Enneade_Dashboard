@@ -7,6 +7,7 @@ import pandas as pd
 
 db = SQLAlchemy()
 
+
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(15), unique=True)
@@ -14,16 +15,20 @@ class User(db.Model):
     password = db.Column(db.String(80))
     profil = db.Column(db.Integer)
 
+
 User_tbl = Table("user", User.metadata)
+
 
 def create_table():
     User.metadata.create_all(engine)
+
 
 def update_output():
     con = engine.connect()
     list_users = pd.read_sql("user", con=con).username.tolist()
     con.close()
     return [{"label": user, "value": user} for user in list_users]
+
 
 def add_user(username, password, email, profil):
     hashed_password = generate_password_hash(password, method="sha256")
@@ -43,8 +48,6 @@ def add_user(username, password, email, profil):
 def update_password(username, password):
     hashed_password = generate_password_hash(password, method="sha256")
 
-
-
     update = (
         User_tbl.update()
         .values(password=hashed_password)
@@ -54,6 +57,7 @@ def update_password(username, password):
     conn = engine.connect()
     conn.execute(update)
     conn.close()
+
 
 def update_profil(username, profil):
     update = (

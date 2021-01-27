@@ -9,54 +9,64 @@ import dash_bootstrap_components as dbc
 from server import app
 from config import engine
 from data import get_data
+from utils_maps import empty_figure
 
 warnings.filterwarnings("ignore")
 
-colors = {
-    'background': '#222222',
-    'text': 'white'
-}
+colors = {"background": "#222222", "text": "white"}
 
-layout = dbc.Container([
+layout = dbc.Container(
+    [
         dcc.Loading(
-            type='graph',
-            children = [
+            type="graph",
+            children=[
                 dbc.Row(
                     [
                         dbc.Col(
                             [
-                                html.H3('Evolution de la charge des tirants (kN)', style={"textAlign": "center"}),
-                                dcc.Graph(id="evol_tirants_kn", config={"scrollZoom": True}),
+                                html.H3(
+                                    "Evolution de la charge des tirants (kN)",
+                                    style={"textAlign": "center"},
+                                ),
+                                dcc.Graph(
+                                    id="evol_tirants_kn", config={"scrollZoom": True}
+                                ),
                             ],
                         ),
                         dbc.Col(
                             [
-                                html.H3('Evolution de la charge des tirants (%tb)', style={"textAlign": "center"}),
-                                dcc.Graph(id="evol_tirants%", config={"scrollZoom": True}),
+                                html.H3(
+                                    "Evolution de la charge des tirants (%tb)",
+                                    style={"textAlign": "center"},
+                                ),
+                                dcc.Graph(
+                                    id="evol_tirants%", config={"scrollZoom": True}
+                                ),
                             ]
-                        )
+                        ),
                     ]
                 )
-            ]
+            ],
         )
-    ], fluid=True
+    ],
+    fluid=True,
 )
+
 
 @app.callback(
     [
         Output("evol_tirants_kn", "figure"),
         Output("evol_tirants%", "figure"),
     ],
-    [
-        Input("secteur-select", "data"),
-        Input("chantier-select", "data")
-    ]
+    [Input("secteur-select", "data"), Input("chantier-select", "data")],
 )
 def update_graph_tirants(secteurselected, chantier):
-    secteur = list(secteurselected.keys())[0]
-    liste_tirants = secteurselected[secteur]['tirant']
-    return graph_tirant(chantier, liste_tirants)
-
+    try:
+        secteur = list(secteurselected.keys())[0]
+        liste_tirants = secteurselected[secteur]["tirant"]
+        return graph_tirant(chantier, liste_tirants)
+    except:
+        return empty_figure(), empty_figure()
 
 def first(col):
     i = 0
@@ -65,6 +75,7 @@ def first(col):
             i = j
             break
     return i
+
 
 def tension_blocage(df):
     df1 = df.copy()
@@ -76,38 +87,40 @@ def tension_blocage(df):
 def format_df(df, list_tirants):
     df.date = pd.to_datetime(df.date, format="%d/%m/%Y")
     df = pd.DataFrame(df.set_index("date")[list_tirants])
-    df_ratio = tension_blocage(df)*100
+    df_ratio = tension_blocage(df) * 100
     return df, df_ratio
 
 
 def graph_tirant(chantier, list_tirants, height=400, mode=1):
-    df = get_data(chantier, 'actif', 'tirants.csv', sep=False)
+    df = get_data(chantier, "actif", "tirants.csv", sep=False)
     df, df_ratio = format_df(df, list_tirants)
-    fig1 = px.line(df.reset_index(), x='date', y=list_tirants)
-    fig2 = px.line(df_ratio.reset_index(), x='date', y=list_tirants)
+    fig1 = px.line(df.reset_index(), x="date", y=list_tirants)
+    fig2 = px.line(df_ratio.reset_index(), x="date", y=list_tirants)
     fig1.update_layout(
         height=height,
         legend_title_text=None,
         yaxis_title="Tension (kN)",
         xaxis_title=None,
-        plot_bgcolor=colors['background'],
-        paper_bgcolor=colors['background'],
-        font_color=colors['text'],
-        margin={"r":10,"t":10,"l":0,"b":0})
+        plot_bgcolor=colors["background"],
+        paper_bgcolor=colors["background"],
+        font_color=colors["text"],
+        margin={"r": 10, "t": 10, "l": 0, "b": 0},
+    )
     fig2.update_layout(
         height=height,
         legend_title_text=None,
         yaxis_title="Tension (%)",
         xaxis_title=None,
-        plot_bgcolor=colors['background'],
-        paper_bgcolor=colors['background'],
-        font_color=colors['text'],
-        margin={"r":10,"t":10,"l":0,"b":0})
+        plot_bgcolor=colors["background"],
+        paper_bgcolor=colors["background"],
+        font_color=colors["text"],
+        margin={"r": 10, "t": 10, "l": 0, "b": 0},
+    )
     fig1.update_xaxes(showgrid=False)
     fig2.update_xaxes(showgrid=False)
-    fig1.update_yaxes(gridcolor='grey')
-    fig2.update_yaxes(gridcolor='grey')
-    if mode==1:
+    fig1.update_yaxes(gridcolor="grey")
+    fig2.update_yaxes(gridcolor="grey")
+    if mode == 1:
         return fig1, fig2
     else:
         return fig2

@@ -7,26 +7,22 @@ from data import download_image, get_data
 import numpy as np
 from datetime import timedelta
 
-mapbox_token = 'pk.eyJ1IjoiYXJ0aHVyY2hpcXVldCIsImEiOiJja2E1bDc3cjYwMTh5M2V0ZzdvbmF5NXB5In0.ETylJ3ztuDA-S3tQmNGpPQ'
+mapbox_token = "pk.eyJ1IjoiYXJ0aHVyY2hpcXVldCIsImEiOiJja2E1bDc3cjYwMTh5M2V0ZzdvbmF5NXB5In0.ETylJ3ztuDA-S3tQmNGpPQ"
 
-colors = {
-    'background': '#222222',
-    'text': 'white'
-}
+colors = {"background": "#222222", "text": "white"}
 
-coeff_Lamb_GPS = [[1.23952112e-05, 6.63800392e-07], [-4.81267332e-07,  8.98816386e-06]]
+coeff_Lamb_GPS = [[1.23952112e-05, 6.63800392e-07], [-4.81267332e-07, 8.98816386e-06]]
 intercept_Lamb_GPS = [-20.17412175, 16.14120241]
 
 
 def empty_figure():
     fig = {
-        'data': [],
-        'layout': {
-        'plot_bgcolor': colors['background'],
-        'paper_bgcolor': colors['background'],
-        'font': {
-            'color': colors['text']}
-        }
+        "data": [],
+        "layout": {
+            "plot_bgcolor": colors["background"],
+            "paper_bgcolor": colors["background"],
+            "font": {"color": colors["text"]},
+        },
     }
     return fig
 
@@ -37,8 +33,10 @@ def changement_repere(df, coef, intercept):
     df.lat, df.lon = lat, lon
     return df
 
+
 def remove_xyz(string):
-    return string.replace('.x','').replace('.y', '')
+    return string.replace(".x", "").replace(".y", "")
+
 
 def first(col):
     i = 0
@@ -48,148 +46,206 @@ def first(col):
             break
     return i
 
+
 def extract_position(df):
-    df = df.drop(columns=['date'])
+    df = df.drop(columns=["date"])
     df = pd.DataFrame(df.apply(first)).T
-    dfx = df[[col for col in df.columns if '.x' in col]].stack().reset_index().drop(columns=['level_0']).rename(columns={'level_1':'cible',0:'lat'})
-    dfy = df[[col for col in df.columns if '.y' in col]].stack().reset_index().drop(columns=['level_0']).rename(columns={'level_1':'cible',0:'lon'})
+    dfx = (
+        df[[col for col in df.columns if ".x" in col]]
+        .stack()
+        .reset_index()
+        .drop(columns=["level_0"])
+        .rename(columns={"level_1": "cible", 0: "lat"})
+    )
+    dfy = (
+        df[[col for col in df.columns if ".y" in col]]
+        .stack()
+        .reset_index()
+        .drop(columns=["level_0"])
+        .rename(columns={"level_1": "cible", 0: "lon"})
+    )
     dfx.cible = dfx.cible.map(remove_xyz)
     dfy.cible = dfy.cible.map(remove_xyz)
     df2 = dfx.merge(dfy)
     df2 = changement_repere(df2, coeff_Lamb_GPS, intercept_Lamb_GPS)
     return df2
 
+
 #######################  AFFICHAGE MAP CHANTIER   ######################################################
+
 
 def update_map_chantier(chantier, params):
     try:
-        secteurs = params['secteur']
-        del params['secteur']
+        secteurs = params["secteur"]
+        del params["secteur"]
     except:
         secteurs = []
 
-    df = pd.concat({k: pd.DataFrame.from_dict(v, 'index') for k, v in params.items()},axis=0).reset_index().rename(columns={'level_0':'type','level_1':'capteur'})
+    df = (
+        pd.concat(
+            {k: pd.DataFrame.from_dict(v, "index") for k, v in params.items()}, axis=0
+        )
+        .reset_index()
+        .rename(columns={"level_0": "type", "level_1": "capteur"})
+    )
 
     fig = px.scatter_mapbox(
         df,
-        lat='lat',
-        lon='lon',
-        color='type',
-        text='capteur',
-        hover_data={'type':True}
+        lat="lat",
+        lon="lon",
+        color="type",
+        text="capteur",
+        hover_data={"type": True},
     )
 
+    fig.update_traces(hovertemplate="%{text}", textfont_size=11)
+
     fig.update_traces(
-        hovertemplate='%{text}',
-        textfont_size=11)
+        marker=dict(size=20, color="#FF6347"), selector=dict(name="inclino")
+    )
+    fig.update_traces(
+        marker=dict(size=20, color="#FF8C00"), selector=dict(name="tirant")
+    )
+    fig.update_traces(
+        marker=dict(size=20, color="#7CFC00"), selector=dict(name="piezo")
+    )
+    fig.update_traces(
+        marker=dict(size=20, color="#9370DB"), selector=dict(name="button")
+    )
 
-    # fig.update_traces(marker=dict(color='#DCDCDC'), selector=dict(name="cible"))
-    fig.update_traces(marker=dict(size=20, color='#FF6347'), selector=dict(name="inclino"))
-    fig.update_traces(marker=dict(size=20, color='#FF8C00'),selector=dict(name="tirant"))
-    fig.update_traces(marker=dict(size=20, color='#7CFC00'),selector=dict(name="piezo"))
-    fig.update_traces(marker=dict(size=20, color='#9370DB'),selector=dict(name="button"))
-
-
-    # fig.for_each_trace(
-    #     lambda trace: trace.update(marker=dict(size=20)) if trace.name == "inclino" else (),
-    # )
 
     for secteur in secteurs:
-        coords=secteurs[secteur]
-        fig.add_trace(go.Scattermapbox(
-            name=secteur,
-            mode='lines',
-            text=secteur,
-            lon = [coords[0][0], coords[0][0], coords[1][0], coords[1][0], coords[0][0]],
-            lat = [coords[1][1], coords[0][1], coords[0][1], coords[1][1], coords[1][1]],
+        coords = secteurs[secteur]
+        fig.add_trace(
+            go.Scattermapbox(
+                name=secteur,
+                mode="lines",
+                text=secteur,
+                lon=[
+                    coords[0][0],
+                    coords[0][0],
+                    coords[1][0],
+                    coords[1][0],
+                    coords[0][0],
+                ],
+                lat=[
+                    coords[1][1],
+                    coords[0][1],
+                    coords[0][1],
+                    coords[1][1],
+                    coords[1][1],
+                ],
             )
         )
-        fig.update_traces(hovertemplate='Secteur', selector={'name':secteur})
+        fig.update_traces(hovertemplate="Secteur", selector={"name": secteur})
 
-    plan = download_image(chantier, 'plan.jpeg')
+    try:
+        plan = download_image(chantier, "plan.jpeg")
+    except:
+        plan=None
 
     layers = [
         dict(
-            below ='traces',
+            below="traces",
             minzoom=16,
             maxzoom=21,
             opacity=0.7,
-            source = plan,
-            sourcetype= "image",
-            coordinates =  [
+            source=plan,
+            sourcetype="image",
+            coordinates=[
                 [7.4115104, 43.7321406],
                 [7.4137998, 43.7321406],
                 [7.4137998, 43.7310171],
-                [7.4115104, 43.7310171]
-            ]
+                [7.4115104, 43.7310171],
+            ],
         )
     ]
     mapbox = dict(
-        zoom= 17.6,
-        center=dict(
-            lon=7.4126551,
-            lat=43.7315788),
+        zoom=17.6,
+        center=dict(lon=7.4126551, lat=43.7315788),
     )
 
     fig.update_layout(
         mapbox=mapbox,
         mapbox_style="dark",
         mapbox_accesstoken=mapbox_token,
-        clickmode='event+select',
-        plot_bgcolor=colors['background'],
-        paper_bgcolor=colors['background'],
-        font_color=colors['text'],
-        margin=dict(l=20, r=20, t=0, b=0),
+        clickmode="event+select",
+        plot_bgcolor=colors["background"],
+        paper_bgcolor=colors["background"],
+        font_color=colors["text"],
+        margin=dict(l=20, r=10, t=0, b=0),
         height=600,
-        legend=dict(
-            yanchor="top",
-            y=0.99,
-            xanchor="left",
-            x=0.01
-        ),
+        legend=dict(yanchor="top", y=0.99, xanchor="left", x=0.01),
         legend_title_text=None,
         updatemenus=[
             dict(
-                type="buttons",
+                type="dropdown",
                 direction="right",
-                pad={"r": 10, "t": 10},
+                pad={"r": 10, "t": 0},
                 showactive=False,
                 x=0,
                 xanchor="left",
                 y=1.1,
                 yanchor="top",
-                buttons=list([
-                    dict(label="Capteurs",
-                         method="update",
-                         args=[{"visible": [True for i in range(df.type.nunique())]+[False for i in range(len(secteurs))]}]),
-                    dict(label="Secteurs",
-                         method="update",
-                         args=[{"visible": [False for i in range(df.type.nunique())]+[True for i in range(len(secteurs))]}]),
-                    dict(label="Tous",
-                         method="update",
-                         args=[{"visible": [True for i in range(df.type.nunique())]+[True for i in range(len(secteurs))]}]),
-                ]),
+                buttons=list(
+                    [
+                        dict(
+                            label="Capteurs",
+                            method="update",
+                            args=[
+                                {
+                                    "visible": [True for i in range(df.type.nunique())]
+                                    + [False for i in range(len(secteurs))]
+                                }
+                            ],
+                        ),
+                        dict(
+                            label="Secteurs",
+                            method="update",
+                            args=[
+                                {
+                                    "visible": [False for i in range(df.type.nunique())]
+                                    + [True for i in range(len(secteurs))]
+                                }
+                            ],
+                        ),
+                        dict(
+                            label="Tous",
+                            method="update",
+                            args=[
+                                {
+                                    "visible": [True for i in range(df.type.nunique())]
+                                    + [True for i in range(len(secteurs))]
+                                }
+                            ],
+                        ),
+                    ]
+                ),
             ),
             dict(
-                type="buttons",
-                direction="left",
-                pad={"l": 10, "t": 10},
+                type="dropdown",
+                direction="right",
                 showactive=False,
-                x=1,
-                xanchor="right",
+                x=0.18,
+                xanchor="left",
                 y=1.1,
                 yanchor="top",
-                buttons=list([
-                    dict(label='Afficher plan',
-                         method='relayout',
-                         args=[{'mapbox.layers' : layers}]),
-                    dict(label='Masquer plan',
-                         method='relayout',
-                         args=[{'mapbox.layers' : None}]),
+                buttons=list(
+                    [
+                        dict(
+                            label="Afficher plan",
+                            method="relayout",
+                            args=[{"mapbox.layers": layers}],
+                        ),
+                        dict(
+                            label="Masquer plan",
+                            method="relayout",
+                            args=[{"mapbox.layers": None}],
+                        ),
                     ]
-                )
-            )
-        ]
+                ),
+            ),
+        ],
     )
 
     return fig
@@ -198,8 +254,6 @@ def update_map_chantier(chantier, params):
 
 
 #######################  CALCUL DES VECTEURS  ######################################################
-
-
 
 
 # if mode == 3:
@@ -229,6 +283,7 @@ def update_map_chantier(chantier, params):
 #             )
 #             fig.update_xaxes(visible=False, range=[X, X + x_size])
 #             fig.update_yaxes(visible=False, range=[Y - y_size, Y])
+
 
 def create_quiver(df, scale):
     first_indexes = df.apply(pd.Series.first_valid_index).to_dict()
@@ -286,4 +341,3 @@ def mean_pos(list):
 
 def mean_neg(list):
     return np.mean([i for i in list if i < 0])
-
