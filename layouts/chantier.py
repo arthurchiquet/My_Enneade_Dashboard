@@ -1,5 +1,6 @@
 import dash_core_components as dcc
 import dash_html_components as html
+import dash_gif_component as gif
 from dash.dependencies import Input, Output, State
 import dash_bootstrap_components as dbc
 import plotly.graph_objects as go
@@ -70,8 +71,6 @@ layout = html.Div(
                 ),
                 dbc.Col(
                     [
-                        html.Br(),
-                        html.Br(),
                         dbc.Row(
                             dbc.Container(
                                 id="right-content",
@@ -135,7 +134,7 @@ collapse = html.Div(
     [
         dbc.Row(dbc.Button("?", id="help", color="link"), justify="center"),
         dbc.Collapse(
-            dbc.Card(dbc.CardBody([help_text])),
+            dbc.Card(dbc.CardBody([gif.GifPlayer(gif='assets/help.gif', still='statique.png')])),
             id="card-help",
         ),
     ]
@@ -177,100 +176,106 @@ def display_right_content(option, clickData, params):
         else:
             return []
     elif option == 2:
-        return dbc.Card(
-            [
-                dbc.CardHeader(
-                    dbc.Row(html.H4("Ajouter ou modifier"), justify="center")
-                ),
-                collapse,
-                dbc.CardBody(
-                    [
-                        dcc.Dropdown(
-                            id="type_option",
-                            style={"color": "black"},
-                            options=[
-                                {"label": "Ajouter", "value": 1},
-                                {"label": "Modifier", "value": 2},
-                                {"label": "Supprimer", "value": 3},
-                            ],
-                            placeholder="Options",
-                            clearable=False,
-                        ),
-                        html.Br(),
-                        dcc.Dropdown(
-                            id="type_param",
-                            style={"color": "black"},
-                            options=[
-                                {"label": "Secteur", "value": 1},
-                                {"label": "Sous-secteur", "value": 2},
-                                {"label": "Inclinomètre", "value": 3},
-                                {"label": "Tirant", "value": 4},
-                                {"label": "Jauge", "value": 5},
-                                {"label": "Piezomètre", "value": 6},
-                            ],
-                            placeholder="Choix du paramètre",
-                            clearable=False,
-                        ),
-                        html.Br(),
-                        dbc.Input(placeholder="Nom du paramètre", id="nom_param"),
-                        html.Br(),
-                        dbc.Row(
-                            dbc.Button(
-                                "Enregister les modifications",
-                                id="save-update",
-                                href="/chantier",
-                                n_clicks=0,
-                            ),
-                            justify="center",
-                        ),
-                        html.Br(),
-                        dbc.Row(
-                            html.Div(id="update-success", className="text-success"),
-                            justify="center",
-                        ),
-                    ]
-                ),
-            ],
-            style={"width": "41rem"},
-        )
-
-    elif option == 3:
-        return dbc.Card(
-            [
-                dbc.CardHeader(
-                    dbc.Row(html.H4("Sélectionner un secteur"), justify="center")
-                ),
-                dbc.CardBody(
-                    [
-                        dbc.Row(dbc.Label("Choix du secteur"), justify="center"),
-                        dbc.Row(
+        return [
+            html.Br(),
+            html.Br(),
+            dbc.Card(
+                [
+                    dbc.CardHeader(
+                        dbc.Row(html.H4("Ajouter ou modifier"), justify="center")
+                    ),
+                    collapse,
+                    dbc.CardBody(
+                        [
                             dcc.Dropdown(
-                                id="secteur-selection",
+                                id="type_option",
                                 style={"color": "black"},
                                 options=[
-                                    {"label": secteur, "value": secteur}
-                                    for secteur in params["secteur"]
+                                    {"label": "Ajouter", "value": 1},
+                                    {"label": "Modifier", "value": 2},
+                                    {"label": "Supprimer", "value": 3},
                                 ],
-                                # multi=True,
+                                placeholder="Options",
+                                clearable=False,
                             ),
-                            justify="center",
-                        ),
-                        html.Br(),
-                        dbc.Row(
-                            dbc.Button(
-                                "Accéder au bilan",
-                                id="go-secteur",
-                                href="/secteur",
-                                n_clicks=0,
+                            html.Br(),
+                            dcc.Dropdown(
+                                id="type_param",
+                                style={"color": "black"},
+                                options=[
+                                    {"label": "Secteur", "value": 1},
+                                    {"label": "Sous-secteur", "value": 2},
+                                    {"label": "Inclinomètre", "value": 3},
+                                    {"label": "Tirant", "value": 4},
+                                    {"label": "Jauge", "value": 5},
+                                    {"label": "Piezomètre", "value": 6},
+                                ],
+                                placeholder="Choix du paramètre",
+                                clearable=False,
                             ),
-                            justify="center",
-                        ),
-                    ]
-                ),
-            ],
-            style={"width": "41rem"},
-        )
-
+                            html.Br(),
+                            dbc.Input(placeholder="Nom du paramètre", id="nom_param"),
+                            html.Br(),
+                            dbc.Row(
+                                dbc.Button(
+                                    "Enregister les modifications",
+                                    id="save-update",
+                                    href="/chantier",
+                                    n_clicks=0,
+                                ),
+                                justify="center",
+                            ),
+                            html.Br(),
+                            dbc.Row(
+                                html.Div(id="update-success", className="text-success"),
+                                justify="center",
+                            ),
+                        ]
+                    ),
+                ],
+                style={"width": "41rem"},
+            )
+        ]
+    elif option == 3:
+        return [
+            html.Br(),
+            html.Br(),
+            dbc.Card(
+                [
+                    dbc.CardHeader(
+                        dbc.Row(html.H4("Sélectionner un secteur"), justify="center")
+                    ),
+                    dbc.CardBody(
+                        [
+                            dbc.Row(dbc.Label("Choix du secteur"), justify="center"),
+                            dbc.Row(
+                                dcc.Dropdown(
+                                    id="secteur-selection",
+                                    style={"color": "black"},
+                                    options=[
+                                        {"label": secteur, "value": secteur}
+                                        for secteur in params["secteur"]
+                                    ],
+                                    # multi=True,
+                                ),
+                                justify="center",
+                            ),
+                            html.Br(),
+                            dbc.Row(
+                                dbc.Button(
+                                    "Accéder au bilan",
+                                    id="go-secteur",
+                                    href="/secteur",
+                                    n_clicks=0,
+                                ),
+                                justify="center",
+                            ),
+                        ]
+                    ),
+                ],
+                style={"width": "41rem"},
+            )
+        ]
 
 @app.callback(
     Output("secteur-select", "data"),

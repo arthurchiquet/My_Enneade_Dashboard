@@ -23,13 +23,6 @@ def create_table():
     Chantier.metadata.create_all(engine)
 
 
-def update_output_chantier():
-    con = engine.connect()
-    list_chantier = pd.read_sql("chantier", con=con).nom_chantier.tolist()
-    con.close()
-    return [{"label": chantier, "value": chantier} for chantier in list_chantier]
-
-
 def add_chantier(nom_chantier, username, adresse, lat, lon):
     ins = Chantier_tbl.insert().values(
         nom_chantier=nom_chantier,

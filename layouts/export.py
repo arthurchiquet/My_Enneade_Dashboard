@@ -16,6 +16,8 @@ import io
 
 warnings.filterwarnings("ignore")
 
+user='Vallicorp'
+
 tab_content = dbc.Container(
     fluid=True,
     children=[
@@ -117,10 +119,11 @@ def read_data(contents, filename):
     Input('page-content', 'children'))
 def update_choix_chantier(page):
     with engine.connect() as con:
-        query = f"SELECT * FROM chantier where username = '{current_user.username}'"
+        # query = f"SELECT * FROM chantier where username = '{current_user.username}'"
+        query = f"SELECT * FROM chantier where username = '{user}'"
         liste_chantiers = pd.read_sql_query(query, con=con).nom_chantier.tolist()
     if len(liste_chantiers)==0:
-        return {}
+        return []
     else:
         return [{'label': chantier, 'value': chantier} for chantier in liste_chantiers]
 

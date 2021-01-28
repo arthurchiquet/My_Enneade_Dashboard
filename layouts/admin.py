@@ -2,10 +2,11 @@ import dash_core_components as dcc
 import dash_html_components as html
 import dash_bootstrap_components as dbc
 import dash_table as dt
+import pandas as pd
 from dash.dependencies import Input, Output, State
 from server import app
 from user_mgmt import show_users, update_profil, update_output, del_user
-from chantier_mgmt import afficher_chantier, del_chantier, update_output_chantier
+from chantier_mgmt import afficher_chantier, del_chantier
 from config import engine
 import warnings
 
@@ -141,7 +142,6 @@ layout = html.Div(
                                 dbc.Label("Nom du chantier: "),
                                 dcc.Dropdown(
                                     id="chantier_list",
-                                    options=update_output_chantier(),
                                     style={"width": "90%", "color": "black"},
                                 ),
                                 html.Br(),
@@ -164,6 +164,19 @@ layout = html.Div(
         ),
     ]
 )
+
+
+@app.callback(
+    Output('chantier_list', 'options'),
+    Input('page-content', 'children'))
+def update_choix_chantier(page):
+    with engine.connect() as con:
+        query = f"SELECT * FROM chantier"
+        liste_chantiers = pd.read_sql_query(query, con=con).nom_chantier.tolist()
+    if len(liste_chantiers)==0:
+        return []
+    else:
+        return [{'label': chantier, 'value': chantier} for chantier in liste_chantiers]
 
 
 @app.callback(

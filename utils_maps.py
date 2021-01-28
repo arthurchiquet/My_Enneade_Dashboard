@@ -185,7 +185,7 @@ def update_map_chantier(chantier, params):
                 showactive=False,
                 x=0,
                 xanchor="left",
-                y=1.1,
+                y=1.08,
                 yanchor="top",
                 buttons=list(
                     [
@@ -228,7 +228,7 @@ def update_map_chantier(chantier, params):
                 showactive=False,
                 x=0.18,
                 xanchor="left",
-                y=1.1,
+                y=1.08,
                 yanchor="top",
                 buttons=list(
                     [
