@@ -173,6 +173,8 @@ def update_map_chantier(chantier, params):
         plot_bgcolor=colors["background"],
         paper_bgcolor=colors["background"],
         font_color=colors["text"],
+        font_family='Century Gothic, AppleGothic, sans-serif',
+        font_size=12,
         margin=dict(l=20, r=10, t=0, b=0),
         height=600,
         legend=dict(yanchor="top", y=0.99, xanchor="left", x=0.01),
@@ -220,7 +222,7 @@ def update_map_chantier(chantier, params):
                             ],
                         ),
                     ]
-                ),
+                )
             ),
             dict(
                 type="dropdown",

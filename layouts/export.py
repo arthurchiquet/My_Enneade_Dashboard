@@ -23,6 +23,45 @@ tab_content = dbc.Container(
     children=[
         html.Div(
             [
+                html.Br(),
+                dbc.Row(html.H4('Selectionner un chantier'), justify='center'),
+                dbc.Row(
+                    dcc.Dropdown(
+                        id="choix_chantier",
+                        style={"color": "black", 'width': '300px'},
+                        options=[
+                            {"label": "Chantier 1", "value": "chantier_1"},
+                            {"label": "Chantier 2", "value": "chantier_2"},
+                        ],
+                        clearable=False,
+                    ), justify='center'
+                ),
+                html.Br(),
+                dbc.Row(html.H4('Type de données'), justify='center'),
+                dbc.Row(
+                    dcc.Dropdown(
+                        id="type_document",
+                        style={"color": "black", 'width': '300px'},
+                        options=[
+                            {"label": "Mesures topographiques", "value": "topographie"},
+                            {"label": "Mesures inclinométriques", "value": "inclino"},
+                            {"label": "Mesures piezométriques", "value": "jauges"},
+                            {"label": "Charges tirants", "value": "tirants"},
+                            {"label": "Charges butons", "value": "butons"},
+                            {"label": "Jauges", "value": "jauges"},
+                        ],
+                    ), justify='center'
+                ),
+                html.Br(),
+                dbc.Row(html.H4('Date de la dernière mesure'), justify='center'),
+                dbc.Row(
+                    dcc.DatePickerSingle(
+                        id="date-picker",
+                        initial_visible_month=date.today(),
+                        date=date.today(),
+                    ), justify='center'
+                ),
+                html.Br(),
                 dcc.Upload(
                     id="datatable-upload",
                     children=html.Div([html.A("Séléctionner un fichier (XLS ou CSV)")]),
@@ -55,45 +94,15 @@ tab_content = dbc.Container(
                     },
                 ),
                 html.Br(),
-                html.H4('Selectionner un chantier'),
-                dcc.Dropdown(
-                    id="choix_chantier",
-                    style={"color": "black"},
-                    options=[
-                        {"label": "Chantier 1", "value": "chantier_1"},
-                        {"label": "Chantier 2", "value": "chantier_2"},
-                    ],
-                    clearable=False,
-                ),
-                html.Br(),
-                html.H4('Type de données'),
-                dcc.Dropdown(
-                    id="type_document",
-                    style={"color": "black"},
-                    options=[
-                        {"label": "Mesures topographiques", "value": "topographie"},
-                        {"label": "Mesures inclinométriques", "value": "inclino"},
-                        {"label": "Mesures piezométriques", "value": "jauges"},
-                        {"label": "Charges tirants", "value": "tirants"},
-                        {"label": "Charges butons", "value": "butons"},
-                        {"label": "Jauges", "value": "jauges"},
-                    ],
-                ),
-                html.Br(),
-                html.H4('Date de la dernière mesure'),
-                dcc.DatePickerSingle(
-                    id="date-picker",
-                    initial_visible_month=date.today(),
-                    date=date.today(),
-                ),
-                html.Br(),
                 html.Hr(),
-                dbc.Button("Enregistrer le document", id="update", n_clicks=0),
+                dbc.Row(dbc.Button("Enregistrer le document", id="update", n_clicks=0), justify='center'),
                 html.Br(),
-                html.Div(
-                    id="import_success",
-                    className="text-success",
-                ),
+                dbc.Row(
+                    html.Div(
+                        id="import_success",
+                        className="text-success",
+                    ), justify='center'
+                )
             ]
         )
     ]
@@ -119,8 +128,8 @@ def read_data(contents, filename):
     Input('page-content', 'children'))
 def update_choix_chantier(page):
     with engine.connect() as con:
-        # query = f"SELECT * FROM chantier where username = '{current_user.username}'"
-        query = f"SELECT * FROM chantier where username = '{user}'"
+        query = f"SELECT * FROM chantier where username = '{current_user.username}'"
+        # query = f"SELECT * FROM chantier where username = '{user}'"
         liste_chantiers = pd.read_sql_query(query, con=con).nom_chantier.tolist()
     if len(liste_chantiers)==0:
         return []

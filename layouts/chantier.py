@@ -1,3 +1,4 @@
+import dash
 import dash_core_components as dcc
 import dash_html_components as html
 import dash_gif_component as gif
@@ -41,25 +42,50 @@ layout = html.Div(
                                     html.Br(),
                                     dbc.Row(
                                         [
-                                            dbc.RadioItems(
-                                                options=[
-                                                    {
-                                                        "label": "Contrôler carte",
-                                                        "value": 1,
-                                                    },
-                                                    {
-                                                        "label": "Ajouter / Modifier",
-                                                        "value": 2,
-                                                    },
-                                                    {
-                                                        "label": "Selectionner un secteur",
-                                                        "value": 3,
-                                                    },
-                                                ],
-                                                value=1,
-                                                id="options-map",
-                                                inline=True,
-                                            ),
+                                            # dbc.RadioItems(
+                                            #     options=[
+                                            #         {
+                                            #             "label": "Contrôler carte",
+                                            #             "value": 1,
+                                            #         },
+                                            #         {
+                                            #             "label": "Ajouter / Modifier",
+                                            #             "value": 2,
+                                            #         },
+                                            #         {
+                                            #             "label": "Selectionner un secteur",
+                                            #             "value": 3,
+                                            #         },
+                                            #     ],
+                                            #     value=1,
+                                            #     id="options-map",
+                                            #     inline=True,
+                                            # ),
+
+                                            html.Div([
+                                                dbc.Button(id='control-map', className="fas fa-drafting-compass mr-1"),
+                                                dbc.Tooltip(
+                                                    "Selectionner un capteur",
+                                                    target="control-map",
+                                                    placement='top'
+                                                )
+                                            ]),
+                                            html.Div([
+                                                dbc.Button(id='modify-map', className="fas fa-sliders-h mr-1"),
+                                                dbc.Tooltip(
+                                                    "Modifier les paramètres",
+                                                    target="modify-map",
+                                                    placement='top'
+                                                )
+                                            ]),
+                                            html.Div([
+                                                dbc.Button(id='select-map', className="fas fa-object-group"),
+                                                dbc.Tooltip(
+                                                    "Selectionner un secteur",
+                                                    target="select-map",
+                                                    placement='top'
+                                                )
+                                            ]),
                                         ],
                                         justify="center",
                                     ),
@@ -77,13 +103,14 @@ layout = html.Div(
                                 children=[],
                             ),
                             justify="center",
-                        )
+                        ),
                     ]
                 ),
             ]
         ),
     ]
 )
+
 
 ### AFFICHAGE LA CARTE DU CHANTIER SELECTIONNE #####
 @app.callback(
@@ -132,14 +159,13 @@ help_text = html.Div(
 
 collapse = html.Div(
     [
-        dbc.Row(dbc.Button("?", id="help", color="link"), justify="center"),
+        dbc.Row(dbc.Button(id="help", className="fas fa-info-circle"), justify="center"),
         dbc.Collapse(
-            dbc.Card(dbc.CardBody([gif.GifPlayer(gif='assets/help.gif', still='statique.png')])),
+            dbc.Card(dbc.CardBody([dbc.Row(gif.GifPlayer(gif='assets/help.gif', still='statique.png'), justify='center')])),
             id="card-help",
         ),
     ]
 )
-
 
 @app.callback(
     Output("card-help", "is_open"),
@@ -155,13 +181,17 @@ def collapse_parametres(n, is_open):
 @app.callback(
     Output("right-content", "children"),
     [
-        Input("options-map", "value"),
+        # Input("options-map", "value"),
+        Input("control-map", "n_clicks"),
+        Input("modify-map", "n_clicks"),
+        Input("select-map", "n_clicks"),
         Input("map-chantier", "clickData"),
         State("global-params", "data"),
     ],
 )
-def display_right_content(option, clickData, params):
-    if option == 1:
+def display_right_content(btn1, btn2, btn3, clickData, params):
+    changed_id = [p['prop_id'] for p in dash.callback_context.triggered][0]
+    if 'control-map' in changed_id:
         if clickData:
             return [
                 dbc.Row(html.H3(id="titre_graph"), justify="center"),
@@ -175,7 +205,7 @@ def display_right_content(option, clickData, params):
             ]
         else:
             return []
-    elif option == 2:
+    elif 'modify-map' in changed_id:
         return [
             html.Br(),
             html.Br(),
@@ -204,7 +234,7 @@ def display_right_content(option, clickData, params):
                                 style={"color": "black"},
                                 options=[
                                     {"label": "Secteur", "value": 1},
-                                    {"label": "Sous-secteur", "value": 2},
+                                    # {"label": "Sous-secteur", "value": 2},
                                     {"label": "Inclinomètre", "value": 3},
                                     {"label": "Tirant", "value": 4},
                                     {"label": "Jauge", "value": 5},
@@ -218,10 +248,11 @@ def display_right_content(option, clickData, params):
                             html.Br(),
                             dbc.Row(
                                 dbc.Button(
-                                    "Enregister les modifications",
                                     id="save-update",
                                     href="/chantier",
                                     n_clicks=0,
+                                    className='fas fa-save',
+                                    size='lg',
                                 ),
                                 justify="center",
                             ),
@@ -236,7 +267,7 @@ def display_right_content(option, clickData, params):
                 style={"width": "41rem"},
             )
         ]
-    elif option == 3:
+    elif 'select-map' in changed_id:
         return [
             html.Br(),
             html.Br(),
@@ -251,22 +282,22 @@ def display_right_content(option, clickData, params):
                             dbc.Row(
                                 dcc.Dropdown(
                                     id="secteur-selection",
-                                    style={"color": "black"},
+                                    style={"color": "black", 'width': '150px'},
                                     options=[
                                         {"label": secteur, "value": secteur}
                                         for secteur in params["secteur"]
                                     ],
-                                    # multi=True,
                                 ),
                                 justify="center",
                             ),
                             html.Br(),
                             dbc.Row(
                                 dbc.Button(
-                                    "Accéder au bilan",
                                     id="go-secteur",
                                     href="/secteur",
                                     n_clicks=0,
+                                    className="fas fa-chart-line",
+                                    size='lg'
                                 ),
                                 justify="center",
                             ),

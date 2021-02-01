@@ -6,7 +6,7 @@ import pandas as pd
 from dash.dependencies import Input, Output, State
 from server import app
 from user_mgmt import show_users, update_profil, update_output, del_user
-from chantier_mgmt import afficher_chantier, del_chantier
+from chantier_mgmt import del_chantier
 from config import engine
 import warnings
 
@@ -115,7 +115,7 @@ layout = html.Div(
                                         {"name": "Utilisateur", "id": "username"},
                                         {"name": "Adresse", "id": "adresse"},
                                     ],
-                                    data=afficher_chantier(),
+                                    data=[],
                                     style_header={"backgroundColor": "rgb(30, 30, 30)"},
                                     style_cell={
                                         "backgroundColor": "rgb(50, 50, 50)",
@@ -200,6 +200,13 @@ def modify_profil(n_clicks1, n_clicks2, user, profil):
             children=["L'utilisateur a été supprimé"], className="text-success"
         )
 
+
+@app.callback(
+    Output("chantiers", "data"),
+    Input('page-content', 'children'))
+def update_table_chantier(page):
+    with engine.connect() as con:
+        return pd.read_sql('chantier', con=con)[['nom_chantier', 'username', 'adresse']].to_dict('records')
 
 @app.callback(
     Output("del_chantier_success", "children"),

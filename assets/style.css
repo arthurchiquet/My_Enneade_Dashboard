@@ -4,7 +4,6 @@ hr {
   0.5px solid white;
 }
 
-body {
-font-family: "Century Gothic", CenturyGothic, serif;
+*{
+  font-family: "Century Gothic", CenturyGothic, AppleGothic, sans-serif;
 }
-

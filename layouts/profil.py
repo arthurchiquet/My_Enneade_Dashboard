@@ -70,9 +70,10 @@ layout = html.Div(
                                 ),
                                 html.Br(),
                                 dbc.Button(
-                                    children="Mettre à jour",
                                     id="updatePasswordButton",
                                     n_clicks=0,
+                                    className='fas fa-save',
+                                    size='lg'
                                 ),
                                 html.Br(),
                                 html.Div(id="updateSuccess"),

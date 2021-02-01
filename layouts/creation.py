@@ -52,7 +52,7 @@ layout = html.Div(
                         dbc.Row(
                             [
                                 dbc.Button(
-                                    "Créer le chantier", id="creation", className="mr-1", n_clicks=0
+                                    id="creation", className="fas fa-plus-circle", size='lg', style={'width':'80px'}, n_clicks=0
                                 ),
                                 html.Div(id="importer"),
                             ]
@@ -87,7 +87,7 @@ def display_geoloc(n_clicks, adresse, nom):
         response = requests.get(url).json()
         result = response["features"][0]["geometry"]["coordinates"]
         coords = {nom: result}
-        add_chantier(nom, current_user.username, adresse, result[1], result[0])
+        add_chantier(nom, user, adresse, result[1], result[0])
         df = pd.DataFrame(coords).T.reset_index()
         fig = px.scatter_mapbox(
             df,
@@ -109,10 +109,11 @@ def display_geoloc(n_clicks, adresse, nom):
         return (
             dcc.Graph(figure=fig),
             dbc.Button(
-                "Importer des données",
                 href="/export",
                 color="primary",
-                className="mr-1",
+                className="fas fa-cloud-upload-alt",
+                size='lg',
+                style={'width':'80px'}
             ),
             f"Le chantier {nom} a bien été créé",
         )

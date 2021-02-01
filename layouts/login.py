@@ -9,6 +9,8 @@ from werkzeug.security import check_password_hash
 layout = dbc.Container(
     [
         html.Br(),
+        dbc.Row(html.Img(src=app.get_asset_url("logo.png"), height="250px"), justify='center'),
+        html.Br(),
         dbc.Container(
             [
                 dcc.Location(id="url_login", refresh=True),
@@ -34,18 +36,19 @@ layout = dbc.Container(
                                     n_submit=0,
                                 ),
                                 dbc.Alert(id="alert"),
-                                html.Br(),
+                                # html.Br(),
                                 dbc.Button(
-                                    children="Se connecter",
+                                    id='login-button',
                                     n_clicks=0,
-                                    id="login-button",
+                                    className="fas fa-sign-in-alt",
+                                    size="lg",
+                                    style={'width':'100px'}
                                 ),
                                 html.Br(),
-                                dbc.Button(
+                                html.Br(),
+                                dcc.Link(
                                     children="Créer un compte",
-                                    n_clicks=0,
-                                    id="register",
-                                    color="link",
+                                    href='/conditions'
                                 ),
                                 html.Br(),
                             ],
@@ -61,22 +64,19 @@ layout = dbc.Container(
 
 @app.callback(
     Output("url_login", "pathname"),
-    [Input("login-button", "n_clicks"), Input("register", "n_clicks")],
+    [Input("login-button", "n_clicks")],
     [State("uname-box", "value"), State("pwd-box", "value")],
 )
-def sucess(n_click1, n_click2, input1, input2):
-    if n_click2 > 0:
-        return "/conditions"
-    else:
-        user = User.query.filter_by(username=input1).first()
-        if user:
-            if check_password_hash(user.password, input2):
-                login_user(user, remember=True)
-                return "/home"
-            else:
-                pass
+def sucess(n_click, input1, input2):
+    user = User.query.filter_by(username=input1).first()
+    if user:
+        if check_password_hash(user.password, input2):
+            login_user(user, remember=True)
+            return "/home"
         else:
             pass
+    else:
+        pass
 
 
 @app.callback(

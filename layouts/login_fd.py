@@ -20,9 +20,10 @@ layout = dbc.Container(
                             children=[
                                 html.Br(),
                                 dbc.Button(
-                                    children="Connexion",
+                                    id='back-button',
                                     n_clicks=0,
-                                    id="back-button",
+                                    className="fas fa-sign-in-alt",
+                                    size="lg"
                                 ),
                                 html.Br(),
                             ],

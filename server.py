@@ -8,9 +8,11 @@ from flask_login import LoginManager, UserMixin
 from flask_caching import Cache
 from user_mgmt import db, User as base
 
+FONT_AWESOME = "https://use.fontawesome.com/releases/v5.7.2/css/all.css"
+
 app = dash.Dash(
     __name__,
-    external_stylesheets=[dbc.themes.DARKLY],
+    external_stylesheets=[dbc.themes.DARKLY, FONT_AWESOME],
 )
 
 cache = Cache(

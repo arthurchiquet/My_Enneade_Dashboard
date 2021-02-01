@@ -59,7 +59,7 @@ def first(col):
 
 def diff_jauge(df):
     for col in df.columns:
-        df[col] = (df[col] / first(df[col])) * 100
+        df[col] = (df[col] - first(df[col])) * 100
     return df
 
 
@@ -77,7 +77,7 @@ def graph_jauge(chantier, jauges, height=None):
     fig.update_layout(
         height=height,
         showlegend=False,
-        yaxis_title="% Jauges",
+        yaxis_title="Ecart (mm)",
         xaxis_title=None,
         plot_bgcolor=colors["background"],
         paper_bgcolor=colors["background"],

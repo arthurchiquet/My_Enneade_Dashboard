@@ -23,8 +23,13 @@ layout = html.Div(
         html.Div(id="map-geo"),
         html.Br(),
         dbc.Row(
-            dbc.Button("+", href="/creation", size="lg", id='add_button'),
-            justify="center",
+            dbc.Button(
+                href="/creation",
+                size="lg",
+                id='add_button',
+                className="fas fa-map-marked",
+                style={'width':'80px'}
+            ), justify="center",
         ),
         dbc.Tooltip(
             "Définir un nouveau chantier",
@@ -40,8 +45,8 @@ layout = html.Div(
     Input("page-content", "children"))
 def display_map_geo(page_content):
     with engine.connect() as con:
-        # query = f"SELECT * FROM chantier where username = '{current_user.username}'"
-        query = f"SELECT * FROM chantier where username = '{user}'"
+        query = f"SELECT * FROM chantier where username = '{current_user.username}'"
+        # query = f"SELECT * FROM chantier where username = '{user}'"
         df = pd.read_sql_query(query, con=con)
 
     if df.shape[0]==0:
