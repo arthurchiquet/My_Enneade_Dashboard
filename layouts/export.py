@@ -95,7 +95,7 @@ tab_content = dbc.Container(
                 ),
                 html.Br(),
                 html.Hr(),
-                dbc.Row(dbc.Button("Enregistrer le document", id="update", n_clicks=0), justify='center'),
+                dbc.Row(dbc.Button(id="update", n_clicks=0, className='fas fa-save', size='lg'), justify='center'),
                 html.Br(),
                 dbc.Row(
                     html.Div(
