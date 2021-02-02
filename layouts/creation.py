@@ -52,9 +52,20 @@ layout = html.Div(
                         dbc.Row(
                             [
                                 dbc.Button(
-                                    id="creation", className="fas fa-plus-circle", size='lg', style={'width':'80px'}, n_clicks=0
+                                    id="creation",
+                                    className="fas fa-plus-circle mr-1",
+                                    size='lg',
+                                    style={'width':'80px'},
+                                    n_clicks=0
                                 ),
-                                html.Div(id="importer"),
+                                dbc.Button(
+                                    href="/export",
+                                    id='importer',
+                                    className="fas fa-cloud-upload-alt mr-1",
+                                    size='lg',
+                                    style={'width':'80px'},
+                                    disabled=True
+                                ),
                             ]
                         ),
                         html.Br(),
@@ -72,7 +83,7 @@ layout = html.Div(
 @app.callback(
     [
         Output("geo_loc", "children"),
-        Output("importer", "children"),
+        Output("importer", "disabled"),
         Output("sucess_label", "children"),
     ],
     [
@@ -87,7 +98,7 @@ def display_geoloc(n_clicks, adresse, nom):
         response = requests.get(url).json()
         result = response["features"][0]["geometry"]["coordinates"]
         coords = {nom: result}
-        add_chantier(nom, user, adresse, result[1], result[0])
+        add_chantier(nom, current_user.username, adresse, result[1], result[0])
         df = pd.DataFrame(coords).T.reset_index()
         fig = px.scatter_mapbox(
             df,
@@ -108,14 +119,8 @@ def display_geoloc(n_clicks, adresse, nom):
         fig.update_traces(marker=dict(size=30, color="#FF8C00", opacity=0.5))
         return (
             dcc.Graph(figure=fig),
-            dbc.Button(
-                href="/export",
-                color="primary",
-                className="fas fa-cloud-upload-alt",
-                size='lg',
-                style={'width':'80px'}
-            ),
+           False,
             f"Le chantier {nom} a bien été créé",
         )
     else:
-        return [], [], ""
+        return [], True, ""

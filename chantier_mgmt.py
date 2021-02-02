@@ -36,7 +36,6 @@ def add_chantier(nom_chantier, username, adresse, lat, lon):
     conn.execute(ins)
     conn.close()
 
-
 def del_chantier(nom_chantier):
     delete = Chantier_tbl.delete().where(Chantier_tbl.c.nom_chantier == nom_chantier)
 

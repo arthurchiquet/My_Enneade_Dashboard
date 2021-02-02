@@ -41,25 +41,6 @@ layout = html.Div(
                                     html.Br(),
                                     dbc.Row(
                                         [
-                                            # dbc.RadioItems(
-                                            #     options=[
-                                            #         {
-                                            #             # "label": "Contrôler carte",
-                                            #             "value": 1,
-                                            #         },
-                                            #         {
-                                            #             # "label": "Ajouter / Modifier",
-                                            #             "value": 2,
-                                            #         },
-                                            #         {
-                                            #             # "label": "Selectionner un secteur",
-                                            #             "value": 3,
-                                            #         },
-                                            #     ],
-                                            #     value=1,
-                                            #     id="options-map",
-                                            #     inline=True,
-                                            # )
                                             dbc.Tabs(
                                                 [
                                                     dbc.Tab(labelClassName="fas fa-hand-pointer", tab_id='control-map'),
@@ -143,6 +124,7 @@ help_text = html.Div(
 
 collapse = html.Div(
     [
+        html.Br(),
         dbc.Row(dbc.Button(id="help", className="fas fa-info-circle"), justify="center"),
         dbc.Collapse(
             dbc.Card(dbc.CardBody([dbc.Row(gif.GifPlayer(gif='assets/help.gif', still='statique.png'), justify='center')])),
@@ -214,7 +196,6 @@ def display_right_content(options, clickData, params):
                                 style={"color": "black"},
                                 options=[
                                     {"label": "Secteur", "value": 1},
-                                    # {"label": "Sous-secteur", "value": 2},
                                     {"label": "Inclinomètre", "value": 3},
                                     {"label": "Tirant", "value": 4},
                                     {"label": "Jauge", "value": 5},
@@ -224,7 +205,12 @@ def display_right_content(options, clickData, params):
                                 clearable=False,
                             ),
                             html.Br(),
-                            dbc.Input(placeholder="Nom du paramètre", id="nom_param"),
+                            dbc.Input(placeholder="Nom du paramètre", id="nom_param_1", style={'display':'none'}),
+                            dcc.Dropdown(
+                                id="nom_param_2",
+                                style={'display':'none'},
+                            ),
+                            html.Br(),
                             html.Br(),
                             dbc.Row(
                                 dbc.Button(
@@ -290,6 +276,35 @@ def display_right_content(options, clickData, params):
 
 
 @app.callback(
+    Output('nom_param_1', 'style'),
+    Output('nom_param_2', 'style'),
+    Output('nom_param_2', 'options'),
+    Input('type_option', 'value'),
+    Input('type_param', 'value'),
+    State("global-params", "data"),)
+def return_input_dropdown(option, param, params):
+    if option==1:
+        return {'display':'inline'}, {'display':'none'},[]
+    elif option == 2 or option ==3:
+        if param==1:
+            options=[{"label": secteur, "value": secteur} for secteur in params["secteur"]]
+        elif param ==3:
+            options=[{"label": inclino, "value": inclino} for inclino in params["inclino"]]
+        elif param ==4:
+            options=[{"label": tirant, "value": tirant} for tirant in params["tirant"]]
+        elif param ==5:
+            options=[{"label": jauge, "value": jauge} for jauge in params["jauge"]]
+        elif param ==6:
+            options=[{"label": piezo, "value": piezo} for piezo in params["piezo"]]
+        else:
+            options=[]
+
+        return {'display':'none'}, {"color": "black","width": "100%"}, options
+    else:
+        return {'display':'none'}, {'display':'none'},[]
+
+
+@app.callback(
     Output("secteur-select", "data"),
     [
         Input("go-secteur", "n_clicks"),
@@ -333,13 +348,18 @@ def select_secteur(n_clicks, secteur_selected, params):
         Input("save-update", "n_clicks"),
         State("type_option", "value"),
         State("type_param", "value"),
-        State("nom_param", "value"),
+        State("nom_param_1", "value"),
+        State("nom_param_2", "value"),
         State("map-chantier", "selectedData"),
         State("global-params", "data"),
         State("chantier-select", "data"),
     ],
 )
-def add_modif_param(n_clicks, option, param, nom_param, selectedData, params, chantier):
+def add_modif_param(n_clicks, option, param, nom_param1, nom_param2, selectedData, params, chantier):
+    if option ==1:
+        nom_param = nom_param1
+    elif option == 2 or option == 3:
+        nom_param = nom_param2
     if option == 1 or option == 2:
         if selectedData:
             range_selection = selectedData["range"]["mapbox"]

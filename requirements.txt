@@ -19,3 +19,4 @@ Flask-Caching==1.9.0
 google-cloud-storage==1.33.0
 google-auth==1.23.0
 dash-gif-component==1.1.0
+pangres==2.2.3

@@ -57,43 +57,43 @@ table_secteur = html.Div(
 )
 
 
-collapse_secteur = html.Div(
-    [
-        dbc.Row(
-            dbc.Button(
-                "Paramètres secteur",
-                id="collapse-secteur",
-                className="mb-3",
-                color="dark",
-            ),
-            justify="center",
-        ),
-        dbc.Collapse(
-            dbc.Card(dbc.CardBody([table_secteur])),
-            id="card-secteur",
-        ),
-    ]
-)
+# collapse_secteur = html.Div(
+#     [
+#         dbc.Row(
+#             dbc.Button(
+#                 "Paramètres secteur",
+#                 id="collapse-secteur",
+#                 className="mb-3",
+#                 color="dark",
+#             ),
+#             justify="center",
+#         ),
+#         dbc.Collapse(
+#             dbc.Card(dbc.CardBody([table_secteur])),
+#             id="card-secteur",
+#         ),
+#     ]
+# )
 
 layout = html.Div(
     [
         html.Br(),
-        collapse_secteur,
+        # collapse_secteur,
         html.Br(),
         dbc.Row(
             [
                 dbc.Tabs(
                     [
-                        dbc.Tab(label="Cibles", tab_id=1),
-                        dbc.Tab(label="Inclinomètres", tab_id=2),
-                        dbc.Tab(label="Tirants", tab_id=3),
-                        dbc.Tab(label="Piezometres", tab_id=5),
-                        dbc.Tab(label="Jauges", tab_id=4),
-                        dbc.Tab(label="Butons", tab_id=6),
+                        dbc.Tab(labelClassName="far fa-dot-circle", tab_id=1, id='topo'),
+                        dbc.Tab(labelClassName="fas fa-slash", tab_id=2, id='inclino'),
+                        dbc.Tab(labelClassName="fas fa-arrows-alt-h", tab_id=3, id='tirant'),
+                        dbc.Tab(labelClassName="fab fa-cloudscale", tab_id=4, id='jauge'),
+                        dbc.Tab(labelClassName="fas fa-water", tab_id=5, id='pizeo'),
+                        # dbc.Tab(labelClassName="far fa-dot-circle", tab_id=6),
                     ],
                     id="tabs_type",
                     active_tab=1,
-                )
+                ),
             ],
             justify="center",
         ),
@@ -103,45 +103,45 @@ layout = html.Div(
 )
 
 
-collapse_type = html.Div(
-    [
-        dbc.Row(
-            dbc.Button(
-                "Afficher les paramètres",
-                id="collapse-type",
-                # className="mb-3",
-                style={"fontColor": "white"},
-            ),
-            justify="center",
-        ),
-        dbc.Collapse(
-            dbc.Card(dbc.CardBody([table_parametres])),
-            id="card-type",
-        ),
-    ]
-)
+# collapse_type = html.Div(
+#     [
+#         dbc.Row(
+#             dbc.Button(
+#                 "Afficher les paramètres",
+#                 id="collapse-type",
+#                 # className="mb-3",
+#                 style={"fontColor": "white"},
+#             ),
+#             justify="center",
+#         ),
+#         dbc.Collapse(
+#             dbc.Card(dbc.CardBody([table_parametres])),
+#             id="card-type",
+#         ),
+#     ]
+# )
 
 
-@app.callback(
-    Output("card-type", "is_open"),
-    [Input("collapse-type", "n_clicks")],
-    [State("card-type", "is_open")],
-)
-def collapse_parametres(n, is_open):
-    if n:
-        return not is_open
-    return is_open
+# @app.callback(
+#     Output("card-type", "is_open"),
+#     [Input("collapse-type", "n_clicks")],
+#     [State("card-type", "is_open")],
+# )
+# def collapse_parametres(n, is_open):
+#     if n:
+#         return not is_open
+#     return is_open
 
 
-@app.callback(
-    Output("card-secteur", "is_open"),
-    [Input("collapse-secteur", "n_clicks")],
-    [State("card-secteur", "is_open")],
-)
-def collapse_secteur(n, is_open):
-    if n:
-        return not is_open
-    return is_open
+# @app.callback(
+#     Output("card-secteur", "is_open"),
+#     [Input("collapse-secteur", "n_clicks")],
+#     [State("card-secteur", "is_open")],
+# )
+# def collapse_secteur(n, is_open):
+#     if n:
+#         return not is_open
+#     return is_open
 
 
 # @app.callback(
@@ -195,12 +195,12 @@ def collapse_secteur(n, is_open):
 )
 def return_tabs_content(tab, chantier, secteur):
     if tab == 1:
-        return collapse_type, html.Br(), utils_topo.layout
+        return html.Br(), utils_topo.layout
     elif tab == 2:
-        return collapse_type, html.Br(), utils_inclino.layout
+        return html.Br(), utils_inclino.layout
     elif tab == 3:
-        return collapse_type, html.Br(), utils_tirant.layout
+        return html.Br(), utils_tirant.layout
     elif tab == 4:
-        return collapse_type, html.Br(), utils_jauge.layout
+        return html.Br(), utils_jauge.layout
     elif tab == 5:
-        return collapse_type, html.Br(), utils_piezo.layout
+        return html.Br(), utils_piezo.layout

@@ -8,10 +8,9 @@ import pandas as pd
 from server import app
 from config import engine
 import dash_table as dt
+from pangres import upsert
 
 warnings.filterwarnings("ignore")
-
-profil = 1
 
 tab_content_param = dbc.Container(
     [
@@ -31,20 +30,24 @@ tab_content_param = dbc.Container(
                 "color": "white",
                 "fontWeight": "bold",
             },
-            style_table={"height": "500px", "overflowY": "auto"},
+            style_table={"overflowY": "auto"},
         ),
         html.Br(),
-        dbc.Button(
-            children="Mettre à jour les paramètres",
-            n_clicks=0,
-            id="update_params",
-            color="dark",
+        dbc.Row(
+            dbc.Button(
+                n_clicks=0,
+                id="update_params",
+                className='fas fa-save',
+                size='lg'
+            ), justify='center'
         ),
-        html.Div(
-            id="update_success",
-            className="text-success",
-        ),
-    ]
+        dbc.Row(
+            html.Div(
+                id="update_success",
+                className="text-success",
+            ), justify='center'
+        )
+    ], fluid=True
 )
 
 tabs_pram = html.Div(
@@ -53,17 +56,17 @@ tabs_pram = html.Div(
         dbc.Row(
             dbc.Tabs(
                 [
-                    dbc.Tab(label="Chantier", tab_id="tab-chantier"),
-                    dbc.Tab(label="Secteur", tab_id="tab-secteur"),
-                    dbc.Tab(label="Cibles", tab_id="tab-topo"),
-                    dbc.Tab(label="Inclinomètres", tab_id="tab-inclino"),
-                    dbc.Tab(label="Tirants", tab_id="tab-tirant"),
-                    dbc.Tab(label="Piezometres", tab_id="tab-piezo"),
-                    dbc.Tab(label="Jauges", tab_id="tab-jauge"),
-                    dbc.Tab(label="Butons", tab_id="tab-buton"),
+
+                    dbc.Tab(labelClassName="fas fa-layer-group", tab_id=1),
+                    dbc.Tab(labelClassName="fas fa-vector-square", tab_id=2),
+                    # dbc.Tab(labelClassName="far fa-dot-circle", tab_id=3),
+                    dbc.Tab(labelClassName="fas fa-slash", tab_id=4),
+                    dbc.Tab(labelClassName="fas fa-arrows-alt-h", tab_id=5),
+                    dbc.Tab(labelClassName="fab fa-cloudscale", tab_id=6),
+                    dbc.Tab(labelClassName="fas fa-water", tab_id=7),
                 ],
                 id="tabs_param",
-                active_tab="tab-chantier",
+                active_tab=1,
             ),
             justify="center",
         ),
@@ -80,60 +83,94 @@ layout = tabs_pram
         Output("table_params", "columns"),
     ],
     [
-        Input("chantier-select", "data"),
-        Input("secteur-select", "data"),
         Input("tabs_param", "active_tab"),
+        State("chantier-select", "data"),
+        State("global-params", "data")
     ],
 )
-def update_table(chantier, secteur, tab):
-    df = get_data(chantier, "paramètres", "parametres_generaux.csv", sep=False)
-    params = df[(df.chantier == chantier) & (df.secteur == secteur)]
-    if tab == "tab-chantier":
-        parametres = []
-    if tab == "tab-secteur":
-        query = f"select * from secteur where chantier='{chantier}' and secteur='{secteur}'"
-        parametres = pd.read_sql_query(query, con=con)
-    if tab == "tab-topo":
-        filtre_secteur = tuple(params[params.type == "cible"].capteur)
-        query = f"select * from cible_param where cible in {filtre_secteur}"
-        parametres = pd.read_sql_query(query, con=con)
-    if tab == "tab-inclino":
-        filtre_secteur = tuple(params[params.type == "inclino"].capteur)
-        query = f"select * from inclino_param where cible in {filtre_secteur}"
-        parametres = pd.read_sql_query(query, con=con)
-    if tab == "tab-tirant":
-        filtre_secteur = tuple(params[params.type == "tirant"].capteur)
-        query = f"select * from tirant_param where cible in {filtre_secteur}"
-        parametres = pd.read_sql_query(query, con=con)
-    if tab == "tab-piezo":
-        filtre_secteur = tuple(params[params.type == "piezo"].capteur)
-        query = f"select * from piezo_param where cible in {filtre_secteur}"
-        parametres = pd.read_sql_query(query, con=con)
-    if tab == "tab-jauge":
-        filtre_secteur = tuple(params[params.type == "jauge"].capteur)
-        query = f"select * from jauge_param where cible in {filtre_secteur}"
-        parametres = pd.read_sql_query(query, con=con)
-    if tab == "tab-buton":
-        filtre_secteur = tuple(params[params.type == "buton"].capteur)
-        query = f"select * from buton_param where cible in {filtre_secteur}"
-        parametres = pd.read_sql_query(query, con=con)
-    return parametres.to_dict("records"), [
-        {"name": i, "id": i} for i in parametres.columns
-    ]
+def display_table(tab, chantier, data):
+    with engine.connect() as con:
+        if tab == 1:
+            query=f"SELECT * FROM chantier WHERE nom_chantier='{chantier}'"
+            parametres = pd.read_sql_query(query, con=con)
+            return parametres.to_dict("records"), [{"name": i, "id": i} for i in parametres.columns]
+        if tab == 2:
+            query = f"SELECT * FROM secteur_param WHERE nom_chantier='{chantier}'"
+            sql_result = pd.read_sql_query(query, con=con)
+            parametres = pd.DataFrame({'secteur':data['secteur'].keys(), 'nom_chantier': chantier})
+            result=parametres.merge(sql_result, how='left')
+            return result.to_dict("records"), [{"name": i, "id": i} for i in result.columns]
+
+        # if tab == 3:
+        #     filtre_secteur = tuple(params[params.type == "cible"].capteur)
+        #     query = f"select * from cible_param where cible in {filtre_secteur}"
+        #     parametres = pd.read_sql_query(query, con=con)
+
+        if tab == 4:
+            query = f"select * from inclino_param WHERE nom_chantier='{chantier}'"
+            sql_result = pd.read_sql_query(query, con=con)
+            parametres = pd.DataFrame({'inclino':data['inclino'].keys(), 'nom_chantier': chantier})
+            result=parametres.merge(sql_result, how='left')
+            return result.to_dict("records"), [{"name": i, "id": i} for i in result.columns]
+        if tab == 5:
+            query = f"select * from tirant_param WHERE nom_chantier='{chantier}'"
+            sql_result = pd.read_sql_query(query, con=con)
+            parametres = pd.DataFrame({'tirant':data['tirant'].keys(), 'nom_chantier': chantier})
+            result=parametres.merge(sql_result, how='left')
+            return result.to_dict("records"), [{"name": i, "id": i} for i in result.columns]
+        if tab == 6:
+            query = f"select * from jauge_param WHERE nom_chantier='{chantier}'"
+            sql_result = pd.read_sql_query(query, con=con)
+            parametres = pd.DataFrame({'jauge':data['jauge'].keys(), 'nom_chantier': chantier})
+            result=parametres.merge(sql_result, how='left')
+            return result.to_dict("records"), [{"name": i, "id": i} for i in result.columns]
+        if tab == 7:
+            query = f"select * from piezo_param WHERE nom_chantier='{chantier}'"
+            sql_result = pd.read_sql_query(query, con=con)
+            parametres = pd.DataFrame({'piezo':data['piezo'].keys(), 'nom_chantier': chantier})
+            result=parametres.merge(sql_result, how='left')
+            return result.to_dict("records"), [{"name": i, "id": i} for i in result.columns]
 
 
 @app.callback(
     Output("update_success", "children"),
     [
-        Input("table_params", "data"),
         Input("update_params", "n_clicks"),
-        Input("chantier-select", "data"),
+        State("table_params", "data"),
+        State("tabs_param", "active_tab"),
+        State("chantier-select", "data"),
     ],
 )
-def update_params(data, n_clicks, chantier):
-    if n_clicks > 0:
+def update_params(n_clicks, data, tab, chantier):
+    if n_clicks:
         df = pd.DataFrame(data)
-        export_data(df, chantier, "paramètres", "parametres_generaux.csv")
+        df = df.set_index(df.columns[0])
+        if tab ==1:
+            pass
+        if tab ==2:
+            upsert(engine=engine,
+                df=df,
+                table_name='secteur_param',
+                if_row_exists='update'
+            )
+        if tab ==4:
+            upsert(engine=engine,
+                df=df,
+                table_name='inclino_param',
+                if_row_exists='update'
+            )
+        if tab ==5:
+            upsert(engine=engine,
+                df=df,
+                table_name='jauge_param',
+                if_row_exists='update'
+            )
+        if tab ==6:
+            upsert(engine=engine,
+                df=df,
+                table_name='tirant_param',
+                if_row_exists='update'
+            )
         return "Les paramètres ont bien été sauvegardés"
     else:
         return ""
