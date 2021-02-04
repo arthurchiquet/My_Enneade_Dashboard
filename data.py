@@ -14,7 +14,7 @@ PROJECT_ID = "vallicorp1"
 BUCKET_NAME = "myenneade-data"
 
 
-def get_credentials(local=False):
+def get_credentials(local=True):
     if local:
         credentials_raw = os.environ.get("GOOGLE_APPLICATION_CREDENTIALS")
         if ".json" in credentials_raw:

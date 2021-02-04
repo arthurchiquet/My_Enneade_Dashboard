@@ -20,10 +20,16 @@ tab_content_param = dbc.Container(
             editable=True,
             filter_action="native",
             fixed_rows={"headers": True},
+            style_as_list_view=True,
             style_cell={
                 "backgroundColor": "rgb(50, 50, 50)",
                 "color": "white",
                 "textAlign": "center",
+                'whiteSpace': 'normal',
+                'height': 'auto',
+                'minWidth': '180px', 'width': '180px', 'maxWidth': '180px',
+                'overflow': 'hidden',
+                'textOverflow': 'ellipsis',
             },
             style_header={
                 "backgroundColor": "rgb(20, 20, 20)",
@@ -31,23 +37,8 @@ tab_content_param = dbc.Container(
                 "fontWeight": "bold",
             },
             style_table={"overflowY": "auto"},
-        ),
-        html.Br(),
-        dbc.Row(
-            dbc.Button(
-                n_clicks=0,
-                id="update_params",
-                className='fas fa-save',
-                size='lg'
-            ), justify='center'
-        ),
-        dbc.Row(
-            html.Div(
-                id="update_success",
-                className="text-success",
-            ), justify='center'
         )
-    ], fluid=True
+    ]
 )
 
 tabs_pram = html.Div(
@@ -71,6 +62,21 @@ tabs_pram = html.Div(
             justify="center",
         ),
         tab_content_param,
+        html.Br(),
+        dbc.Row(
+            dbc.Button(
+                n_clicks=0,
+                id="update_params",
+                className='fas fa-save',
+                size='lg'
+            ), justify='center'
+        ),
+        dbc.Row(
+            html.Div(
+                id="update_success",
+                className="text-success",
+            ), justify='center'
+        )
     ]
 )
 
@@ -92,7 +98,7 @@ def display_table(tab, chantier, data):
     with engine.connect() as con:
         if tab == 1:
             query=f"SELECT * FROM chantier WHERE nom_chantier='{chantier}'"
-            parametres = pd.read_sql_query(query, con=con)
+            parametres = pd.read_sql_query(query, con=con).iloc[:,1:]
             return parametres.to_dict("records"), [{"name": i, "id": i} for i in parametres.columns]
         if tab == 2:
             query = f"SELECT * FROM secteur_param WHERE nom_chantier='{chantier}'"
@@ -139,12 +145,13 @@ def display_table(tab, chantier, data):
         State("table_params", "data"),
         State("tabs_param", "active_tab"),
         State("chantier-select", "data"),
+        State("update_success", "children"),
     ],
 )
-def update_params(n_clicks, data, tab, chantier):
+def update_params(n_clicks, data, tab, chantier, label):
     if n_clicks:
         df = pd.DataFrame(data)
-        df = df.set_index(df.columns[0])
+        df = df.set_index([df.columns[0], df.columns[1]])
         if tab ==1:
             pass
         if tab ==2:
@@ -162,13 +169,19 @@ def update_params(n_clicks, data, tab, chantier):
         if tab ==5:
             upsert(engine=engine,
                 df=df,
-                table_name='jauge_param',
+                table_name='tirant_param',
                 if_row_exists='update'
             )
         if tab ==6:
             upsert(engine=engine,
                 df=df,
-                table_name='tirant_param',
+                table_name='jauge_param',
+                if_row_exists='update'
+            )
+        if tab ==7:
+            upsert(engine=engine,
+                df=df,
+                table_name='piezo_param',
                 if_row_exists='update'
             )
         return "Les paramètres ont bien été sauvegardés"

@@ -20,6 +20,7 @@ colors = {"background": "#222222", "text": "#FF8C00"}
 
 layout = html.Div(
     [
+        dbc.Row(html.H4(id='loading-map-title', children='La carte est en cours de chargment ...'), justify='center'),
         html.Div(id="map-geo"),
         html.Br(),
         dbc.Row(
@@ -42,6 +43,7 @@ layout = html.Div(
 
 @app.callback(
     Output("map-geo", "children"),
+    Output("loading-map-title", 'children'),
     Input("page-content", "children"))
 def display_map_geo(page_content):
     with engine.connect() as con:
@@ -50,7 +52,7 @@ def display_map_geo(page_content):
         df = pd.read_sql_query(query, con=con)
 
     if df.shape[0]==0:
-        return []
+        return [] , 'Aucun chantier'
     else:
         fig = px.scatter_mapbox(
             df,
@@ -74,7 +76,7 @@ def display_map_geo(page_content):
         )
 
         return dcc.Graph(
-            id="map-geo", config={"displayModeBar": False}, figure=fig)
+            id="map-geo", config={"displayModeBar": False}, figure=fig), ''
 
 ##### SELECTIONNE CHANTIER #####
 @app.callback(

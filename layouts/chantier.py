@@ -28,8 +28,9 @@ layout = html.Div(
                 dbc.Col(
                     [
                         dbc.Row(
-                            dbc.Container(
+                            dbc.Container(id='map-container',
                                 children=[
+                                    dbc.Row(html.H4(id='no-chantier-selected', children='Chargement des données en cours ...'), justify='center'),
                                     dcc.Graph(
                                         id="map-chantier",
                                         config={
@@ -76,17 +77,20 @@ layout = html.Div(
     ]
 )
 
-
 ### AFFICHAGE LA CARTE DU CHANTIER SELECTIONNE #####
 @app.callback(
     Output("map-chantier", "figure"),
+    Output("no-chantier-selected", "children"),
     [
         Input("chantier-select", "data"),
         Input("global-params", "data"),
     ],
 )
 def affichage_map(chantier, params):
-    return update_map_chantier(chantier, params)
+    try:
+        return update_map_chantier(chantier, params), ''
+    except:
+        return empty_figure(), 'Aucun chantier selectionné'
 
 
 @app.callback(
@@ -453,7 +457,7 @@ def affichage_courbe_capteur(selectedData, chantier):
             sous_titre(customdata),
         )
     except:
-        return "", empty_figure(), ""
+        return "", empty_figure(), f"Aucune donnée existante pour cet élément"
 
 
 ### RENVOIE LA METHODE D'AFFICHAGE DE LA COURBE EN FONCTION DU TYPE DE CAPTEUR ####
@@ -476,7 +480,7 @@ def selection_affichage(chantier, customdata, text):
 
 def sous_titre(customdata):
     if customdata == "cible":
-        return "Déplacements N, T, Z (mm)"
+        return "Déplacements 3 axes (mm)"
     elif customdata == "inclino":
         return ""
     elif customdata == "tirant":

@@ -22,6 +22,17 @@ from layouts import (
 
 user_profil = 1
 
+app.layout = html.Div(
+    [
+        dcc.Store(id="chantier-select", data={}, storage_type="session"),
+        dcc.Store(id="secteur-select", data={}, storage_type="session"),
+        dcc.Store(id="global-params", data={}, storage_type="session"),
+        dcc.Store(id="provis-params", data={}, storage_type="session"),
+        dcc.Location(id="url", refresh=False),
+        html.Div(id="navBar"),
+        html.Div(id="page-content"),
+    ],
+)
 
 def return_buttons(profil):
     if profil==1:
@@ -277,20 +288,6 @@ def return_navbar(profil):
         style=dict(height=60),
     )
     return navbar
-
-
-app.layout = html.Div(
-    [
-        dcc.Store(id="chantier-select", data={}, storage_type="session"),
-        dcc.Store(id="secteur-select", data={}, storage_type="session"),
-        dcc.Store(id="global-params", data={}, storage_type="session"),
-        dcc.Store(id="provis-params", data={}, storage_type="session"),
-        dcc.Location(id="url", refresh=False),
-        html.Div(id="navBar"),
-        html.Div(id="page-content"),
-    ],
-)
-
 
 # @app.callback(Output("page-content", "children"), Input("url", "pathname"))
 # def display_page(pathname):
