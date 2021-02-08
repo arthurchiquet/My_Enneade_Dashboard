@@ -12,6 +12,7 @@ from plotly.subplots import make_subplots
 from utils_maps import empty_figure
 from math import radians, cos, sin
 from data import memoized_data
+import json
 
 colors = {"background": "#222222", "text": "white"}
 
@@ -24,7 +25,7 @@ layout = html.Div(
                     html.H4("Positions des cibles sélectionnées"), justify="center"
                 ),
                 dbc.Row(
-                    [dcc.Loading(dcc.Graph(id="3d-positions"), type="graph")], justify='center'
+                    [dcc.Loading(dcc.Graph(id="3d-positions", figure=empty_figure()), type="graph")], justify='center'
                 ),
             ], width=5),
             dbc.Col([
@@ -32,41 +33,75 @@ layout = html.Div(
                     html.H4("Déplacement normal, tangentiel et vertical (mm)"), justify="center"
                 ),
                 dbc.Container(
-                    [dcc.Loading(dcc.Graph(id="time-series"), type="graph")], fluid=True
+                    [dcc.Graph(id="time-series", figure=empty_figure())], fluid=True
                 ),
             ], width=7)
-        ])
+        ]),
+        # html.Pre(id='hover-data')
     ]
 )
 
+# @app.callback(
+#     Output('hover-data', 'children'),
+#     Input('3d-positions', 'figure'))
+# def display_hover_data(hoverData):
+#     return json.dumps(hoverData['data'], indent=2)
 
 @app.callback(
     Output("time-series", "figure"),
-    Input("secteur-select", "data"),
+    Input('3d-positions', 'hoverData'),
+    State("secteur-select", "data"),
     State("chantier-select", "data"),
+    State("time-series", "figure"),
 )
-def update_timeseries(secteur_selected, chantier):
-    try:
-        secteur = list(secteur_selected.keys())[0]
-        list_capteur = secteur_selected[secteur]["cible"]
-        return graph_topo(chantier, list_capteur, 0)
-    except:
-        return empty_figure()
+def update_timeseries(hoverData, secteur_selected, chantier, fig):
+    if fig==empty_figure():
+        try:
+            secteur = list(secteur_selected.keys())[0]
+            list_capteur = secteur_selected[secteur]["cible"]
+            return graph_topo(chantier, list_capteur, 0)
+        except:
+            return empty_figure()
+    else:
+        try:
+            capteur=hoverData['points'][0]['customdata'][0]
+            fig=go.Figure(fig)
+            fig.update_traces(
+                line=dict(width=2, color='rgba(127, 255, 212, 0.3)')
+            )
+            fig.update_traces(
+                line=dict(width=4, color='#FF1493'), selector=dict(name=capteur)
+            )
+        except:
+            pass
+        return fig
 
 @app.callback(
     Output("3d-positions", "figure"),
-    Input("secteur-select", "data"),
+    Input('time-series', 'hoverData'),
+    State("secteur-select", "data"),
     State("chantier-select", "data"),
+    State("3d-positions", "figure"),
 )
-def update_3d_graph(secteur_selected, chantier):
-    try:
-        secteur = list(secteur_selected.keys())[0]
-        list_capteur = secteur_selected[secteur]["cible"]
-        df = extract_3d_positions(chantier, list_capteur, secteur)
-        return graph_3d_positions(df)
-    except:
-        return empty_figure()
-
+def update_3d_graph(hoverData, secteur_selected, chantier, fig):
+    if fig==empty_figure():
+        try:
+            secteur = list(secteur_selected.keys())[0]
+            list_capteur = secteur_selected[secteur]["cible"]
+            df = extract_3d_positions(chantier, list_capteur, secteur)
+            return graph_3d_positions(df, secteur)
+        except:
+            return empty_figure()
+    else:
+        try:
+            capteur=hoverData['points'][0]['customdata'][0]
+            fig=go.Figure(fig)
+            fig.for_each_trace(
+                lambda trace: trace.update(marker=dict(size=10) if trace.customdata == capteur else (),
+            ))
+        except:
+            pass
+        return fig
 
 def affect(nom_capteur, liste_capteur, nom_secteur):
     if nom_capteur in liste_capteur:
@@ -107,24 +142,161 @@ def extract_3d_positions(chantier, liste_capteur, secteur):
     df2 = df2[(df2.x < df2.x.mean()*1.2)&(df2.x > df2.x.mean()*0.8)&(df2.y < df2.y.mean()*1.2)&(df2.y >df2.y.mean()*0.8)&(df2.z < df2.z.mean()*1.2)&(df2.z >df2.z.mean()*0.8)]
     return df2
 
-def graph_3d_positions(df):
-    fig = px.scatter_3d(
-        df,
-        x='x',
-        y='y',
-        z='z',
-        color='secteur',
-        hover_data={"cible": True, 'x':False, 'y':False, 'z':False}
+def graph_3d_positions(df, secteur):
+
+    manu1 = list((df.cible.map(manu_auto_sd)=='manu') & (df.secteur==secteur))
+    manu2 = list((df.cible.map(manu_auto_sd)=='manu') & (df.secteur!=secteur))
+    auto1 = list((df.cible.map(manu_auto_sd)=='auto') & (df.secteur==secteur))
+    auto2 = list((df.cible.map(manu_auto_sd)=='auto') & (df.secteur!=secteur))
+    sd1 = list((df.cible.map(manu_auto_sd)=='sd') & (df.secteur==secteur))
+    sd2 = list((df.cible.map(manu_auto_sd)=='sd') & (df.secteur!=secteur))
+
+    df1=df[manu1]
+    df2=df[manu2]
+    df3=df[auto1]
+    df4=df[auto2]
+    df5=df[sd1]
+    df6=df[sd2]
+
+    fig = go.Figure(
+        data=[go.Scatter3d(
+            x=df1.x,
+            y=df1.y,
+            z=df1.z,
+            customdata=df1[['cible','secteur']],
+            mode='markers',
+            name='Manuel_S')
+        ]
     )
+
+    fig.add_trace(
+        go.Scatter3d(
+            x=df2.x,
+            y=df2.y,
+            z=df2.z,
+            customdata=df2[['cible','secteur']],
+            mode='markers',
+            name='Manuel_HS'
+        )
+    )
+
+    fig.add_trace(
+        go.Scatter3d(
+            x=df3.x,
+            y=df3.y,
+            z=df3.z,
+            customdata=df3[['cible','secteur']],
+            mode='markers',
+            name='Auto_S'
+        )
+    )
+
+    fig.add_trace(
+        go.Scatter3d(
+            x=df4.x,
+            y=df4.y,
+            z=df4.z,
+            customdata=df4[['cible','secteur']],
+            mode='markers',
+            name='Auto_HS'
+        )
+    )
+
+    fig.add_trace(
+        go.Scatter3d(
+            x=df5.x,
+            y=df5.y,
+            z=df5.z,
+            customdata=df5[['cible','secteur']],
+            mode='markers',
+            name='Sd_S'
+        )
+    )
+
+    fig.add_trace(
+        go.Scatter3d(
+            x=df6.x,
+            y=df6.y,
+            z=df6.z,
+            customdata=df6[['cible','secteur']],
+            mode='markers',
+            name='Sd_HS'
+        )
+    )
+
     fig.update_traces(
-        marker=dict(size=3)
+        marker=dict(size=3, opacity=0.6, color='#7FFFD4')
+    )
+
+    fig.update_traces(
+        marker=dict(size=3, opacity=1, color='#FF1493'), selector=dict(name='Manuel_S')
+    )
+
+    fig.update_traces(
+        marker=dict(size=3, opacity=1, color='#FF1493'), selector=dict(name='Auto_S')
+    )
+
+    fig.update_traces(
+        marker=dict(size=3, opacity=1, color='#FF1493'), selector=dict(name='Sd_S')
     )
 
     fig.update_layout(
+        updatemenus=[
+            dict(
+                type="dropdown",
+                direction="right",
+                pad={"r": 10, "t": 0},
+                showactive=False,
+                x=0.15,
+                xanchor="left",
+                y=1.08,
+                yanchor="top",
+                buttons=list(
+                    [
+                        dict(
+                            label="Manuel",
+                            method="update",
+                            args=[
+                                {
+                                    "visible": [True, True, False, False, False, False]
+                                }
+                            ],
+                        ),
+                        dict(
+                            label="Auto",
+                            method="update",
+                            args=[
+                                {
+                                    "visible": [False, False, True, True, False, False]
+                                }
+                            ],
+                        ),
+                        dict(
+                            label="Sous-dalle",
+                            method="update",
+                            args=[
+                                {
+                                    "visible": [False, False, False, False, True, True]
+                                }
+                            ],
+                        ),
+                        dict(
+                            label="Tous",
+                            method="update",
+                            args=[
+                                {
+                                    "visible": [True, True, True, True, True, True]
+                                }
+                            ],
+                        ),
+                    ]
+                )
+            ),
+        ],
         scene=dict(
-            xaxis_title="Est",
-            yaxis_title="Nord",
-            zaxis_title="Profondeur",
+            xaxis_title="Est / Ouest",
+            yaxis_title="Nord / Sud",
+            zaxis_title="Z",
             xaxis=dict(
                 backgroundcolor=colors["background"],
                 gridcolor="grey",
@@ -210,8 +382,13 @@ def facet_name_ntz(string):
 def remove_xyz(string):
     return string[:-2]
 
+def manu_auto_sd(cible):
+    if cible[:2].lower()=='sd':
+        return 'sd'
+    else:
+        return cible[:4].lower()
 
-def format_df(df, list_cibles, angle, repere='xyz'):
+def format_df(df, list_cibles, angle=0, repere='xyz'):
     df.date = pd.to_datetime(df.date, format="%d/%m/%Y")
     liste_colonnes = select_columns(df, list_cibles)
     df = df.set_index("date")[liste_colonnes]
@@ -230,7 +407,7 @@ def format_df(df, list_cibles, angle, repere='xyz'):
        df["Axe"] = df["level_1"].map(facet_name_xyz)
     else:
         df["Axe"] = df["level_1"].map(facet_name_ntz)
-    df["Cible"] = df["level_1"].map(remove_xyz)
+    df["cible"] = df["level_1"].map(remove_xyz)
     return df.rename(columns={0: "delta"}).drop(columns="level_1")
 
 
@@ -239,17 +416,19 @@ def graph_topo(
 ):
     df = memoized_data(chantier, "actif", "topographie.csv")
     dff = format_df(df, list_cibles, angle)
+
     fig = px.line(
         dff,
         x="date",
         y="delta",
         facet_row="Axe",
-        color="Cible",
+        color="cible",
+        hover_data={'cible' : True},
         facet_row_spacing=spacing,
     )
     fig.update_xaxes(showgrid=False, title=dict(text=None))
-    fig.update_yaxes(mirror="allticks", title=dict(text=None), gridcolor="grey")
-    fig.update_traces(hovertemplate=None)
+    fig.update_yaxes(mirror='all', title=dict(text=None), gridcolor="grey", nticks=15)
+    fig.update_traces(hovertemplate=None, line=dict(color='rgba(127, 255, 212, 0.4)', width=2))
     fig.update_layout(
         showlegend=showlegend,
         height=height,

@@ -16,39 +16,53 @@ layout = dbc.Container(
                 dcc.Location(id="url_login", refresh=True),
                 html.Div(
                     [
-                        dbc.Container(html.H3("Connexion")),
+                        # dbc.Row(html.H3("Connexion"), justify='center'),
                         dbc.Container(
                             id="loginType",
                             children=[
-                                dcc.Input(
-                                    placeholder="Veuillez saisir votre nom d'utilisateur",
-                                    type="text",
-                                    id="uname-box",
-                                    className="form-control",
-                                    n_submit=0,
+                                dbc.Row(
+                                    dcc.Input(
+                                        placeholder="Veuillez saisir votre nom d'utilisateur",
+                                        type="text",
+                                        id="uname-box",
+                                        className="form-control",
+                                        n_submit=0,
+                                        style=dict(width='300px')
+                                    ), justify='center'
                                 ),
                                 html.Br(),
-                                dcc.Input(
-                                    placeholder="Veuillez saisir votre mot de passe",
-                                    type="password",
-                                    id="pwd-box",
-                                    className="form-control",
-                                    n_submit=0,
+                                dbc.Row(
+                                    dcc.Input(
+                                        placeholder="Veuillez saisir votre mot de passe",
+                                        type="password",
+                                        id="pwd-box",
+                                        className="form-control",
+                                        n_submit=0,
+                                        style=dict(width='300px')
+                                    ), justify='center'
                                 ),
-                                dbc.Alert(id="alert"),
+                                dbc.Row(dbc.Alert(id="alert"), justify='center'),
                                 # html.Br(),
-                                dbc.Button(
-                                    id='login-button',
-                                    n_clicks=0,
-                                    className="fas fa-sign-in-alt",
-                                    size="lg",
-                                    style={'width':'100px'}
+                                dbc.Row(
+                                    dbc.Button(
+                                        id='login-button',
+                                        n_clicks=0,
+                                        className="fas fa-sign-in-alt",
+                                        size="lg",
+                                        style={'width':'100px'}
+                                    ), justify='center'
+                                ),
+                                dbc.Tooltip(
+                                    "Se connecter",
+                                    target="login-button",
+                                    placement='down'
                                 ),
                                 html.Br(),
-                                html.Br(),
-                                dcc.Link(
-                                    children="Créer un compte",
-                                    href='/conditions'
+                                dbc.Row(
+                                    dcc.Link(
+                                        children="Créer un compte",
+                                        href='/conditions'
+                                    ), justify='center'
                                 ),
                                 html.Br(),
                             ],

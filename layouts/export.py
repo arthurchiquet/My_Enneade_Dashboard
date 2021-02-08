@@ -24,11 +24,11 @@ tab_content = dbc.Container(
         html.Div(
             [
                 html.Br(),
-                dbc.Row(html.H4('Selectionner un chantier'), justify='center'),
+                dbc.Row(html.H6('Selectionner un chantier'), justify='center'),
                 dbc.Row(
                     dcc.Dropdown(
                         id="choix_chantier",
-                        style={"color": "black", 'width': '300px'},
+                        style={"color": "black", 'width': '250px'},
                         options=[
                             {"label": "Chantier 1", "value": "chantier_1"},
                             {"label": "Chantier 2", "value": "chantier_2"},
@@ -37,11 +37,11 @@ tab_content = dbc.Container(
                     ), justify='center'
                 ),
                 html.Br(),
-                dbc.Row(html.H4('Type de données'), justify='center'),
+                dbc.Row(html.H6('Type de données'), justify='center'),
                 dbc.Row(
                     dcc.Dropdown(
                         id="type_document",
-                        style={"color": "black", 'width': '300px'},
+                        style={"color": "black", 'width': '250px'},
                         options=[
                             {"label": "Mesures topographiques", "value": "topographie"},
                             {"label": "Mesures inclinométriques", "value": "inclino"},
@@ -50,16 +50,18 @@ tab_content = dbc.Container(
                             {"label": "Charges butons", "value": "butons"},
                             {"label": "Jauges", "value": "jauges"},
                         ],
+                        clearable=False,
                     ), justify='center'
                 ),
                 html.Br(),
-                dbc.Row(html.H4('Date de la dernière mesure'), justify='center'),
+                dbc.Row(html.H6('Date de la dernière mesure'), justify='center'),
                 dbc.Row(
-                    dcc.DatePickerSingle(
-                        id="date-picker",
-                        initial_visible_month=date.today(),
-                        date=date.today(),
-                    ), justify='center'
+                    html.Td(
+                        dcc.DatePickerSingle(
+                            id="date-picker",
+                            initial_visible_month=date.today(),
+                            date=date.today(),
+                        )), justify='center'
                 ),
                 html.Br(),
                 dcc.Upload(

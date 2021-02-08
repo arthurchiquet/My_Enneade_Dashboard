@@ -47,8 +47,8 @@ layout = html.Div(
     Input("page-content", "children"))
 def display_map_geo(page_content):
     with engine.connect() as con:
-        query = f"SELECT * FROM chantier where username = '{current_user.username}'"
-        # query = f"SELECT * FROM chantier where username = '{user}'"
+        # query = f"SELECT * FROM chantier where username = '{current_user.username}'"
+        query = f"SELECT * FROM chantier where username = '{user}'"
         df = pd.read_sql_query(query, con=con)
 
     if df.shape[0]==0:
@@ -67,6 +67,20 @@ def display_map_geo(page_content):
             height=650,
             zoom=4,
         )
+        fig.add_layout_image(dict(
+                source=app.get_asset_url("logo.png"),
+                x=0,
+                y=0.98,
+                )
+        )
+        fig.update_layout_images(dict(
+                xref="paper",
+                yref="paper",
+                sizex=0.12,
+                sizey=0.12,
+                xanchor="left",
+                yanchor="top"
+        ))
         fig.update_layout(mapbox_style="dark", mapbox_accesstoken=mapbox_token)
         fig.update_layout(
             plot_bgcolor=colors["background"],

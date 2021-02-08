@@ -46,7 +46,6 @@ def first(col):
             break
     return i
 
-
 def extract_position(df):
     df = df.drop(columns=["date"])
     df = pd.DataFrame(df.apply(first)).T
@@ -94,6 +93,7 @@ def update_map_chantier(chantier, params):
         lat="lat",
         lon="lon",
         color="type",
+        opacity=0.7,
         text="capteur",
         hover_data={"type": True},
     )
@@ -101,16 +101,16 @@ def update_map_chantier(chantier, params):
     fig.update_traces(hovertemplate="%{text}", textfont_size=11)
 
     fig.update_traces(
-        marker=dict(size=20, color="#FF6347"), selector=dict(name="inclino")
+        marker=dict(size=20, color="#FF6347", opacity=0.5), selector=dict(name="inclino")
     )
     fig.update_traces(
-        marker=dict(size=20, color="#FF8C00"), selector=dict(name="tirant")
+        marker=dict(size=20, color="#FF8C00", opacity=0.5), selector=dict(name="tirant")
     )
     fig.update_traces(
-        marker=dict(size=20, color="#7CFC00"), selector=dict(name="piezo")
+        marker=dict(size=20, color="#7CFC00", opacity=0.5), selector=dict(name="piezo")
     )
     fig.update_traces(
-        marker=dict(size=20, color="#9370DB"), selector=dict(name="button")
+        marker=dict(size=20, color="#9370DB", opacity=0.5), selector=dict(name="button")
     )
 
 
