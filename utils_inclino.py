@@ -17,8 +17,10 @@ colors = {"background": "#222222", "text": "white"}
 
 
 def graph_inclino(chantier, inclino, height=None):
+
     dfnorm = get_data(chantier, "actif", f"{inclino}_norm.csv", sep=False)
     dftan = get_data(chantier, "actif", f"{inclino}_tan.csv", sep=False)
+
     last_col = dfnorm.columns[-1]
     past_last_col = dfnorm.columns[-2]
     dfnorm[f"{last_col} vs {past_last_col}"] = dfnorm[last_col] - dfnorm[past_last_col]
@@ -55,7 +57,6 @@ def graph_inclino(chantier, inclino, height=None):
         row=1,
         col=1,
     )
-    # fig.update_xaxes(range=[-10, 25])
     fig.update_yaxes(autorange="reversed", gridcolor="grey")
     fig.update_xaxes(gridcolor="grey")
     fig.update_layout(
@@ -63,7 +64,6 @@ def graph_inclino(chantier, inclino, height=None):
         legend_title_text=None,
         yaxis_title="Profondeur (m)",
         xaxis_title=None,
-        # height=550,
         legend_orientation="h",
         plot_bgcolor=colors["background"],
         paper_bgcolor=colors["background"],
@@ -215,9 +215,6 @@ layout = html.Div(
                             [
                                 dcc.Graph(
                                     id="var_norm",
-                                    config={
-                                        "scrollZoom": True,
-                                    },
                                     figure=empty_figure(),
                                 ),
                             ]
@@ -225,8 +222,6 @@ layout = html.Div(
                         dbc.Col(
                             [
                                 dcc.Graph(
-                                    id="var_tan",
-                                    config={"scrollZoom": True},
                                     figure=empty_figure(),
                                 ),
                             ]
@@ -243,7 +238,6 @@ layout = html.Div(
                             [
                                 dcc.Graph(
                                     id="var_norm_2",
-                                    config={"scrollZoom": True},
                                     figure=empty_figure(),
                                 ),
                             ]
@@ -261,7 +255,6 @@ layout = html.Div(
                             [
                                 dcc.Graph(
                                     id="var_tan_2",
-                                    config={"scrollZoom": True},
                                     figure=empty_figure(),
                                 ),
                             ]
@@ -284,7 +277,6 @@ layout = html.Div(
                             [
                                 dcc.Graph(
                                     id="var_norm_3",
-                                    config={"scrollZoom": True},
                                     figure=empty_figure(),
                                 ),
                             ]
@@ -293,7 +285,6 @@ layout = html.Div(
                             [
                                 dcc.Graph(
                                     id="var_tan_3",
-                                    config={"scrollZoom": True},
                                     figure=empty_figure(),
                                 ),
                             ]
@@ -316,7 +307,6 @@ layout = html.Div(
                             [
                                 dcc.Graph(
                                     id="var_norm_4",
-                                    config={"scrollZoom": True},
                                     figure=empty_figure(),
                                 ),
                             ]
@@ -325,7 +315,6 @@ layout = html.Div(
                             [
                                 dcc.Graph(
                                     id="var_tan_4",
-                                    config={"scrollZoom": True},
                                     figure=empty_figure(),
                                 )
                             ]
@@ -403,13 +392,13 @@ def update_graphs(
             .T[[2, 5, 10, 20, 30, 40, 50, 60]]
             .iloc[-15:, :]
         )
-        tablenorm = tablenorm.reset_index().rename(columns={"index": "Date"})
+        tablenorm = tablenorm.reset_index().rename(columns={"index": "date"})
         tabletan = (
             dftan.set_index("profondeur")
             .T[[2, 5, 10, 20, 30, 40, 50, 60]]
             .iloc[-15:, :]
         )
-        tabletan = tabletan.reset_index().rename(columns={"index": "Date"})
+        tabletan = tabletan.reset_index().rename(columns={"index": "date"})
         return (
             fig1,
             fig2,
@@ -534,12 +523,12 @@ def create_graph_4(dfi, chantier, inclino, profondeur, title):
     df["Min"] = df.min(axis=1)
     df["Tête"] = df[0.5]
     df[f"{profondeur}m"] = df[profondeur]
-    df = df.reset_index().rename(columns={"index": "Date"})
+    df = df.reset_index().rename(columns={"index": "date"})
     df.Date = pd.to_datetime(df.Date, format="%d/%m/%Y")
     fig = px.line(
         df,
         y=["Tête", "Min", "Max", f"{profondeur}m"],
-        x="Date",
+        x="date",
         title=f"Evolution du déplacement {title} (mm)",
     )
     fig.update_yaxes(range=[-10, 25])

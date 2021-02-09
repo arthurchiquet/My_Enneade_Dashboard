@@ -99,11 +99,13 @@ def update_graph_piezos(chantier, secteurselected):
 def graph_piezo(chantier, piezo):
     df = get_data(chantier, "actif", f"{piezo}.csv")
     terrassement = get_data(chantier, "actif", "terrassement.csv")
+    df=df.rename(columns={'Date':'date'})
+    terrassement=terrassement.rename(columns={'Date':'date'})
     df.date = pd.to_datetime(df.date, format="%d/%m/%Y")
-    terrassement.Date = pd.to_datetime(terrassement.Date, format="%d/%m/%Y")
+    terrassement.date = pd.to_datetime(terrassement.date, format="%d/%m/%Y")
     fig = go.Figure()
     fig.add_trace(
-        go.Scatter(name="terrassement", x=terrassement.Date, y=terrassement["Coupe IJ"])
+        go.Scatter(name="terrassement", x=terrassement.date, y=terrassement["Coupe IJ"])
     )
     fig.add_trace(go.Scatter(name="piezo", x=df.date, y=df.Niveau_eau))
     fig.update_layout(

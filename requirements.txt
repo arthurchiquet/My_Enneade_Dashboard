@@ -20,3 +20,4 @@ google-cloud-storage==1.33.0
 google-auth==1.23.0
 dash-gif-component==1.1.0
 pangres==2.2.3
+scipy==1.5.4

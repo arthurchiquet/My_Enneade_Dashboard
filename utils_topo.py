@@ -12,6 +12,7 @@ from plotly.subplots import make_subplots
 from utils_maps import empty_figure
 from math import radians, cos, sin
 from data import memoized_data
+from scipy.stats import zscore
 import json
 
 colors = {"background": "#222222", "text": "white"}
@@ -35,8 +36,14 @@ layout = html.Div(
                 dbc.Container(
                     [dcc.Graph(id="time-series", figure=empty_figure())], fluid=True
                 ),
-            ], width=7)
-        ]),
+                ], width=7)
+            ]
+        ),
+        html.Br(),
+        html.Hr(),
+        html.Br(),
+        dbc.Row(html.H4("Vecteurs de déplacements (mm)"), justify='center'),
+        dbc.Container(dcc.Graph(id="vector-plot", figure=empty_figure()), fluid=True)
         # html.Pre(id='hover-data')
     ]
 )
@@ -46,6 +53,23 @@ layout = html.Div(
 #     Input('3d-positions', 'figure'))
 # def display_hover_data(hoverData):
 #     return json.dumps(hoverData['data'], indent=2)
+
+
+@app.callback(
+    Output("3d-positions", "figure"),
+    Input("secteur-select", "data"),
+    State("chantier-select", "data"),
+)
+def update_3d_graph(secteur_selected, chantier):
+    try:
+        secteur = list(secteur_selected.keys())[0]
+        list_capteur = secteur_selected[secteur]["cible"]
+        df = memoized_data(chantier, "actif", "topographie.csv")
+        df = extract_3d_positions(df, list_capteur, secteur)
+        return graph_3d_positions(df, secteur)
+    except:
+        return empty_figure()
+
 
 @app.callback(
     Output("time-series", "figure"),
@@ -59,7 +83,9 @@ def update_timeseries(hoverData, secteur_selected, chantier, fig):
         try:
             secteur = list(secteur_selected.keys())[0]
             list_capteur = secteur_selected[secteur]["cible"]
-            return graph_topo(chantier, list_capteur, 0)
+            df = memoized_data(chantier, "actif", "topographie.csv")
+            df = format_df(df, list_capteur, 0)
+            return graph_topo(df)
         except:
             return empty_figure()
     else:
@@ -77,31 +103,16 @@ def update_timeseries(hoverData, secteur_selected, chantier, fig):
         return fig
 
 @app.callback(
-    Output("3d-positions", "figure"),
-    Input('time-series', 'hoverData'),
-    State("secteur-select", "data"),
-    State("chantier-select", "data"),
-    State("3d-positions", "figure"),
+    Output("vector-plot", "figure"),
+    Input("chantier-select", "data"),
 )
-def update_3d_graph(hoverData, secteur_selected, chantier, fig):
-    if fig==empty_figure():
-        try:
-            secteur = list(secteur_selected.keys())[0]
-            list_capteur = secteur_selected[secteur]["cible"]
-            df = extract_3d_positions(chantier, list_capteur, secteur)
-            return graph_3d_positions(df, secteur)
-        except:
-            return empty_figure()
-    else:
-        try:
-            capteur=hoverData['points'][0]['customdata'][0]
-            fig=go.Figure(fig)
-            fig.for_each_trace(
-                lambda trace: trace.update(marker=dict(size=10) if trace.customdata == capteur else (),
-            ))
-        except:
-            pass
-        return fig
+def update_3d_graph(chantier):
+    try:
+        df = memoized_data(chantier, "actif", "topographie.csv")
+        return graph_vectors(df)
+    except:
+        return empty_figure()
+
 
 def affect(nom_capteur, liste_capteur, nom_secteur):
     if nom_capteur in liste_capteur:
@@ -109,8 +120,8 @@ def affect(nom_capteur, liste_capteur, nom_secteur):
     else:
         return 'Hors secteur'
 
-def extract_3d_positions(chantier, liste_capteur, secteur):
-    df = memoized_data(chantier, "actif", "topographie.csv")
+def extract_3d_positions(df, liste_capteur, secteur):
+    df=df.rename(columns={'Date':'date'})
     df = df.drop(columns=["date"])
     df = pd.DataFrame(df.apply(first)).T
     dfx = (
@@ -338,6 +349,7 @@ def graph_3d_positions(df, secteur):
     )
     return fig
 
+
 def first(col):
     i = 0
     for j in col:
@@ -346,21 +358,17 @@ def first(col):
             break
     return i
 
-
 def delta(df):
     for col in df.columns:
         df[col] = (df[col] - first(df[col])) * 1000
     return df
 
-
 def get_columns(df):
     col = [i[:-2] for i in df.columns][1:]
     return [col[i] for i in range(0, df.shape[1] - 1, 3)]
 
-
 def select_columns(df, liste):
     return [col for col in df.columns if col[:-2] in liste]
-
 
 def facet_name_xyz(string):
     if "x" in string:
@@ -378,7 +386,6 @@ def facet_name_ntz(string):
     elif "z" in string:
         return "Vertical"
 
-
 def remove_xyz(string):
     return string[:-2]
 
@@ -389,6 +396,7 @@ def manu_auto_sd(cible):
         return cible[:4].lower()
 
 def format_df(df, list_cibles, angle=0, repere='xyz'):
+    df=df.rename(columns={'Date':'date'})
     df.date = pd.to_datetime(df.date, format="%d/%m/%Y")
     liste_colonnes = select_columns(df, list_cibles)
     df = df.set_index("date")[liste_colonnes]
@@ -411,14 +419,9 @@ def format_df(df, list_cibles, angle=0, repere='xyz'):
     return df.rename(columns={0: "delta"}).drop(columns="level_1")
 
 
-def graph_topo(
-    chantier, list_cibles, angle, height=470, memo=False, spacing=0.08, showlegend=True
-):
-    df = memoized_data(chantier, "actif", "topographie.csv")
-    dff = format_df(df, list_cibles, angle)
-
+def graph_topo(df, height=470, memo=False, spacing=0.08, showlegend=True):
     fig = px.line(
-        dff,
+        df,
         x="date",
         y="delta",
         facet_row="Axe",
@@ -439,3 +442,88 @@ def graph_topo(
     )
     fig.for_each_annotation(lambda a: a.update(text=a.text.split("=")[-1]))
     return fig
+
+
+def graph_vectors(df):
+    df=df.drop(columns=["date"]).dropna(axis=1, how="all")
+    first_indexes = df.apply(pd.Series.first_valid_index).to_dict()
+    last_indexes = df.apply(pd.Series.last_valid_index).to_dict()
+    first_last = {col : [df.loc[first_indexes[col], col],df.loc[last_indexes[col], col]] for col in df.columns}
+    df =pd.DataFrame.from_dict(first_last).T.rename(columns={0:'first',1:'last'})
+    df['norm']=(df['last']-df['first'])
+    df_x=df.iloc[[3*i for i in range(df.shape[0]//3)],:]
+    df_y=df.iloc[[3*i+1 for i in range(df.shape[0]//3)],:]
+    df_z=df.iloc[[3*i+2 for i in range(df.shape[0]//3)],:]
+    df_x=df_x.reset_index().rename(columns={'index':'cible','first':'x','norm':'u'}).drop(columns=['last'])
+    df_y=df_y.reset_index().rename(columns={'index':'cible','first':'y','norm':'v'}).drop(columns=['last'])
+    df_z=df_z.reset_index().rename(columns={'index':'cible','first':'z','norm':'w'}).drop(columns=['last'])
+    df_x.cible=df_x.cible.map(remove_xyz)
+    df_y.cible=df_y.cible.map(remove_xyz)
+    df_z.cible=df_z.cible.map(remove_xyz)
+    df=df_x.merge(df_y).merge(df_z)
+    df=df.set_index('cible')
+    z_scores = zscore(df)
+    abs_z_scores = np.abs(z_scores)
+    filtered_entries = (abs_z_scores < 3).all(axis=1)
+    df= df[filtered_entries]
+    df= df.reset_index()
+    fig = go.Figure(data = go.Cone(
+        x=df.x.tolist(),
+        y=df.y.tolist(),
+        z=df.z.tolist(),
+        u=df.u.tolist(),
+        v=df.v.tolist(),
+        w=df.w.tolist(),
+        colorscale='hsv',
+        # opacity=0.7,
+        sizemode="absolute",
+        hovertext=df.cible,
+        sizeref=500)
+    )
+    fig.update_layout(
+         scene=dict(
+            xaxis_title="Est / Ouest",
+            yaxis_title="Nord / Sud",
+            zaxis_title="Z",
+            xaxis=dict(
+                backgroundcolor=colors["background"],
+                gridcolor="grey",
+                showbackground=False,
+                showticklabels=False,
+                showline=True,
+                linewidth=2,
+                linecolor='white',
+                mirror=True
+            ),
+            yaxis=dict(
+                backgroundcolor=colors["background"],
+                gridcolor="grey",
+                showbackground=False,
+                showticklabels=False,
+                showline=True,
+                linewidth=2,
+                linecolor='white',
+                mirror=True
+            ),
+            zaxis=dict(
+                backgroundcolor=colors["background"],
+                gridcolor="grey",
+                showbackground=False,
+                showticklabels=False,
+                showline=True,
+                linewidth=2,
+                linecolor='white',
+                mirror=True
+            ),
+        ),
+        margin=dict(l=0, r=00, t=0, b=0),
+        # width=1000,
+        # height=470,
+        showlegend=False,
+        plot_bgcolor=colors["background"],
+        paper_bgcolor=colors["background"],
+        font_color=colors["text"],)
+    return fig
+
+
+

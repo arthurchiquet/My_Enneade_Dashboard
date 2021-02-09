@@ -35,7 +35,7 @@ def changement_repere(df, coef, intercept):
 
 
 def remove_xyz(string):
-    return string.replace(".x", "").replace(".y", "")
+    return string[:-2]
 
 
 def first(col):
@@ -251,95 +251,3 @@ def update_map_chantier(chantier, params):
     )
 
     return fig
-    # except:
-    #     return fig
-
-
-#######################  CALCUL DES VECTEURS  ######################################################
-
-
-# if mode == 3:
-#             dff = pd.read_json(data['topo'])
-#             if preset==1 or preset==2:
-#                 dff.date = pd.to_datetime(dff.date, format="%d/%m/%Y")
-#                 last_date = dff.date.iloc[-1]
-#                 dff = dff[dff.date > last_date - timedelta(30*preset)]
-
-# fig = create_quiver(dff.drop(columns=["date"]).dropna(axis=1, how="all"), scale=750//preset)
-#             X = 2055229.22647546
-#             Y = 3179752.70410855
-#             x_size = 2055406.7254806 - 2055229.22647546
-#             y_size = 3179752.70410855 - 3179618.20410255
-#             fig.add_layout_image(
-#                 dict(
-#                     source=download_image(chantier, 'plan.jpeg'),
-#                     xref="x",
-#                     yref="y",
-#                     x=X,
-#                     y=Y,
-#                     sizex=x_size,
-#                     sizey=y_size,
-#                     sizing="stretch",
-#                     layer="below",
-#                 )
-#             )
-#             fig.update_xaxes(visible=False, range=[X, X + x_size])
-#             fig.update_yaxes(visible=False, range=[Y - y_size, Y])
-
-
-def create_quiver(df, scale):
-    first_indexes = df.apply(pd.Series.first_valid_index).to_dict()
-    last_indexes = df.apply(pd.Series.last_valid_index).to_dict()
-    first = [df.loc[first_indexes[col], col] for col in df.columns]
-    last = [df.loc[last_indexes[col], col] for col in df.columns]
-    first_x = [first[3 * i] for i in range(len(first) // 3)]
-    first_y = [first[3 * i + 1] for i in range(len(first) // 3)]
-    last_x = [last[3 * i] for i in range(len(last) // 3)]
-    last_y = [last[3 * i + 1] for i in range(len(last) // 3)]
-    u = [last_x[i] - first_x[i] for i in range(len(first_x))]
-    v = [last_y[i] - first_y[i] for i in range(len(first_y))]
-    while max(first_x) > 1.5 * np.mean(first_x):
-        index = first_x.index(max(first_x))
-        first_x.pop(index)
-        first_y.pop(index)
-        u.pop(index)
-        v.pop(index)
-    while max(first_y) > 1.5 * np.mean(first_y):
-        index = first_y.index(max(first_y))
-        first_x.pop(index)
-        first_y.pop(index)
-        u.pop(index)
-        v.pop(index)
-    while max(u) > 20 * mean_pos(u):
-        index = u.index(max(u))
-        first_x.pop(index)
-        first_y.pop(index)
-        u.pop(index)
-        v.pop(index)
-    while max(v) > 20 * mean_pos(v):
-        index = v.index(max(v))
-        first_x.pop(index)
-        first_y.pop(index)
-        u.pop(index)
-        v.pop(index)
-    while min(u) < 20 * mean_neg(u):
-        index = u.index(min(u))
-        first_x.pop(index)
-        first_y.pop(index)
-        u.pop(index)
-        v.pop(index)
-    while min(v) < 20 * mean_neg(v):
-        index = v.index(min(v))
-        first_x.pop(index)
-        first_y.pop(index)
-        u.pop(index)
-        v.pop(index)
-    return ff.create_quiver(first_x, first_y, u, v, scale=scale)
-
-
-def mean_pos(list):
-    return np.mean([i for i in list if i > 0])
-
-
-def mean_neg(list):
-    return np.mean([i for i in list if i < 0])

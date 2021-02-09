@@ -65,15 +65,16 @@ def diff_jauge(df):
 
 def graph_jauge(chantier, jauges, height=None):
     df = get_data(chantier, "actif", "jauges.csv", sep=False)
-    df.Date = pd.to_datetime(df.Date, format="%d/%m/%Y")
+    df=df.rename(columns={'Date':'date'})
+    df.date = pd.to_datetime(df.date, format="%d/%m/%Y")
     liste_colonnes = []
     for jauge in jauges:
         for col in df.columns[1:]:
             if jauge.lower() in col.lower().replace("jauge", ""):
                 liste_colonnes.append(col)
-    df = df.set_index("Date")[liste_colonnes]
+    df = df.set_index("date")[liste_colonnes]
     df = diff_jauge(df)
-    fig = px.line(df.reset_index(), x="Date", y=df.columns, line_shape="spline")
+    fig = px.line(df.reset_index(), x="date", y=df.columns, line_shape="spline")
     fig.update_layout(
         height=height,
         showlegend=False,
