@@ -108,7 +108,7 @@ def update_params(params, chantier):
             except:
                 params = {}
             data = memoized_data(chantier, "actif", "topographie.csv")
-            data_positions = extract_position(data).set_index("cible")
+            data_positions = extract_position(data)
             capteurs = {"cible": data_positions.to_dict("index")}
             params.update(capteurs)
         else:

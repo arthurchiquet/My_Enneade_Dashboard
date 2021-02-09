@@ -47,27 +47,19 @@ def first(col):
     return i
 
 def extract_position(df):
-    df = df.drop(columns=["date"])
-    df = pd.DataFrame(df.apply(first)).T
-    dfx = (
-        df[[col for col in df.columns if ".x" in col]]
-        .stack()
-        .reset_index()
-        .drop(columns=["level_0"])
-        .rename(columns={"level_1": "cible", 0: "lat"})
-    )
-    dfy = (
-        df[[col for col in df.columns if ".y" in col]]
-        .stack()
-        .reset_index()
-        .drop(columns=["level_0"])
-        .rename(columns={"level_1": "cible", 0: "lon"})
-    )
-    dfx.cible = dfx.cible.map(remove_xyz)
-    dfy.cible = dfy.cible.map(remove_xyz)
-    df2 = dfx.merge(dfy)
-    df2 = changement_repere(df2, coeff_Lamb_GPS, intercept_Lamb_GPS)
-    return df2
+    df=df.drop(columns=["date"]).dropna(axis=1, how="all")
+    first_indexes = df.apply(pd.Series.first_valid_index).to_dict()
+    positions = {col : [df.loc[first_indexes[col], col]] for col in df.columns}
+    df =pd.DataFrame.from_dict(positions).T
+    df_x=df.iloc[[3*i for i in range(df.shape[0]//3)],:]
+    df_y=df.iloc[[3*i+1 for i in range(df.shape[0]//3)],:]
+    df_x=df_x.reset_index().rename(columns={'index':'cible',0:'lat'})
+    df_y=df_y.reset_index().rename(columns={'index':'cible',0:'lon'})
+    df_x.cible=df_x.cible.map(remove_xyz)
+    df_y.cible=df_y.cible.map(remove_xyz)
+    df=df_x.merge(df_y).set_index('cible')
+    df = changement_repere(df, coeff_Lamb_GPS, intercept_Lamb_GPS)
+    return df
 
 
 #######################  AFFICHAGE MAP CHANTIER   ######################################################

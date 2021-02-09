@@ -26,15 +26,15 @@ layout = html.Div(
                     html.H4("Positions des cibles sélectionnées"), justify="center"
                 ),
                 dbc.Row(
-                    [dcc.Loading(dcc.Graph(id="3d-positions", figure=empty_figure()), type="graph")], justify='center'
+                    dcc.Graph(id="3d-positions", figure=empty_figure()), justify='center'
                 ),
             ], width=5),
             dbc.Col([
                 dbc.Row(
                     html.H4("Déplacement normal, tangentiel et vertical (mm)"), justify="center"
                 ),
-                dbc.Container(
-                    [dcc.Graph(id="time-series", figure=empty_figure())], fluid=True
+                dbc.Row(
+                    dcc.Graph(id="time-series", figure=empty_figure()), justify='center'
                 ),
                 ], width=7)
             ]
@@ -55,63 +55,100 @@ layout = html.Div(
 #     return json.dumps(hoverData['data'], indent=2)
 
 
+# @app.callback(
+#     Output("3d-positions", "figure"),
+#     Input("secteur-select", "data"),
+#     State("chantier-select", "data"),
+# )
+# def update_3d_graph(secteur_selected, chantier):
+#     try:
+#         secteur = list(secteur_selected.keys())[0]
+#         list_capteur = secteur_selected[secteur]["cible"]
+#         df = memoized_data(chantier, "actif", "topographie.csv")
+#         df = extract_3d_positions(df, list_capteur, secteur)
+#         return graph_3d_positions(df, secteur)
+#     except:
+#         return empty_figure()
+
+
+# @app.callback(
+#     Output("time-series", "figure"),
+#     Input('3d-positions', 'hoverData'),
+#     State("secteur-select", "data"),
+#     State("chantier-select", "data"),
+#     State("time-series", "figure"),
+# )
+# def update_timeseries(hoverData, secteur_selected, chantier, fig):
+#     if fig==empty_figure():
+#         try:
+#             secteur = list(secteur_selected.keys())[0]
+#             list_capteur = secteur_selected[secteur]["cible"]
+#             df = memoized_data(chantier, "actif", "topographie.csv")
+#             df = format_df(df, list_capteur, 0)
+#             return graph_topo(df)
+#         except:
+#             return empty_figure()
+#     else:
+#         try:
+#             capteur=hoverData['points'][0]['customdata'][0]
+#             fig=go.Figure(fig)
+#             fig.update_traces(
+#                 line=dict(width=2, color='rgba(127, 255, 212, 0.3)')
+#             )
+#             fig.update_traces(
+#                 line=dict(width=4, color='#FF1493'), selector=dict(name=capteur)
+#             )
+#         except:
+#             pass
+#         return fig
+
+# @app.callback(
+#     Output("vector-plot", "figure"),
+#     Input("chantier-select", "data"),
+# )
+# def update_vector_graph(chantier):
+#     try:
+#         df = memoized_data(chantier, "actif", "topographie.csv")
+#         return graph_vectors(df)
+#     except:
+#         return empty_figure()
+
+
 @app.callback(
     Output("3d-positions", "figure"),
-    Input("secteur-select", "data"),
-    State("chantier-select", "data"),
-)
-def update_3d_graph(secteur_selected, chantier):
-    try:
-        secteur = list(secteur_selected.keys())[0]
-        list_capteur = secteur_selected[secteur]["cible"]
-        df = memoized_data(chantier, "actif", "topographie.csv")
-        df = extract_3d_positions(df, list_capteur, secteur)
-        return graph_3d_positions(df, secteur)
-    except:
-        return empty_figure()
-
-
-@app.callback(
     Output("time-series", "figure"),
+    Output("vector-plot", "figure"),
     Input('3d-positions', 'hoverData'),
     State("secteur-select", "data"),
     State("chantier-select", "data"),
+    State("3d-positions", "figure"),
     State("time-series", "figure"),
+    State("vector-plot", "figure"),
 )
-def update_timeseries(hoverData, secteur_selected, chantier, fig):
-    if fig==empty_figure():
-        try:
-            secteur = list(secteur_selected.keys())[0]
-            list_capteur = secteur_selected[secteur]["cible"]
-            df = memoized_data(chantier, "actif", "topographie.csv")
-            df = format_df(df, list_capteur, 0)
-            return graph_topo(df)
-        except:
-            return empty_figure()
-    else:
-        try:
-            capteur=hoverData['points'][0]['customdata'][0]
-            fig=go.Figure(fig)
-            fig.update_traces(
-                line=dict(width=2, color='rgba(127, 255, 212, 0.3)')
-            )
-            fig.update_traces(
-                line=dict(width=4, color='#FF1493'), selector=dict(name=capteur)
-            )
-        except:
-            pass
-        return fig
-
-@app.callback(
-    Output("vector-plot", "figure"),
-    Input("chantier-select", "data"),
-)
-def update_3d_graph(chantier):
-    try:
-        df = memoized_data(chantier, "actif", "topographie.csv")
-        return graph_vectors(df)
-    except:
-        return empty_figure()
+def update_graphs(hoverData, secteur_selected, chantier, fig1, fig2, fig3):
+    # if fig2==empty_figure():
+    #     try:
+    secteur = list(secteur_selected.keys())[0]
+    list_capteur = secteur_selected[secteur]["cible"]
+    df = memoized_data(chantier, "actif", "topographie.csv")
+    df1 = extract_3d_positions(df, list_capteur, secteur)
+    df2 = format_df(df, list_capteur, 0)
+    return graph_3d_positions(df1, secteur), graph_topo(df2), graph_vectors(df, list_capteur, secteur)
+        # except:
+        #     return empty_figure(), empty_figure(), empty_figure()
+    # else:
+    #     try:
+    #         capteur=hoverData['points'][0]['customdata'][0]
+    #         fig2=go.Figure(fig2)
+    #         fig2.update_traces(
+    #             line=dict(width=2, color='rgba(127, 255, 212, 0.3)')
+    #         )
+    #         fig2.update_traces(
+    #             line=dict(width=4, color='#FF1493'), selector=dict(name=capteur)
+    #         )
+    #     except:
+    #         pass
+    #     return fig1, fig2, fig3
 
 
 def affect(nom_capteur, liste_capteur, nom_secteur):
@@ -121,37 +158,28 @@ def affect(nom_capteur, liste_capteur, nom_secteur):
         return 'Hors secteur'
 
 def extract_3d_positions(df, liste_capteur, secteur):
-    df=df.rename(columns={'Date':'date'})
-    df = df.drop(columns=["date"])
-    df = pd.DataFrame(df.apply(first)).T
-    dfx = (
-        df[[col for col in df.columns if ".x" in col]]
-        .stack()
-        .reset_index()
-        .drop(columns=["level_0"])
-        .rename(columns={"level_1": "cible", 0: "x"})
-    )
-    dfy = (
-        df[[col for col in df.columns if ".y" in col]]
-        .stack()
-        .reset_index()
-        .drop(columns=["level_0"])
-        .rename(columns={"level_1": "cible", 0: "y"})
-    )
-    dfz = (
-        df[[col for col in df.columns if ".z" in col]]
-        .stack()
-        .reset_index()
-        .drop(columns=["level_0"])
-        .rename(columns={"level_1": "cible", 0: "z"})
-    )
-    dfx.cible = dfx.cible.map(remove_xyz)
-    dfy.cible = dfy.cible.map(remove_xyz)
-    dfz.cible = dfz.cible.map(remove_xyz)
-    df2 = dfx.merge(dfy).merge(dfz)
-    df2['secteur'] = df2.apply(lambda x: affect(x['cible'], liste_capteur, secteur), axis=1)
-    df2 = df2[(df2.x < df2.x.mean()*1.2)&(df2.x > df2.x.mean()*0.8)&(df2.y < df2.y.mean()*1.2)&(df2.y >df2.y.mean()*0.8)&(df2.z < df2.z.mean()*1.2)&(df2.z >df2.z.mean()*0.8)]
-    return df2
+    df=df.drop(columns=["date"]).dropna(axis=1, how="all")
+    first_indexes = df.apply(pd.Series.first_valid_index).to_dict()
+    positions = {col : [df.loc[first_indexes[col], col]] for col in df.columns}
+    df =pd.DataFrame.from_dict(positions).T
+    df_x=df.iloc[[3*i for i in range(df.shape[0]//3)],:]
+    df_y=df.iloc[[3*i+1 for i in range(df.shape[0]//3)],:]
+    df_z=df.iloc[[3*i+2 for i in range(df.shape[0]//3)],:]
+    df_x=df_x.reset_index().rename(columns={'index':'cible',0:'x'})
+    df_y=df_y.reset_index().rename(columns={'index':'cible',0:'y'})
+    df_z=df_z.reset_index().rename(columns={'index':'cible',0:'z'})
+    df_x.cible=df_x.cible.map(remove_xyz)
+    df_y.cible=df_y.cible.map(remove_xyz)
+    df_z.cible=df_z.cible.map(remove_xyz)
+    df=df_x.merge(df_y).merge(df_z)
+    df=df.set_index('cible')
+    z_scores = zscore(df)
+    abs_z_scores = np.abs(z_scores)
+    filtered_entries = (abs_z_scores < 3).all(axis=1)
+    df= df[filtered_entries]
+    df= df.reset_index()
+    df['secteur'] = df.apply(lambda x: affect(x['cible'], liste_capteur, secteur), axis=1)
+    return df
 
 def graph_3d_positions(df, secteur):
 
@@ -418,7 +446,6 @@ def format_df(df, list_cibles, angle=0, repere='xyz'):
     df["cible"] = df["level_1"].map(remove_xyz)
     return df.rename(columns={0: "delta"}).drop(columns="level_1")
 
-
 def graph_topo(df, height=470, memo=False, spacing=0.08, showlegend=True):
     fig = px.line(
         df,
@@ -444,7 +471,7 @@ def graph_topo(df, height=470, memo=False, spacing=0.08, showlegend=True):
     return fig
 
 
-def graph_vectors(df):
+def graph_vectors(df, liste_capteur, secteur):
     df=df.drop(columns=["date"]).dropna(axis=1, how="all")
     first_indexes = df.apply(pd.Series.first_valid_index).to_dict()
     last_indexes = df.apply(pd.Series.last_valid_index).to_dict()
@@ -474,11 +501,12 @@ def graph_vectors(df):
         u=df.u.tolist(),
         v=df.v.tolist(),
         w=df.w.tolist(),
-        colorscale='hsv',
-        # opacity=0.7,
+        colorscale='pinkyl',
         sizemode="absolute",
-        hovertext=df.cible,
-        sizeref=500)
+        name=secteur,
+        text=df.cible,
+        sizeref=350
+        )
     )
     fig.update_layout(
          scene=dict(
@@ -515,15 +543,15 @@ def graph_vectors(df):
                 linecolor='white',
                 mirror=True
             ),
+            aspectratio=dict(x=2, y=2, z=1)
         ),
         margin=dict(l=0, r=00, t=0, b=0),
-        # width=1000,
-        # height=470,
         showlegend=False,
         plot_bgcolor=colors["background"],
         paper_bgcolor=colors["background"],
-        font_color=colors["text"],)
+        font_color=colors["text"])
     return fig
+
 
 
 
