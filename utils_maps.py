@@ -11,9 +11,10 @@ mapbox_token = "pk.eyJ1IjoiYXJ0aHVyY2hpcXVldCIsImEiOiJja2E1bDc3cjYwMTh5M2V0Zzdvb
 
 colors = {"background": "#222222", "text": "white"}
 
-coeff_Lamb_GPS = [[1.23952112e-05, 6.63800392e-07], [-4.81267332e-07, 8.98816386e-06]]
-intercept_Lamb_GPS = [-20.17412175, 16.14120241]
-
+coefx = [1.23952055e-05, 6.63856015e-07]
+coefy = [-4.81328848e-07,  8.98817548e-06]
+interceptx = -20.17428687
+intercepty = 16.1412919
 
 def empty_figure():
     fig = {
@@ -27,9 +28,9 @@ def empty_figure():
     return fig
 
 
-def changement_repere(df, coef, intercept):
-    lon = df.lat * coef[0][0] + df.lon * coef[0][1] + intercept[0]
-    lat = df.lat * coef[1][0] + df.lon * coef[1][1] + intercept[1]
+def changement_repere(df, coefx, coefy, interceptx, intercepty):
+    lon = df.lat * coefx[0] + df.lon * coefx[1] + interceptx
+    lat = df.lat * coefy[0] + df.lon * coefy[1] + intercepty
     df.lat, df.lon = lat, lon
     return df
 
@@ -58,7 +59,7 @@ def extract_position(df):
     df_x.cible=df_x.cible.map(remove_xyz)
     df_y.cible=df_y.cible.map(remove_xyz)
     df=df_x.merge(df_y).set_index('cible')
-    df = changement_repere(df, coeff_Lamb_GPS, intercept_Lamb_GPS)
+    df = changement_repere(df, coefx, coefy, interceptx, intercepty)
     return df
 
 
