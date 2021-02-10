@@ -56,8 +56,6 @@ def update_time_serie(secteur_selected, chantier):
     fig = graph_topo(df, height=700)
     return fig
 
-
-
 def affect(nom_capteur, liste_capteur, nom_secteur):
     if nom_capteur in liste_capteur:
         return nom_secteur
