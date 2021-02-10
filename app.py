@@ -397,7 +397,7 @@ def navBar(input1, url):
         return []
     else:
         if current_user.is_authenticated:
-        if True:
+        # if True:
             return return_navbar(user_profil)
         else:
             return []
