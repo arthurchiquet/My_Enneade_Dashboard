@@ -33,14 +33,17 @@ layout = html.Div(
     State("global-params", "data"),
 )
 def update_graph_vector(chantier, secteur_selected, params):
-    df = memoized_data(chantier, "actif", "topographie.csv")
-    secteurs_params = params["secteur"]
-    secteur = list(secteur_selected.keys())[0]
-    list_capteur = secteur_selected[secteur]["cible"]
-    coords = secteurs_params[secteur]
-    df1 = extract_3d_positions(df, list_capteur, secteur)
-    df2 = format_df_vector(df)
-    return graph_3D(df1, df2, coords, secteur)
+    if secteur_selected == {}:
+        return empty_figure()
+    else:
+        df = memoized_data(chantier, "actif", "topographie.csv")
+        secteurs_params = params["secteur"]
+        secteur = list(secteur_selected.keys())[0]
+        list_capteur = secteur_selected[secteur]["cible"]
+        coords = secteurs_params[secteur]
+        df1 = extract_3d_positions(df, list_capteur, secteur)
+        df2 = format_df_vector(df)
+        return graph_3D(df1, df2, coords, secteur)
 
 
 @app.callback(
@@ -49,12 +52,15 @@ def update_graph_vector(chantier, secteur_selected, params):
     State("chantier-select", "data"),
 )
 def update_time_serie(secteur_selected, chantier):
-    secteur = list(secteur_selected.keys())[0]
-    df = memoized_data(chantier, "actif", "topographie.csv")
-    list_capteur = secteur_selected[secteur]["cible"]
-    df = format_df(df, list_capteur, 0)
-    fig = graph_topo(df, height=700)
-    return fig
+    if secteur_selected == {}:
+        return empty_figure()
+    else:
+        secteur = list(secteur_selected.keys())[0]
+        df = memoized_data(chantier, "actif", "topographie.csv")
+        list_capteur = secteur_selected[secteur]["cible"]
+        df = format_df(df, list_capteur, 0)
+        fig = graph_topo(df, height=700)
+        return fig
 
 def affect(nom_capteur, liste_capteur, nom_secteur):
     if nom_capteur in liste_capteur:
@@ -119,8 +125,8 @@ def graph_3D(df1, df2, secteur, nom_secteur):
     )
 
     x1, x2, y1, y2 = changement_repere(secteur, coefx, coefy, interceptx, intercepty)
-    z1 = df2.z.min()
-    z2 = df2.z.max()
+    z1 = df1[df1.secteur == nom_secteur].z.min()-4
+    z2 = df1[df1.secteur == nom_secteur].z.max()+4
 
     fig.add_trace(
          go.Mesh3d(
@@ -131,7 +137,7 @@ def graph_3D(df1, df2, secteur, nom_secteur):
             i = [7, 0, 0, 0, 4, 4, 6, 6, 4, 0, 3, 2],
             j = [3, 4, 1, 2, 5, 6, 5, 2, 0, 1, 6, 3],
             k = [0, 7, 2, 3, 6, 7, 1, 1, 5, 5, 7, 6],
-            opacity=0.3,
+            opacity=0.15,
             color='#FF1493',
             name=f'secteur {nom_secteur}'
         )
@@ -187,7 +193,7 @@ def graph_3D(df1, df2, secteur, nom_secteur):
                             ],
                         ),
                         dict(
-                            label="Vecteurs + Secteurs",
+                            label="Vecteurs + Secteur",
                             method="update",
                             args=[
                                 {

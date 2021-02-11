@@ -22,7 +22,7 @@ layout = dbc.Container(
                             children=[
                                 dbc.Row(
                                     dcc.Input(
-                                        placeholder="Veuillez saisir votre nom d'utilisateur",
+                                        placeholder="Nom d'utilisateur",
                                         type="text",
                                         id="uname-box",
                                         className="form-control",
@@ -33,7 +33,7 @@ layout = dbc.Container(
                                 html.Br(),
                                 dbc.Row(
                                     dcc.Input(
-                                        placeholder="Veuillez saisir votre mot de passe",
+                                        placeholder="Mot de passe",
                                         type="password",
                                         id="pwd-box",
                                         className="form-control",

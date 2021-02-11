@@ -80,7 +80,7 @@ layout = html.Div(
                                     id="update_button",
                                     n_clicks=0,
                                     type="submit",
-                                    className="btn btn-primary btn-lg",
+                                    className="btn btn-alert btn-lg",
                                 ),
                                 html.Button(
                                     children="Supprimer",

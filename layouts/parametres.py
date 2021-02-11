@@ -58,6 +58,8 @@ tabs_pram = html.Div(
                 ],
                 id="tabs_param",
                 active_tab=1,
+                persistence=True,
+                persistence_type='session'
             ),
             justify="center",
         ),

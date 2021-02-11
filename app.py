@@ -40,7 +40,7 @@ def return_buttons(profil):
             [
                 dbc.Col([
                     dbc.Button(
-                        html.Span([html.I(className="fas fa-globe-europe")]),
+                        className="fas fa-globe-europe",
                         href='home',
                         id='home',
                         style={'height':'30px', 'width':'50px'}
@@ -53,7 +53,7 @@ def return_buttons(profil):
                 ]),
                 dbc.Col([
                     dbc.Button(
-                        html.Span([html.I(className="fas fa-layer-group mr-1")]),
+                        className="fas fa-layer-group mr-1",
                         href="/chantier",
                         id='menu-chantier',
                         style={'height':'30px', 'width':'50px'}
@@ -61,6 +61,19 @@ def return_buttons(profil):
                     dbc.Tooltip(
                         "Carte intéractive",
                         target="menu-chantier",
+                        placement='down'
+                    )
+                ]),
+                dbc.Col([
+                    dbc.Button(
+                        className="fas fa-chart-line mr-1",
+                        href="/secteur",
+                        id='menu-secteur',
+                        style={'height':'30px', 'width':'50px'}
+                    ),
+                    dbc.Tooltip(
+                        "Synthèse par secteur",
+                        target="menu-secteur",
                         placement='down'
                     )
                 ]),
@@ -159,7 +172,7 @@ def return_buttons(profil):
             [
                 dbc.Col([
                     dbc.Button(
-                        html.Span([html.I(className="fas fa-globe-europe")]),
+                        className="fas fa-globe-europe",
                         href='home',
                         id='home',
                         style={'height':'30px', 'width':'50px'}
@@ -172,7 +185,7 @@ def return_buttons(profil):
                 ]),
                 dbc.Col([
                     dbc.Button(
-                        html.Span([html.I(className="fas fa-layer-group mr-1")]),
+                        className="fas fa-layer-group mr-1",
                         href="/chantier",
                         id='menu-chantier',
                         style={'height':'30px', 'width':'50px'}
@@ -180,6 +193,19 @@ def return_buttons(profil):
                     dbc.Tooltip(
                         "Carte intéractive",
                         target="menu-chantier",
+                        placement='down'
+                    )
+                ]),
+                dbc.Col([
+                    dbc.Button(
+                        className="fas fa-chart-line mr-1",
+                        href="/secteur",
+                        id='menu-secteur',
+                        style={'height':'30px', 'width':'50px'}
+                    ),
+                    dbc.Tooltip(
+                        "Synthèse par secteur",
+                        target="menu-secteur",
                         placement='down'
                     )
                 ]),
@@ -281,6 +307,7 @@ def return_navbar(profil):
                 ),
                 href="https://fr.enneade-ingenierie.com",
             ),
+            html.H4(id='title_chantier'),
             return_buttons(profil)
         ],
         color="dark",
@@ -288,6 +315,13 @@ def return_navbar(profil):
         style=dict(height=60),
     )
     return navbar
+
+
+@app.callback(
+    Output('title_chantier', 'children'),
+    Input('chantier-select', 'data'))
+def afficher_nom_chantier(chantier):
+    return f'..  {chantier}  ..'
 
 @app.callback(Output("page-content", "children"), Input("url", "pathname"))
 def display_page(pathname):

@@ -18,8 +18,6 @@ warnings.filterwarnings("ignore")
 
 colors = {"background": "#222222", "text": "#FF8C00"}
 
-styles = {"pre": {"border": "thin lightgrey solid", "overflowX": "scroll"}}
-
 layout = html.Div(
     children=[
         html.Br(),
@@ -114,17 +112,6 @@ def update_params(params, chantier):
         else:
             pass
         return params
-
-
-help_text = html.Div(
-    [
-        dcc.Markdown(
-            """
-## **AIDE**
-        """
-        )
-    ]
-)
 
 collapse = html.Div(
     [
@@ -463,8 +450,10 @@ def affichage_courbe_capteur(selectedData, chantier):
 ### RENVOIE LA METHODE D'AFFICHAGE DE LA COURBE EN FONCTION DU TYPE DE CAPTEUR ####
 def selection_affichage(chantier, customdata, text):
     if customdata == "cible":
+        df = memoized_data(chantier, "actif", "topographie.csv")
+        df = utils_topo.format_df(df, text, angle=0, repere='xyz')
         return utils_topo.graph_topo(
-            chantier, text, 0, height=550, spacing=0.06, showlegend=False
+            df, height=550, spacing=0.06, showlegend=False
         )
     elif customdata == "inclino":
         return utils_inclino.graph_inclino(chantier, text, height=550)

@@ -59,7 +59,8 @@ table_secteur = html.Div(
 layout = html.Div(
     [
         html.Br(),
-        html.Br(),
+        dbc.Row(html.H4(id='secteur-title'), justify='center'),
+        html.Hr(style=dict(width='400px')),
         dbc.Row(
             [
                 dbc.Tabs(
@@ -73,6 +74,8 @@ layout = html.Div(
                     ],
                     id="tabs_type",
                     active_tab=1,
+                    persistence=True,
+                    persistence_type='session'
                 ),
             ],
             justify="center",
@@ -82,6 +85,17 @@ layout = html.Div(
     ]
 )
 
+
+@app.callback(
+    Output("secteur-title", "children"),
+    Input("secteur-select", "data"),
+)
+def return_title(secteur_selected):
+    try:
+        return f'Secteur {list(secteur_selected.keys())[0]}'
+    except:
+        return 'Aucun secteur sélectionné'
+
 @app.callback(
     Output("tab_type_content", "children"),
     [Input("tabs_type", "active_tab")],
@@ -89,12 +103,12 @@ layout = html.Div(
 )
 def return_tabs_content(tab, chantier, secteur):
     if tab == 1:
-        return html.Br(), utils_topo.layout
+        return utils_topo.layout
     elif tab == 2:
-        return html.Br(), utils_inclino.layout
+        return utils_inclino.layout
     elif tab == 3:
-        return html.Br(), utils_tirant.layout
+        return utils_tirant.layout
     elif tab == 4:
-        return html.Br(), utils_jauge.layout
+        return utils_jauge.layout
     elif tab == 5:
-        return html.Br(), utils_piezo.layout
+        return utils_piezo.layout

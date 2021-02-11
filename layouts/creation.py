@@ -20,32 +20,44 @@ layout = html.Div(
     [
         dbc.Container(
             [
+                dbc.Row(html.Img(src=app.get_asset_url("logo.png"), height="100px"), justify='center'),
                 html.Br(),
-                dbc.Row(html.H4("Définition du nouveau chantier"), justify="center"),
+                dbc.Row(html.H3("Définition d'un nouveau chantier"), justify="center"),
                 html.Br(),
                 dbc.Container(
                     [
                         dbc.Row(
-                            dbc.Input(id="nom_chantier", placeholder="Nom du chantier"),
-                            justify="center",
-                        ),
-                        html.Br(),
-                        dbc.Row(
                             dbc.Input(
-                                id="adresse_chantier", placeholder="Adresse du chantier"
+                                id="nom_chantier",
+                                placeholder="Nom du chantier",
+                                style=dict(width='500px')
                             ),
                             justify="center",
                         ),
                         html.Br(),
                         dbc.Row(
                             dbc.Input(
-                                id="nom_prestataire", placeholder="Nom du prestataire"
+                                id="adresse_chantier",
+                                placeholder="Adresse du chantier",
+                                style=dict(width='500px')
                             ),
                             justify="center",
                         ),
                         html.Br(),
                         dbc.Row(
-                            dbc.Input(placeholder="Nom du maître d'oeuvre"),
+                            dbc.Input(
+                                id="nom_prestataire",
+                                placeholder="Nom du prestataire",
+                                style=dict(width='500px')
+                            ),
+                            justify="center",
+                        ),
+                        html.Br(),
+                        dbc.Row(
+                            dbc.Input(
+                                placeholder="Nom du maître d'oeuvre",
+                                style=dict(width='500px')
+                            ),
                             justify="center",
                         ),
                         html.Br(),
@@ -66,12 +78,12 @@ layout = html.Div(
                                     style={'width':'80px'},
                                     disabled=True
                                 ),
-                            ]
+                            ], justify='center'
                         ),
                         html.Br(),
-                        html.Div(id="sucess_label", className="text-success"),
-                        html.Br(),
-                        html.Div(id="geo_loc"),
+                        dbc.Row(html.Div(id="sucess_label", className="text-success"), justify ='center'),
+
+                        dbc.Row(id="geo_loc", justify='center'),
                     ]
                 ),
             ]
@@ -106,7 +118,8 @@ def display_geoloc(n_clicks, adresse, nom):
             lon=0,
             zoom=14,
             text="index",
-            height=300,
+            height=200,
+            width=700,
             hover_name="index",
         )
         fig.update_layout(mapbox_style="dark", mapbox_accesstoken=mapbox_token)

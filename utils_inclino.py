@@ -222,6 +222,7 @@ layout = html.Div(
                         dbc.Col(
                             [
                                 dcc.Graph(
+                                    id='var_tan',
                                     figure=empty_figure(),
                                 ),
                             ]
@@ -524,7 +525,7 @@ def create_graph_4(dfi, chantier, inclino, profondeur, title):
     df["Tête"] = df[0.5]
     df[f"{profondeur}m"] = df[profondeur]
     df = df.reset_index().rename(columns={"index": "date"})
-    df.Date = pd.to_datetime(df.Date, format="%d/%m/%Y")
+    df.date = pd.to_datetime(df.date, format="%d/%m/%Y")
     fig = px.line(
         df,
         y=["Tête", "Min", "Max", f"{profondeur}m"],
