@@ -9,6 +9,7 @@ from server import app
 from config import engine
 import dash_table as dt
 from pangres import upsert
+from chantier_mgmt import update_chantier
 
 warnings.filterwarnings("ignore")
 
@@ -155,7 +156,12 @@ def update_params(n_clicks, data, tab, chantier, label):
         df = pd.DataFrame(data)
         df = df.set_index([df.columns[0], df.columns[1]])
         if tab ==1:
-            pass
+            df=df.reset_index().set_index('nom_chantier')
+            upsert(engine=engine,
+                df=df,
+                table_name='chantier',
+                if_row_exists='update'
+            )
         if tab ==2:
             upsert(engine=engine,
                 df=df,

@@ -22,7 +22,23 @@ layout = html.Div(
         html.Hr(),
         html.Br(),
         dbc.Row(html.H4('Dépalcement des cibles X, Y, et Z (mm)'), justify='center'),
-            dcc.Graph(id="time-series", figure=empty_figure())
+        html.Br(),
+        dbc.Row(dbc.Label('Référentiel de mesure'), justify='center'),
+        dbc.Row(
+            dcc.Dropdown(
+                id="absolu_NTZ",
+                style={"color": "black", 'width': '150px'},
+                options=[
+                    {"label": 'Absolu', "value": 'absolu'},
+                    {"label": 'Secteur', "value": 'secteur'}
+                ],
+                value='absolu'
+            ),
+            justify="center",
+        ),
+        dbc.Row(dbc.Label(id='ref_ok'), justify='center'),
+        html.Br(),
+        dcc.Graph(id="time-series", figure=empty_figure())
     ]
 )
 
@@ -48,19 +64,32 @@ def update_graph_vector(chantier, secteur_selected, params):
 
 @app.callback(
     Output("time-series", "figure"),
+    Output("ref_ok", 'children'),
+    Input('absolu_NTZ', 'value'),
     Input("secteur-select", "data"),
     State("chantier-select", "data"),
 )
-def update_time_serie(secteur_selected, chantier):
+def update_time_serie(ref, secteur_selected, chantier):
     if secteur_selected == {}:
-        return empty_figure()
+        return empty_figure(), ''
     else:
         secteur = list(secteur_selected.keys())[0]
+        if ref=='secteur':
+            with engine.connect() as con:
+                query=f"SELECT * FROM secteur_param WHERE nom_chantier='{chantier}' AND secteur='{secteur}' "
+                angle = pd.read_sql_query(query, con=con).angle[0]
+        else:
+            angle=0
         df = memoized_data(chantier, "actif", "topographie.csv")
         list_capteur = secteur_selected[secteur]["cible"]
-        df = format_df(df, list_capteur, 0)
-        fig = graph_topo(df, height=700)
-        return fig
+        if angle==None:
+            df = format_df(df, list_capteur, 0)
+            fig = graph_topo(df, height=700)
+            return fig, 'Aucun référentiel renseigné pour ce secteur'
+        else:
+            df = format_df(df, list_capteur, angle)
+            fig = graph_topo(df, height=700)
+            return fig, ''
 
 def affect(nom_capteur, liste_capteur, nom_secteur):
     if nom_capteur in liste_capteur:

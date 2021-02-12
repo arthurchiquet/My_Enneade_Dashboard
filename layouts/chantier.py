@@ -435,16 +435,16 @@ def add_modif_param(n_clicks, option, param, nom_param1, nom_param2, selectedDat
     [Input("map-chantier", "selectedData"), State("chantier-select", "data")],
 )
 def affichage_courbe_capteur(selectedData, chantier):
-    try:
-        customdata = selectedData["points"][0]["customdata"][0]
-        text = selectedData["points"][0]["text"]
-        return (
-            text,
-            selection_affichage(chantier, customdata, text),
-            sous_titre(customdata),
-        )
-    except:
-        return "", empty_figure(), f"Aucune donnée existante pour cet élément"
+    # try:
+    customdata = selectedData["points"][0]["customdata"][0]
+    text = selectedData["points"][0]["text"]
+    return (
+        text,
+        selection_affichage(chantier, customdata, text),
+        sous_titre(customdata),
+    )
+    # except:
+    #     return "", empty_figure(), f"Aucune donnée existante pour cet élément"
 
 
 ### RENVOIE LA METHODE D'AFFICHAGE DE LA COURBE EN FONCTION DU TYPE DE CAPTEUR ####
@@ -477,6 +477,6 @@ def sous_titre(customdata):
     elif customdata == "jauge":
         return "Evolution brute des fissures (Ecarts, mm)"
     elif customdata == "piezo":
-        return "Niveau piezométrique (mm)"
+        return ""
     else:
         return ""

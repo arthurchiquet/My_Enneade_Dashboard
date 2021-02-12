@@ -317,108 +317,108 @@ def return_navbar(profil):
     return navbar
 
 
-@app.callback(
-    Output('title_chantier', 'children'),
-    Input('chantier-select', 'data'))
-def afficher_nom_chantier(chantier):
-    return f'..  {chantier}  ..'
-
-@app.callback(Output("page-content", "children"), Input("url", "pathname"))
-def display_page(pathname):
-    if pathname == "/":
-        return home.layout
-    if pathname == "/login":
-        return login.layout
-    elif pathname == "/creation":
-        return creation.layout
-    elif pathname == "/home":
-        return home.layout
-    elif pathname == "/chantier":
-        return chantier.layout
-    elif pathname == "/secteur":
-        return secteur.layout
-    elif pathname == "/export":
-        return export.layout
-    elif pathname == "/parametres":
-        return parametres.layout
-    elif pathname == "/admin":
-        return admin.layout
-    elif pathname == "/profil":
-        return profil.layout
-    elif pathname == "/conditions":
-        return conditions.layout
-    elif pathname == "/logout":
-        return logout.layout
-    else:
-        return error.layout
-
-
 # @app.callback(
-#     Output("page-content", "children"),
-#     Input("url", "pathname")
-#     )
+#     Output('title_chantier', 'children'),
+#     Input('chantier-select', 'data'))
+# def afficher_nom_chantier(chantier):
+#     return f'..  {chantier}  ..'
+
+# @app.callback(Output("page-content", "children"), Input("url", "pathname"))
 # def display_page(pathname):
 #     if pathname == "/":
-#         if current_user.is_authenticated:
-#             if current_user.profil == 4:
-#                 return html.H3("La page demandée est inaccessible")
-#             else:
-#                 return home.layout
-#         else:
-#             return login.layout
-#     elif pathname == "/home":
-#         if current_user.is_authenticated:
-#             return home.layout
-#         else:
-#             return login_fd.layout
+#         return home.layout
+#     if pathname == "/login":
+#         return login.layout
 #     elif pathname == "/creation":
-#         if current_user.is_authenticated:
-#             return creation.layout
-#         else:
-#             return login_fd.layout
+#         return creation.layout
+#     elif pathname == "/home":
+#         return home.layout
 #     elif pathname == "/chantier":
-#         if current_user.is_authenticated:
-#             return chantier.layout
-#         else:
-#             return login_fd.layout
+#         return chantier.layout
 #     elif pathname == "/secteur":
-#         if current_user.is_authenticated:
-#             return secteur.layout
-#         else:
-#             return login_fd.layout
-#     elif pathname == "/parametres":
-#         if current_user.is_authenticated:
-#             return parametres.layout
-#         else:
-#             return login_fd.layout
+#         return secteur.layout
 #     elif pathname == "/export":
-#         if current_user.is_authenticated:
-#             return export.layout
-#         else:
-#             return login_fd.layout
+#         return export.layout
+#     elif pathname == "/parametres":
+#         return parametres.layout
 #     elif pathname == "/admin":
-#         if current_user.is_authenticated:
-#             if current_user.profil == 1:
-#                 return admin.layout
-#             else:
-#                 return html.H3("La page demandée est inaccessible")
-#         else:
-#             return login_fd.layout
+#         return admin.layout
 #     elif pathname == "/profil":
-#         if current_user.is_authenticated:
-#             return profil.layout
-#         else:
-#             return login_fd.layout
+#         return profil.layout
 #     elif pathname == "/conditions":
 #         return conditions.layout
 #     elif pathname == "/logout":
-#         if current_user.is_authenticated:
-#             logout_user()
-#             return logout.layout
-#         else:
-#             return logout.layout
+#         return logout.layout
 #     else:
 #         return error.layout
+
+
+@app.callback(
+    Output("page-content", "children"),
+    Input("url", "pathname")
+    )
+def display_page(pathname):
+    if pathname == "/":
+        if current_user.is_authenticated:
+            if current_user.profil == 4:
+                return html.H3("La page demandée est inaccessible")
+            else:
+                return home.layout
+        else:
+            return login.layout
+    elif pathname == "/home":
+        if current_user.is_authenticated:
+            return home.layout
+        else:
+            return login_fd.layout
+    elif pathname == "/creation":
+        if current_user.is_authenticated:
+            return creation.layout
+        else:
+            return login_fd.layout
+    elif pathname == "/chantier":
+        if current_user.is_authenticated:
+            return chantier.layout
+        else:
+            return login_fd.layout
+    elif pathname == "/secteur":
+        if current_user.is_authenticated:
+            return secteur.layout
+        else:
+            return login_fd.layout
+    elif pathname == "/parametres":
+        if current_user.is_authenticated:
+            return parametres.layout
+        else:
+            return login_fd.layout
+    elif pathname == "/export":
+        if current_user.is_authenticated:
+            return export.layout
+        else:
+            return login_fd.layout
+    elif pathname == "/admin":
+        if current_user.is_authenticated:
+            if current_user.profil == 1:
+                return admin.layout
+            else:
+                return html.H3("La page demandée est inaccessible")
+        else:
+            return login_fd.layout
+    elif pathname == "/profil":
+        if current_user.is_authenticated:
+            return profil.layout
+        else:
+            return login_fd.layout
+    elif pathname == "/conditions":
+        return conditions.layout
+    elif pathname == "/logout":
+        if current_user.is_authenticated:
+            logout_user()
+            return logout.layout
+        else:
+            return logout.layout
+    else:
+        return error.layout
 
 
 @app.callback(
@@ -430,9 +430,9 @@ def navBar(input1, url):
     if url == "/" or url == "/creation" or url == "/logout" or url == "/login_fd":
         return []
     else:
-        # if current_user.is_authenticated:
-        if True:
-            return return_navbar(user_profil)
+        if current_user.is_authenticated:
+        # if True:
+            return return_navbar(current_user.user_profil)
         else:
             return []
 

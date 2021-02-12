@@ -134,6 +134,9 @@ def update_map_chantier(chantier, params):
 
     try:
         plan = download_image(chantier, "plan.jpeg")
+        with engine.connect() as con:
+            query=f"SELECT * FROM chantier WHERE nom_chantier='{chantier}'"
+            dim = pd.read_sql_query(query, con=con)[['x1','x2','y1','y2']]
     except:
         plan=None
 
@@ -146,10 +149,10 @@ def update_map_chantier(chantier, params):
             source=plan,
             sourcetype="image",
             coordinates=[
-                [7.4115104, 43.7321406],
-                [7.4137998, 43.7321406],
-                [7.4137998, 43.7310171],
-                [7.4115104, 43.7310171],
+                [dim.x1[0], dim.y2[0]],
+                [dim.x2[0], dim.y2[0]],
+                [dim.x2[0], dim.y1[0]],
+                [dim.x1[0], dim.y1[0]],
             ],
         )
     ]
