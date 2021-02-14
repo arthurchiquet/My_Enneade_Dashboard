@@ -93,7 +93,7 @@ def format_df(df, list_tirants):
 
 
 def graph_tirant(chantier, list_tirants, height=400, mode=1):
-    df = get_data(chantier, "actif", "tirants.csv", sep=False)
+    df = get_data(chantier, "actif", "tirant", "tirant.csv", sep=False)
     df, df_ratio = format_df(df, list_tirants)
     fig1 = px.line(df.reset_index(), x="date", y=list_tirants)
     fig2 = px.line(df_ratio.reset_index(), x="date", y=list_tirants)

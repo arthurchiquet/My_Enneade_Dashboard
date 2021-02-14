@@ -43,7 +43,7 @@ layout = html.Div(
 
 @app.callback(
     Output("map-geo", "children"),
-    Output("loading-map-title", 'children'),
+    Output("loading-map-title",'children'),
     Input("page-content", "children"))
 def display_map_geo(page_content):
     with engine.connect() as con:

@@ -321,7 +321,7 @@ def return_navbar(profil):
 #     Output('title_chantier', 'children'),
 #     Input('chantier-select', 'data'))
 # def afficher_nom_chantier(chantier):
-#     return f'..  {chantier}  ..'
+#     return f'  {chantier}'
 
 # @app.callback(Output("page-content", "children"), Input("url", "pathname"))
 # def display_page(pathname):

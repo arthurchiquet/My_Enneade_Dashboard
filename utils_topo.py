@@ -18,10 +18,39 @@ colors = {"background": "#222222", "text": "white"}
 
 layout = html.Div(
     [
+        dbc.Row(dcc.Dropdown(
+                id="focus",
+                style={"color": "black", 'width': '150px'},
+                options=[
+                    {"label": 'Vue chantier', "value": 30},
+                    {"label": 'Vue secteur', "value": 1}
+                ],
+                value=30,
+                persistence=True,
+                persistence_type='session'
+            ), justify='center'
+        ),
+        html.Br(),
+        dbc.Container(
+            dcc.Slider(
+                id="size_ref",
+                min=0,
+                max=100,
+                step=1,
+                value=50,
+                marks={
+                    0: "Zoom Min.",
+                    50: "50%",
+                    100: "Zoom Max.",
+                },
+            )
+        ),
+        html.Br(),
         dcc.Graph(id="graph-3D", figure=empty_figure()),
         html.Hr(),
         html.Br(),
-        dbc.Row(html.H4('Dépalcement des cibles X, Y, et Z (mm)'), justify='center'),
+        dbc.Row(html.H4('Dépalcement des cibles'), justify='center'),
+        dbc.Row(html.H5(id='subtitle_topo'), justify='center'),
         html.Br(),
         dbc.Row(dbc.Label('Référentiel de mesure'), justify='center'),
         dbc.Row(
@@ -32,7 +61,9 @@ layout = html.Div(
                     {"label": 'Absolu', "value": 'absolu'},
                     {"label": 'Secteur', "value": 'secteur'}
                 ],
-                value='absolu'
+                value='absolu',
+                persistence=True,
+                persistence_type='session'
             ),
             justify="center",
         ),
@@ -44,26 +75,32 @@ layout = html.Div(
 
 @app.callback(
     Output("graph-3D", "figure"),
-    Input("chantier-select", "data"),
+    Input('focus', 'value'),
+    Input('size_ref', 'value'),
+    State("chantier-select", "data"),
     State('secteur-select', 'data'),
     State("global-params", "data"),
 )
-def update_graph_vector(chantier, secteur_selected, params):
+def update_graph_3D(focus, sizeref, chantier, secteur_selected, params):
     if secteur_selected == {}:
         return empty_figure()
     else:
-        df = memoized_data(chantier, "actif", "topographie.csv")
+        df = memoized_data(chantier, "actif", "topographie", "topo.csv")
         secteurs_params = params["secteur"]
         secteur = list(secteur_selected.keys())[0]
         list_capteur = secteur_selected[secteur]["cible"]
         coords = secteurs_params[secteur]
-        df1 = extract_3d_positions(df, list_capteur, secteur)
         df2 = format_df_vector(df)
-        return graph_3D(df1, df2, coords, secteur)
+        if focus==30:
+            pass
+        else:
+            df2=df2[df2.cible.isin(list_capteur)]
+        return graph_3D(df2, coords, secteur, list_capteur, sizeref, focus)
 
 
 @app.callback(
     Output("time-series", "figure"),
+    Output("subtitle_topo", 'children'),
     Output("ref_ok", 'children'),
     Input('absolu_NTZ', 'value'),
     Input("secteur-select", "data"),
@@ -71,25 +108,29 @@ def update_graph_vector(chantier, secteur_selected, params):
 )
 def update_time_serie(ref, secteur_selected, chantier):
     if secteur_selected == {}:
-        return empty_figure(), ''
+        return empty_figure(), '', ''
     else:
         secteur = list(secteur_selected.keys())[0]
         if ref=='secteur':
             with engine.connect() as con:
                 query=f"SELECT * FROM secteur_param WHERE nom_chantier='{chantier}' AND secteur='{secteur}' "
                 angle = pd.read_sql_query(query, con=con).angle[0]
+                subtitle='N, T, Z (mm)'
+                repere='ntz'
         else:
             angle=0
-        df = memoized_data(chantier, "actif", "topographie.csv")
+            subtitle='X, Y, Z (mm)'
+            repere='xyz'
+        df = memoized_data(chantier, "actif", "topographie", "topo.csv")
         list_capteur = secteur_selected[secteur]["cible"]
         if angle==None:
             df = format_df(df, list_capteur, 0)
             fig = graph_topo(df, height=700)
             return fig, 'Aucun référentiel renseigné pour ce secteur'
         else:
-            df = format_df(df, list_capteur, angle)
+            df = format_df(df, list_capteur, angle, repere=repere)
             fig = graph_topo(df, height=700)
-            return fig, ''
+            return fig, subtitle, ''
 
 def affect(nom_capteur, liste_capteur, nom_secteur):
     if nom_capteur in liste_capteur:
@@ -122,22 +163,10 @@ def extract_3d_positions(df, liste_capteur, secteur):
     return df
 
 
-def graph_3D(df1, df2, secteur, nom_secteur):
+def graph_3D(df2, secteur, nom_secteur, list_capteur, sizeref, focus):
 
-    fig = go.Figure(
-        data=[go.Scatter3d(
-            x=df1.x,
-            y=df1.y,
-            z=df1.z,
-            customdata=df1[['cible','secteur']],
-            name='Position',
-            text = df1.cible,
-            mode='markers',)
-        ]
-    )
-    fig.update_traces(
-        marker=dict(size=3, opacity=0.6, color='#7FFFD4')
-    )
+    fig = go.Figure()
+
     fig.add_trace(go.Cone(
         x=df2.x.tolist(),
         y=df2.y.tolist(),
@@ -146,94 +175,42 @@ def graph_3D(df1, df2, secteur, nom_secteur):
         v=df2.v.tolist(),
         w=df2.w.tolist(),
         colorscale='pinkyl',
-        sizemode="absolute",
+        sizemode="scaled",
         text=df2.cible,
         name='Déplacement',
-        sizeref=350,
+        sizeref=sizeref*focus,
         )
     )
 
     x1, x2, y1, y2 = changement_repere(secteur, coefx, coefy, interceptx, intercepty)
-    z1 = df1[df1.secteur == nom_secteur].z.min()-4
-    z2 = df1[df1.secteur == nom_secteur].z.max()+4
+    z1 =df2[df2.cible.isin(list_capteur)].z.min()-5
+    z2 =df2[df2.cible.isin(list_capteur)].z.max()+5
 
-    fig.add_trace(
-         go.Mesh3d(
-            x=[x1, x1, x2, x2, x1, x1, x2, x2],
-            y=[y1, y2, y2, y1, y1, y2, y2, y1],
-            z=[z1, z1, z1, z1, z2, z2, z2, z2],
+    if focus==1:
+        rangex=[x1,x2]
+        rangey=[y1,y2]
+        rangez=[z1,z2]
+    else:
+        rangex=None
+        rangey=None
+        rangez=None
 
-            i = [7, 0, 0, 0, 4, 4, 6, 6, 4, 0, 3, 2],
-            j = [3, 4, 1, 2, 5, 6, 5, 2, 0, 1, 6, 3],
-            k = [0, 7, 2, 3, 6, 7, 1, 1, 5, 5, 7, 6],
-            opacity=0.15,
-            color='#FF1493',
-            name=f'secteur {nom_secteur}'
+        fig.add_trace(
+             go.Mesh3d(
+                x=[x1, x1, x2, x2, x1, x1, x2, x2],
+                y=[y1, y2, y2, y1, y1, y2, y2, y1],
+                z=[z1, z1, z1, z1, z2, z2, z2, z2],
+
+                i = [7, 0, 0, 0, 4, 4, 6, 6, 4, 0, 3, 2],
+                j = [3, 4, 1, 2, 5, 6, 5, 2, 0, 1, 6, 3],
+                k = [0, 7, 2, 3, 6, 7, 1, 1, 5, 5, 7, 6],
+                opacity=0.15,
+                color='#FF1493',
+                name=f'secteur {nom_secteur}'
+            )
         )
-    )
 
     fig.update_layout(
-        updatemenus=[
-            dict(
-                type="dropdown",
-                direction="left",
-                pad={"r": 10, "t": 0},
-                showactive=False,
-                x=0.45,
-                xanchor="left",
-                y=1.15,
-                yanchor="top",
-                buttons=list(
-                    [
-                        dict(
-                            label="Tous",
-                            method="update",
-                            args=[
-                                {
-                                    "visible": [True, True, True]
-                                }
-                            ],
-                        ),
-                        dict(
-                            label="Positions",
-                            method="update",
-                            args=[
-                                {
-                                    "visible": [True, False, False]
-                                }
-                            ],
-                        ),
-                        dict(
-                            label="Vecteurs",
-                            method="update",
-                            args=[
-                                {
-                                    "visible": [False, True, False]
-                                }
-                            ],
-                        ),
-                        dict(
-                            label="Positions + Secteur",
-                            method="update",
-                            args=[
-                                {
-                                    "visible": [True, False, True]
-                                }
-                            ],
-                        ),
-                        dict(
-                            label="Vecteurs + Secteur",
-                            method="update",
-                            args=[
-                                {
-                                    "visible": [False, True, True]
-                                }
-                            ],
-                        ),
-                    ]
-                )
-            ),
-        ],
         scene=dict(
             xaxis_title="Est / Ouest",
             yaxis_title="Nord / Sud",
@@ -246,7 +223,8 @@ def graph_3D(df1, df2, secteur, nom_secteur):
                 showline=True,
                 linewidth=2,
                 linecolor='white',
-                mirror=True
+                mirror=True,
+                range=rangex
             ),
             yaxis=dict(
                 backgroundcolor=colors["background"],
@@ -256,7 +234,8 @@ def graph_3D(df1, df2, secteur, nom_secteur):
                 showline=True,
                 linewidth=2,
                 linecolor='white',
-                mirror=True
+                mirror=True,
+                range=rangey
             ),
             zaxis=dict(
                 backgroundcolor=colors["background"],
@@ -266,12 +245,14 @@ def graph_3D(df1, df2, secteur, nom_secteur):
                 showline=True,
                 linewidth=2,
                 linecolor='white',
-                mirror=True
+                mirror=True,
+                range=rangez
             ),
             camera=dict(eye=dict(x=0,y=-0.3,z=1.25))
         ),
         margin=dict(l=0, r=0, t=0, b=0),
         showlegend=False,
+        height=350,
         plot_bgcolor=colors["background"],
         paper_bgcolor=colors["background"],
         font_color=colors["text"],

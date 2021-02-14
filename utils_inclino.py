@@ -18,8 +18,8 @@ colors = {"background": "#222222", "text": "white"}
 
 def graph_inclino(chantier, inclino, height=None):
 
-    dfnorm = get_data(chantier, "actif", f"{inclino}_norm.csv", sep=False)
-    dftan = get_data(chantier, "actif", f"{inclino}_tan.csv", sep=False)
+    dfnorm = get_data(chantier, "actif", "inclinometrie", f"{inclino}_norm.csv", sep=False)
+    dftan = get_data(chantier, "actif", "inclinometrie", f"{inclino}_tan.csv", sep=False)
 
     last_col = dfnorm.columns[-1]
     past_last_col = dfnorm.columns[-2]
@@ -377,8 +377,8 @@ def update_graphs(
     try:
         secteur = list(secteur_selected.keys())[0]
         inclino = secteur_selected[secteur]["inclino"][0]
-        dfnorm = get_data(chantier, "actif", f"{inclino}_norm.csv", sep=False)
-        dftan = get_data(chantier, "actif", f"{inclino}_tan.csv", sep=False)
+        dfnorm = get_data(chantier, "actif", "inclinometrie", f"{inclino}_norm.csv", sep=False)
+        dftan = get_data(chantier, "actif", "inclinometrie", f"{inclino}_tan.csv", sep=False)
         fig1 = create_graph_1(dfnorm, chantier, inclino, nb_courbes3, "normal")
         fig2 = create_graph_1(dftan, chantier, inclino, nb_courbes3, "tangentiel")
         fig3 = create_graph_2(dfnorm, chantier, inclino, nb_courbes, "normal")
@@ -461,10 +461,7 @@ def create_graph_1(dfi, chantier, inclino, nb_courbes, title):
 
 def create_graph_2(dfi, chantier, inclino, nb_courbes, title):
     df = dfi.copy()
-    first = df.iloc[:, 1]
     cols = df.columns[-nb_courbes:]
-    for col in cols:
-        df[col] = df[col] - first
     fig = px.line(df, y="profondeur", x=cols, title=f"Deplacement {title} (mm)")
     fig.update_xaxes(range=[-10, 25])
     fig.update_yaxes(autorange="reversed")
@@ -472,6 +469,7 @@ def create_graph_2(dfi, chantier, inclino, nb_courbes, title):
     fig.update_layout(
         height=400,
         legend_title_text=None,
+        legend_traceorder="reversed",
         yaxis_title="Profondeur (m)",
         xaxis_title=None,
         legend_orientation="h",
@@ -555,7 +553,7 @@ def create_3d_graph(dfnormi, dftani, chantier, inclino, nb_courbes):
     profondeur = dfnorm.profondeur
     fig = go.Figure()
     for i in range(nb_courbes):
-        normi = dfnorm.iloc[:, -1 - i]
+        normi = dfnorm.iloc[:, -1 -i]
         tani = dftan.iloc[:, -1 - i]
         fig.add_trace(
             go.Scatter3d(

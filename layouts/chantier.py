@@ -88,7 +88,7 @@ def affichage_map(chantier, params):
     try:
         return update_map_chantier(chantier, params), ''
     except:
-        return empty_figure(), 'Aucun chantier selectionné'
+        return empty_figure(), 'Aucune donnée à afficher'
 
 
 @app.callback(
@@ -105,10 +105,13 @@ def update_params(params, chantier):
                 params = download_json(chantier, "paramètres", "positions.json")
             except:
                 params = {}
-            data = memoized_data(chantier, "actif", "topographie.csv")
-            data_positions = extract_position(data)
-            capteurs = {"cible": data_positions.to_dict("index")}
-            params.update(capteurs)
+            try:
+                data = memoized_data(chantier, "actif", "topographie", "topo.csv")
+                data_positions = extract_position(data)
+                capteurs = {"cible": data_positions.to_dict("index")}
+                params.update(capteurs)
+            except:
+                param={}
         else:
             pass
         return params
@@ -225,6 +228,10 @@ def display_right_content(options, clickData, params):
             )
         ]
     elif options=='select-map':
+        if "secteur" in params.keys():
+            options_secteur = [{"label": secteur, "value": secteur} for secteur in params["secteur"]]
+        else:
+            options_secteur=[]
         return [
             html.Br(),
             html.Br(),
@@ -240,10 +247,7 @@ def display_right_content(options, clickData, params):
                                 dcc.Dropdown(
                                     id="secteur-selection",
                                     style={"color": "black", 'width': '150px'},
-                                    options=[
-                                        {"label": secteur, "value": secteur}
-                                        for secteur in params["secteur"]
-                                    ],
+                                    options=options_secteur
                                 ),
                                 justify="center",
                             ),
@@ -278,15 +282,30 @@ def return_input_dropdown(option, param, params):
         return {'display':'inline'}, {'display':'none'},[]
     elif option == 2 or option ==3:
         if param==1:
-            options=[{"label": secteur, "value": secteur} for secteur in params["secteur"]]
+            if 'secteur' in params.keys():
+                options=[{"label": secteur, "value": secteur} for secteur in params["secteur"]]
+            else:
+                options=[]
         elif param ==3:
-            options=[{"label": inclino, "value": inclino} for inclino in params["inclino"]]
+            if 'inclino' in params.keys():
+                options=[{"label": inclino, "value": inclino} for inclino in params["inclino"]]
+            else:
+                options=[]
         elif param ==4:
-            options=[{"label": tirant, "value": tirant} for tirant in params["tirant"]]
+            if 'tirant' in params.keys():
+                options=[{"label": tirant, "value": tirant} for tirant in params["tirant"]]
+            else:
+                options=[]
         elif param ==5:
-            options=[{"label": jauge, "value": jauge} for jauge in params["jauge"]]
+            if 'jauge' in params.keys():
+                options=[{"label": jauge, "value": jauge} for jauge in params["jauge"]]
+            else:
+                options=[]
         elif param ==6:
-            options=[{"label": piezo, "value": piezo} for piezo in params["piezo"]]
+            if 'piezo' in params.keys():
+                options=[{"label": piezo, "value": piezo} for piezo in params["piezo"]]
+            else:
+                options=[]
         else:
             options=[]
 
@@ -435,22 +454,22 @@ def add_modif_param(n_clicks, option, param, nom_param1, nom_param2, selectedDat
     [Input("map-chantier", "selectedData"), State("chantier-select", "data")],
 )
 def affichage_courbe_capteur(selectedData, chantier):
-    # try:
-    customdata = selectedData["points"][0]["customdata"][0]
-    text = selectedData["points"][0]["text"]
-    return (
-        text,
-        selection_affichage(chantier, customdata, text),
-        sous_titre(customdata),
-    )
-    # except:
-    #     return "", empty_figure(), f"Aucune donnée existante pour cet élément"
+    try:
+        customdata = selectedData["points"][0]["customdata"][0]
+        text = selectedData["points"][0]["text"]
+        return (
+            text,
+            selection_affichage(chantier, customdata, text),
+            sous_titre(customdata),
+        )
+    except:
+        return "", empty_figure(), f"Aucune donnée existante pour cet élément"
 
 
 ### RENVOIE LA METHODE D'AFFICHAGE DE LA COURBE EN FONCTION DU TYPE DE CAPTEUR ####
 def selection_affichage(chantier, customdata, text):
     if customdata == "cible":
-        df = memoized_data(chantier, "actif", "topographie.csv")
+        df = memoized_data(chantier, "actif", "topographie", "topo.csv")
         df = utils_topo.format_df(df, text, angle=0, repere='xyz')
         return utils_topo.graph_topo(
             df, height=550, spacing=0.06, showlegend=False

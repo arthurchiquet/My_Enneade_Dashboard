@@ -64,7 +64,7 @@ def diff_jauge(df):
 
 
 def graph_jauge(chantier, jauges, height=None):
-    df = get_data(chantier, "actif", "jauges.csv", sep=False)
+    df = get_data(chantier, "actif", "jauge", "jauges.csv", sep=False)
     df=df.rename(columns={'Date':'date'})
     df.date = pd.to_datetime(df.date, format="%d/%m/%Y")
     liste_colonnes = []

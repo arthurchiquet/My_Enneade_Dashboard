@@ -7,3 +7,7 @@ hr {
 *{
   font-family: "Century Gothic", CenturyGothic, AppleGothic, sans-serif;
 }
+
+.DateInput, .DateInput_1 {
+  width: 300px;
+}

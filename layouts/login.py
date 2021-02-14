@@ -16,7 +16,6 @@ layout = dbc.Container(
                 dcc.Location(id="url_login", refresh=True),
                 html.Div(
                     [
-                        # dbc.Row(html.H3("Connexion"), justify='center'),
                         dbc.Container(
                             id="loginType",
                             children=[

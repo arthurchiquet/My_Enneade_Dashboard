@@ -3,7 +3,7 @@ import plotly.express as px
 import plotly.graph_objects as go
 from config import engine
 import pandas as pd
-from data import download_image, get_data
+from data import download_image
 import numpy as np
 from datetime import timedelta
 
@@ -38,14 +38,6 @@ def changement_repere(df, coefx, coefy, interceptx, intercepty):
 def remove_xyz(string):
     return string[:-2]
 
-
-def first(col):
-    i = 0
-    for j in col:
-        if not np.isnan(j) & (i == 0):
-            i = j
-            break
-    return i
 
 def extract_position(df):
     df=df.drop(columns=["date"]).dropna(axis=1, how="all")

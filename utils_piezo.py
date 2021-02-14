@@ -101,8 +101,8 @@ def update_graph_piezos(chantier, secteurselected):
 
 
 def graph_piezo(chantier, piezo, height=550):
-    df = get_data(chantier, "actif", f"{piezo}.csv")
-    terrassement = get_data(chantier, "actif", "terrassement.csv")
+    df = get_data(chantier, "actif", "piezometrie", f"{piezo}.csv")
+    terrassement = get_data(chantier, "actif", "piezometrie", f"/terrassement/niveau_{piezo}.csv")
     df=df.rename(columns={'Date':'date'})
     terrassement=terrassement.rename(columns={'Date':'date'})
     df.date = pd.to_datetime(df.date, format="%d/%m/%Y")
