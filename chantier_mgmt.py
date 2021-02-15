@@ -14,6 +14,7 @@ class Chantier(db.Model):
     adresse = db.Column(db.String(50))
     lat = db.Column(db.Float)
     lon = db.Column(db.Float)
+    zoom=db.Column(db.Float)
     x1 = db.Column(db.Float)
     x2 = db.Column(db.Float)
     y1 = db.Column(db.Float)
@@ -27,13 +28,14 @@ def create_table():
     Chantier.metadata.create_all(engine)
 
 
-def add_chantier(nom_chantier, username, adresse, lat, lon, x1=0, x2=0, y1=0, y2=0):
+def add_chantier(nom_chantier, username, adresse, lat, lon, zoom=15, x1=0, x2=0, y1=0, y2=0):
     ins = Chantier_tbl.insert().values(
         nom_chantier=nom_chantier,
         username=username,
         adresse=adresse,
         lat=lat,
         lon=lon,
+        zoom=zoom,
         x1=x1,
         x2=x2,
         y1=y1,

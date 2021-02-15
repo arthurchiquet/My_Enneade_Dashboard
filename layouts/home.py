@@ -5,7 +5,6 @@ import dash_bootstrap_components as dbc
 from server import app
 import dash_table as dt
 from flask_login import current_user
-from data import get_data, download_json
 import plotly.express as px
 from config import engine
 import pandas as pd
@@ -47,8 +46,8 @@ layout = html.Div(
     Input("page-content", "children"))
 def display_map_geo(page_content):
     with engine.connect() as con:
-        query = f"SELECT * FROM chantier where username = '{current_user.username}'"
-        # query = f"SELECT * FROM chantier where username = '{user}'"
+        # query = f"SELECT * FROM chantier where username = '{current_user.username}'"
+        query = f"SELECT * FROM chantier where username = '{user}'"
         df = pd.read_sql_query(query, con=con)
 
     if df.shape[0]==0:
@@ -102,5 +101,5 @@ def store_chantier(clickData):
     try:
         chantier = clickData["points"][0]["hovertext"]
         return chantier, "/chantier"
-    except:
+    except TypeError:
         return {}, "/"

@@ -94,54 +94,55 @@ layout = tabs_pram
     [
         Input("tabs_param", "active_tab"),
         State("chantier-select", "data"),
-        State("global-params", "data")
     ],
 )
-def display_table(tab, chantier, data):
-    try:
-        with engine.connect() as con:
-            if tab == 1:
-                query=f"SELECT * FROM chantier WHERE nom_chantier='{chantier}'"
-                parametres = pd.read_sql_query(query, con=con).iloc[:,1:]
-                return parametres.to_dict("records"), [{"name": i, "id": i} for i in parametres.columns]
-            if tab == 2:
-                query = f"SELECT * FROM secteur_param WHERE nom_chantier='{chantier}'"
-                sql_result = pd.read_sql_query(query, con=con)
-                parametres = pd.DataFrame({'secteur':data['secteur'].keys(), 'nom_chantier': chantier})
-                result=parametres.merge(sql_result, how='left')
-                return result.to_dict("records"), [{"name": i, "id": i} for i in result.columns]
+def display_table(tab, chantier):
+    with engine.connect() as con:
+        if tab == 1:
+            query=f"SELECT * FROM chantier WHERE nom_chantier='{chantier}'"
+            parametres = pd.read_sql_query(query, con=con).iloc[:,1:]
+            return parametres.to_dict("records"), [{"name": i, "id": i} for i in parametres.columns]
+        if tab == 2:
+            query1 = f"SELECT * FROM secteur WHERE nom_chantier='{chantier}'"
+            query2 = f"SELECT * FROM secteur_param WHERE nom_chantier='{chantier}'"
+            gauche = pd.read_sql_query(query1, con=con)[['nom_secteur','nom_chantier']]
+            droite = pd.read_sql_query(query2, con=con)
+            result=gauche.merge(droite, how='left')
+            return result.to_dict("records"), [{"name": i, "id": i} for i in result.columns]
 
-            # if tab == 3:
-            #     filtre_secteur = tuple(params[params.type == "cible"].capteur)
-            #     query = f"select * from cible_param where cible in {filtre_secteur}"
-            #     parametres = pd.read_sql_query(query, con=con)
+        # if tab == 3:
+        #     filtre_secteur = tuple(params[params.type == "cible"].capteur)
+        #     query = f"select * from cible_param where cible in {filtre_secteur}"
+        #     parametres = pd.read_sql_query(query, con=con)
 
-            if tab == 4:
-                query = f"select * from inclino_param WHERE nom_chantier='{chantier}'"
-                sql_result = pd.read_sql_query(query, con=con)
-                parametres = pd.DataFrame({'inclino':data['inclino'].keys(), 'nom_chantier': chantier})
-                result=parametres.merge(sql_result, how='left')
-                return result.to_dict("records"), [{"name": i, "id": i} for i in result.columns]
-            if tab == 5:
-                query = f"select * from tirant_param WHERE nom_chantier='{chantier}'"
-                sql_result = pd.read_sql_query(query, con=con)
-                parametres = pd.DataFrame({'tirant':data['tirant'].keys(), 'nom_chantier': chantier})
-                result=parametres.merge(sql_result, how='left')
-                return result.to_dict("records"), [{"name": i, "id": i} for i in result.columns]
-            if tab == 6:
-                query = f"select * from jauge_param WHERE nom_chantier='{chantier}'"
-                sql_result = pd.read_sql_query(query, con=con)
-                parametres = pd.DataFrame({'jauge':data['jauge'].keys(), 'nom_chantier': chantier})
-                result=parametres.merge(sql_result, how='left')
-                return result.to_dict("records"), [{"name": i, "id": i} for i in result.columns]
-            if tab == 7:
-                query = f"select * from piezo_param WHERE nom_chantier='{chantier}'"
-                sql_result = pd.read_sql_query(query, con=con)
-                parametres = pd.DataFrame({'piezo':data['piezo'].keys(), 'nom_chantier': chantier})
-                result=parametres.merge(sql_result, how='left')
-                return result.to_dict("records"), [{"name": i, "id": i} for i in result.columns]
-    except:
-        return [], []
+        if tab == 4:
+            query1 = f"SELECT * FROM capteur WHERE nom_chantier='{chantier}' and type='inclino'"
+            query2 = f"SELECT * FROM inclino_param WHERE nom_chantier='{chantier}'"
+            gauche = pd.read_sql_query(query1, con=con)[['nom_capteur','nom_chantier']]
+            droite = pd.read_sql_query(query2, con=con)
+            result=gauche.merge(droite, how='left')
+            return result.to_dict("records"), [{"name": i, "id": i} for i in result.columns]
+        if tab == 5:
+            query1 = f"SELECT * FROM capteur WHERE nom_chantier='{chantier}' and type='tirant'"
+            query2 = f"SELECT * FROM inclino_param WHERE nom_chantier='{chantier}'"
+            gauche = pd.read_sql_query(query1, con=con)[['nom_capteur','nom_chantier']]
+            droite = pd.read_sql_query(query2, con=con)
+            result=gauche.merge(droite, how='left')
+            return result.to_dict("records"), [{"name": i, "id": i} for i in result.columns]
+        if tab == 6:
+            query1 = f"SELECT * FROM capteur WHERE nom_chantier='{chantier}' and type='jauge'"
+            query2 = f"SELECT * FROM inclino_param WHERE nom_chantier='{chantier}'"
+            gauche = pd.read_sql_query(query1, con=con)[['nom_capteur','nom_chantier']]
+            droite = pd.read_sql_query(query2, con=con)
+            result=gauche.merge(droite, how='left')
+            return result.to_dict("records"), [{"name": i, "id": i} for i in result.columns]
+        if tab == 7:
+            query1 = f"SELECT * FROM capteur WHERE nom_chantier='{chantier}' and type='piezo'"
+            query2 = f"SELECT * FROM inclino_param WHERE nom_chantier='{chantier}'"
+            gauche = pd.read_sql_query(query1, con=con)[['nom_capteur','nom_chantier']]
+            droite = pd.read_sql_query(query2, con=con)
+            result=gauche.merge(droite, how='left')
+            return result.to_dict("records"), [{"name": i, "id": i} for i in result.columns]
 
 
 @app.callback(

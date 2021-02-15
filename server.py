@@ -19,7 +19,7 @@ cache = Cache(
     app.server, config={"CACHE_TYPE": "filesystem", "CACHE_DIR": "cache-directory"}
 )
 
-TIMEOUT = 3600
+TIMEOUT = 2000
 
 server = app.server
 app.config.suppress_callback_exceptions = True

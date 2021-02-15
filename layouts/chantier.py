@@ -3,16 +3,18 @@ import dash_html_components as html
 import dash_gif_component as gif
 from dash.dependencies import Input, Output, State
 import dash_bootstrap_components as dbc
+from google.cloud.exceptions import NotFound
 import plotly.graph_objects as go
 import pandas as pd
 import dash_table as dt
 import warnings
 from server import app
 from config import engine
-from data import get_data, save_json, download_json, memoized_data
+from pangres import upsert
+from data import memoized_data
 from utils_maps import update_map_chantier, empty_figure, extract_position
+from params_mgmt import ajout_secteur, ajout_capteur, maj_secteur, maj_capteur, supp_secteur, supp_capteur
 import utils_topo, utils_inclino, utils_jauge, utils_tirant, utils_piezo
-import json
 
 warnings.filterwarnings("ignore")
 
@@ -21,6 +23,7 @@ colors = {"background": "#222222", "text": "#FF8C00"}
 layout = html.Div(
     children=[
         html.Br(),
+        html.Div(id='reload-map'),
         dbc.Row(
             [
                 dbc.Col(
@@ -75,46 +78,19 @@ layout = html.Div(
     ]
 )
 
+
 ### AFFICHAGE LA CARTE DU CHANTIER SELECTIONNE #####
 @app.callback(
     Output("map-chantier", "figure"),
     Output("no-chantier-selected", "children"),
-    [
-        Input("chantier-select", "data"),
-        Input("global-params", "data"),
-    ],
-)
-def affichage_map(chantier, params):
-    try:
-        return update_map_chantier(chantier, params), ''
-    except:
-        return empty_figure(), 'Aucune donnée à afficher'
-
-
-@app.callback(
-    Output("global-params", "data"),
-    Input("provis-params", "data"),
+    Input('reload-map', 'children'),
     Input("chantier-select", "data"),
 )
-def update_params(params, chantier):
-    if chantier == {}:
-        return {}
-    else:
-        if params == {}:
-            try:
-                params = download_json(chantier, "paramètres", "positions.json")
-            except:
-                params = {}
-            try:
-                data = memoized_data(chantier, "actif", "topographie", "topo.csv")
-                data_positions = extract_position(data)
-                capteurs = {"cible": data_positions.to_dict("index")}
-                params.update(capteurs)
-            except:
-                param={}
-        else:
-            pass
-        return params
+def affichage_map(reload, chantier):
+    try:
+        return update_map_chantier(chantier), ''
+    except ValueError:
+        return empty_figure(), 'Aucune donnée à afficher'
 
 collapse = html.Div(
     [
@@ -143,10 +119,10 @@ def collapse_parametres(n, is_open):
     [
         Input("options-map", "active_tab"),
         Input("map-chantier", "clickData"),
-        State("global-params", "data"),
     ],
+        State('chantier-select', 'data')
 )
-def display_right_content(options, clickData, params):
+def display_right_content(options, clickData, chantier):
     if options=='control-map':
         if clickData:
             return [
@@ -228,10 +204,10 @@ def display_right_content(options, clickData, params):
             )
         ]
     elif options=='select-map':
-        if "secteur" in params.keys():
-            options_secteur = [{"label": secteur, "value": secteur} for secteur in params["secteur"]]
-        else:
-            options_secteur=[]
+        with engine.connect() as con:
+            query3 = f"SELECT * FROM secteur where nom_chantier = '{chantier}'"
+            liste_secteurs=pd.read_sql_query(query3, con=con).nom_secteur.tolist()
+        options_secteur = [{"label": secteur, "value": secteur} for secteur in liste_secteurs]
         return [
             html.Br(),
             html.Br(),
@@ -276,36 +252,31 @@ def display_right_content(options, clickData, params):
     Output('nom_param_2', 'options'),
     Input('type_option', 'value'),
     Input('type_param', 'value'),
-    State("global-params", "data"),)
-def return_input_dropdown(option, param, params):
+    State('chantier-select', 'data')
+)
+def return_input_dropdown(option, param, chantier):
     if option==1:
         return {'display':'inline'}, {'display':'none'},[]
     elif option == 2 or option ==3:
+        with engine.connect() as con:
+            query2 = f"SELECT * FROM capteur where nom_chantier = '{chantier}'"
+            query3 = f"SELECT * FROM secteur where nom_chantier = '{chantier}'"
+            liste_capteurs=pd.read_sql_query(query2, con=con)
+            liste_secteurs=pd.read_sql_query(query3, con=con).nom_secteur.tolist()
+        liste_inclino = liste_capteurs[liste_capteurs.type=='inclino'].nom_capteur.tolist()
+        liste_tirant = liste_capteurs[liste_capteurs.type=='tirant'].nom_capteur.tolist()
+        liste_jauge = liste_capteurs[liste_capteurs.type=='jauge'].nom_capteur.tolist()
+        liste_piezo = liste_capteurs[liste_capteurs.type=='piezo'].nom_capteur.tolist()
         if param==1:
-            if 'secteur' in params.keys():
-                options=[{"label": secteur, "value": secteur} for secteur in params["secteur"]]
-            else:
-                options=[]
+            options=[{"label": secteur, "value": secteur} for secteur in liste_secteurs]
         elif param ==3:
-            if 'inclino' in params.keys():
-                options=[{"label": inclino, "value": inclino} for inclino in params["inclino"]]
-            else:
-                options=[]
+            options=[{"label": inclino, "value": inclino} for inclino in liste_inclino]
         elif param ==4:
-            if 'tirant' in params.keys():
-                options=[{"label": tirant, "value": tirant} for tirant in params["tirant"]]
-            else:
-                options=[]
+            options=[{"label": tirant, "value": tirant} for tirant in liste_tirant]
         elif param ==5:
-            if 'jauge' in params.keys():
-                options=[{"label": jauge, "value": jauge} for jauge in params["jauge"]]
-            else:
-                options=[]
+            options=[{"label": jauge, "value": jauge} for jauge in liste_jauge]
         elif param ==6:
-            if 'piezo' in params.keys():
-                options=[{"label": piezo, "value": piezo} for piezo in params["piezo"]]
-            else:
-                options=[]
+            options=[{"label": piezo, "value": piezo} for piezo in liste_piezo]
         else:
             options=[]
 
@@ -319,41 +290,42 @@ def return_input_dropdown(option, param, params):
     [
         Input("go-secteur", "n_clicks"),
         State("secteur-selection", "value"),
-        State("global-params", "data"),
+        State('chantier-select', 'data')
     ],
 )
-def select_secteur(n_clicks, secteur_selected, params):
+def select_secteur(n_clicks, secteur_selected, chantier):
     if n_clicks > 0:
-        secteurs_params = params["secteur"]
-        secteur = secteurs_params[secteur_selected]
-        del params["secteur"]
-        df = (
-            pd.concat(
-                {k: pd.DataFrame.from_dict(v, "index") for k, v in params.items()},
-                axis=0,
-            )
-            .reset_index()
-            .rename(columns={"level_0": "type", "level_1": "capteur"})
-        )
-        capteurs = df[
-            (df.lon > secteur[0][0])
-            & (df.lon < secteur[1][0])
-            & (df.lat < secteur[0][1])
-            & (df.lat > secteur[1][1])
-        ]
-        return {
-            secteur_selected: {
-                t: capteurs[capteurs["type"] == t]["capteur"].tolist()
-                for t in capteurs["type"].unique()
-            }
-        }
+        # try:
+        #     df = extract_position(memoized_data(chantier, "actif", "topographie", "topo.csv"))
+        #     with engine.connect() as con:
+        #         query2 = f"SELECT * FROM capteur where chantier = '{chantier}'"
+        #         query3 = f"SELECT * FROM secteur where chantier = '{chantier}' and secteur='{secteur_selected}'"
+        #         liste_capteurs=pd.read_sql_query(query2, con=con)
+        #         liste_secteurs=pd.read_sql_query(query3, con=con)
+        #     lat1=liste_secteurs.lat1[0]
+        #     lat2=liste_secteurs.lat2[0]
+        #     lon1=liste_secteurs.lon1[0]
+        #     lon2=liste_secteurs.lon2[0]
+
+        #     cibles_select =
+        #     capteurs = liste_capteurs[
+        #         (liste_capteurs.lon > lon1)
+        #         & (liste_capteurs.lon < lon2)
+        #         & (liste_capteurs.lat > lat1)
+        #         & (liste_capteurs.lat < lat2)
+        #     ]
+        # except IndexError:
+        #     return {}
+
+
+        return secteur_selected
     else:
         return {}
 
 
 @app.callback(
     Output("update-success", "children"),
-    Output("provis-params", "data"),
+    Output('reload-map', 'children'),
     [
         Input("save-update", "n_clicks"),
         State("type_option", "value"),
@@ -361,87 +333,107 @@ def select_secteur(n_clicks, secteur_selected, params):
         State("nom_param_1", "value"),
         State("nom_param_2", "value"),
         State("map-chantier", "selectedData"),
-        State("global-params", "data"),
         State("chantier-select", "data"),
     ],
 )
-def add_modif_param(n_clicks, option, param, nom_param1, nom_param2, selectedData, params, chantier):
-    if option ==1:
-        nom_param = nom_param1
-    elif option == 2 or option == 3:
-        nom_param = nom_param2
-    if option == 1 or option == 2:
+def add_modif_param(n_clicks, option, param, nom_param1, nom_param2, selectedData, chantier):
+    if option == 1:
         if selectedData:
+            nom_param = nom_param1
             range_selection = selectedData["range"]["mapbox"]
             lat = (range_selection[0][1] + range_selection[1][1]) / 2
             lon = (range_selection[0][0] + range_selection[1][0]) / 2
             if param == 1:
-                try:
-                    params["secteur"][nom_param] = range_selection
-                except:
-                    params["secteur"] = {nom_param: range_selection}
-                save_json(params, chantier, "paramètres", "positions.json"), params
-                return "Les paramètres ont bien été enregistrés", params
+                lon1=range_selection[0][0]
+                lon2=range_selection[1][0]
+                lat1=range_selection[0][1]
+                lat2=range_selection[1][1]
+                if n_clicks:
+                    ajout_secteur(nom_param, chantier, lat1, lat2, lon1, lon2)
+                    return "Les paramètres ont bien été enregistrés", ''
             elif param == 2:
-                return "", params
+                return "", ''
             elif param == 3:
-                try:
-                    params["inclino"][nom_param] = {"lat": lat, "lon": lon}
-                except:
-                    params["inclino"] = {nom_param: {"lat": lat, "lon": lon}}
-                save_json(params, chantier, "paramètres", "positions.json")
-                return "Les paramètres ont bien été enregistrés", params
+                if n_clicks:
+                    ajout_capteur(nom_param, chantier, 'inclino', lat, lon)
+                    return "Les paramètres ont bien été enregistrés", ''
             elif param == 4:
-                try:
-                    params["tirant"][nom_param] = {"lat": lat, "lon": lon}
-                except:
-                    params["tirant"] = {nom_param: {"lat": lat, "lon": lon}}
-                save_json(params, chantier, "paramètres", "positions.json")
-                return "Les paramètres ont bien été enregistrés", params
+                if n_clicks:
+                    ajout_capteur(nom_param, chantier, 'tirant', lat, lon)
+                    return "Les paramètres ont bien été enregistrés", ''
             elif param == 5:
-                try:
-                    params["jauge"][nom_param] = {"lat": lat, "lon": lon}
-                except:
-                    params["jauge"] = {nom_param: {"lat": lat, "lon": lon}}
-                save_json(params, chantier, "paramètres", "positions.json")
-                return "Les paramètres ont bien été enregistrés", params
+                if n_clicks:
+                    ajout_capteur(nom_param, chantier, 'jauge', lat, lon)
+                    return "Les paramètres ont bien été enregistrés", ''
             elif param == 6:
-                try:
-                    params["piezo"][nom_param] = {"lat": lat, "lon": lon}
-                except:
-                    params["piezo"] = {nom_param: {"lat": lat, "lon": lon}}
-                save_json(params, chantier, "paramètres", "positions.json")
-                return "Les paramètres ont bien été enregistrés", params
+                if n_clicks:
+                    ajout_capteur(nom_param, chantier, 'piezo', lat, lon)
+                    return "Les paramètres ont bien été enregistrés", ''
             else:
-                return "", params
+                return "", ''
+    elif option == 2:
+        if selectedData:
+            nom_param = nom_param2
+            range_selection = selectedData["range"]["mapbox"]
+            lat = (range_selection[0][1] + range_selection[1][1]) / 2
+            lon = (range_selection[0][0] + range_selection[1][0]) / 2
+            if param == 1:
+                lon1=range_selection[0][0]
+                lon2=range_selection[1][0]
+                lat1=range_selection[0][1]
+                lat2=range_selection[1][1]
+                if n_clicks:
+                    maj_secteur(nom_param, chantier, lat1, lat2, lon1, lon2)
+                    return "Les paramètres ont bien été enregistrés", ''
+            elif param == 2:
+                return "", ''
+            elif param == 3:
+                if n_clicks:
+                    maj_capteur(nom_param, chantier, 'inclino', lat, lon)
+                    return "Les paramètres ont bien été enregistrés", ''
+            elif param == 4:
+                if n_clicks:
+                    maj_capteur(nom_param, chantier, 'tirant', lat, lon)
+                    return "Les paramètres ont bien été enregistrés", ''
+            elif param == 5:
+                if n_clicks:
+                    maj_capteur(nom_param, chantier, 'jauge', lat, lon)
+                    return "Les paramètres ont bien été enregistrés", ''
+            elif param == 6:
+                if n_clicks:
+                    maj_capteur(nom_param, chantier, 'piezo', lat, lon)
+                    return "Les paramètres ont bien été enregistrés", ''
+            else:
+                return "", ''
 
     elif option == 3:
+        nom_param = nom_param2
         if param == 1:
-            del params["secteur"][nom_param]
-            save_json(params, chantier, "paramètres", "positions.json")
-            return "Le secteur a bien été supprimé", params
+            if n_clicks:
+                supp_secteur(nom_param, chantier)
+                return "Le secteur a bien été supprimé", ''
         elif param == 2:
-            return "", params
+            return "", ''
         elif param == 3:
-            del params["inclino"][nom_param]
-            save_json(params, chantier, "paramètres", "positions.json")
-            return "L'inclinomètre a bien été supprimé", params
+            if n_clicks:
+                supp_capteur(nom_param, chantier)
+                return "L'inclinomètre a bien été supprimé", ''
         elif param == 4:
-            del params["tirant"][nom_param]
-            save_json(params, chantier, "paramètres", "positions.json")
-            return "Le tirant a bien été supprimé", params
+            if n_clicks:
+                supp_capteur(nom_param, chantier)
+                return "Le tirant a bien été supprimé", ''
         elif param == 5:
-            del params["jauge"][nom_param]
-            save_json(params, chantier, "paramètres", "positions.json")
-            return "La jauge a bien été supprimé", params
+            if n_clicks:
+                supp_capteur(nom_param, chantier)
+                return "La jauge a bien été supprimé", ''
         elif param == 6:
-            del params["piezo"][nom_param]
-            save_json(params, chantier, "paramètres", "positions.json")
-            return "Le piezomètre a bien été supprimé", params
+            if n_clicks:
+                supp_capteur(nom_param, chantier)
+                return "Le piezomètre a bien été supprimé", ''
         else:
-            return "", params
+            return "", ''
     else:
-        return "", params
+        return '', ''
 
 
 ### AFFICHE LA COURBE CORRESPONDANT AU CAPTEUR SELECTIONNÉ ####
@@ -460,10 +452,10 @@ def affichage_courbe_capteur(selectedData, chantier):
         return (
             text,
             selection_affichage(chantier, customdata, text),
-            sous_titre(customdata),
-        )
-    except:
-        return "", empty_figure(), f"Aucune donnée existante pour cet élément"
+            sous_titre(customdata)
+            )
+    except :
+        return "", empty_figure(), "Aucune donnée existante pour cet élément"
 
 
 ### RENVOIE LA METHODE D'AFFICHAGE DE LA COURBE EN FONCTION DU TYPE DE CAPTEUR ####

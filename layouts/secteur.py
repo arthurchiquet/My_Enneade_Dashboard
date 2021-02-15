@@ -91,10 +91,10 @@ layout = html.Div(
     Input("secteur-select", "data"),
 )
 def return_title(secteur_selected):
-    try:
-        return f'Secteur {list(secteur_selected.keys())[0]}'
-    except:
+    if secteur_selected=={}:
         return 'Aucun secteur sélectionné'
+    else:
+       return f'Secteur {secteur_selected}'
 
 @app.callback(
     Output("tab_type_content", "children"),

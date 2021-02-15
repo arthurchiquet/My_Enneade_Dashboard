@@ -18,7 +18,8 @@ colors = {"background": "#222222", "text": "white"}
 
 layout = html.Div(
     [
-        dbc.Row(dcc.Dropdown(
+        dbc.Row(
+            dcc.Dropdown(
                 id="focus",
                 style={"color": "black", 'width': '150px'},
                 options=[
@@ -79,14 +80,12 @@ layout = html.Div(
     Input('size_ref', 'value'),
     State("chantier-select", "data"),
     State('secteur-select', 'data'),
-    State("global-params", "data"),
 )
-def update_graph_3D(focus, sizeref, chantier, secteur_selected, params):
+def update_graph_3D(focus, sizeref, chantier, secteur_selected):
     if secteur_selected == {}:
         return empty_figure()
     else:
         df = memoized_data(chantier, "actif", "topographie", "topo.csv")
-        secteurs_params = params["secteur"]
         secteur = list(secteur_selected.keys())[0]
         list_capteur = secteur_selected[secteur]["cible"]
         coords = secteurs_params[secteur]
@@ -96,7 +95,6 @@ def update_graph_3D(focus, sizeref, chantier, secteur_selected, params):
         else:
             df2=df2[df2.cible.isin(list_capteur)]
         return graph_3D(df2, coords, secteur, list_capteur, sizeref, focus)
-
 
 @app.callback(
     Output("time-series", "figure"),
@@ -112,11 +110,17 @@ def update_time_serie(ref, secteur_selected, chantier):
     else:
         secteur = list(secteur_selected.keys())[0]
         if ref=='secteur':
-            with engine.connect() as con:
-                query=f"SELECT * FROM secteur_param WHERE nom_chantier='{chantier}' AND secteur='{secteur}' "
-                angle = pd.read_sql_query(query, con=con).angle[0]
-                subtitle='N, T, Z (mm)'
-                repere='ntz'
+            try:
+                with engine.connect() as con:
+                    query=f"SELECT * FROM secteur_param WHERE nom_chantier='{chantier}' AND secteur='{secteur}' "
+                    angle = pd.read_sql_query(query, con=con).angle[0]
+                    subtitle='N, T, Z (mm)'
+                    repere='ntz'
+            except IndexError:
+                angle=0
+                subtitle='X, Y, Z (mm)'
+                repere='xyz'
+
         else:
             angle=0
             subtitle='X, Y, Z (mm)'
@@ -273,10 +277,6 @@ def delta(df):
         df[col] = (df[col] - first(df[col])) * 1000
     return df
 
-def get_columns(df):
-    col = [i[:-2] for i in df.columns][1:]
-    return [col[i] for i in range(0, df.shape[1] - 1, 3)]
-
 def select_columns(df, liste):
     return [col for col in df.columns if col[:-2] in liste]
 
@@ -299,11 +299,6 @@ def facet_name_ntz(string):
 def remove_xyz(string):
     return string[:-2]
 
-def manu_auto_sd(cible):
-    if cible[:2].lower()=='sd':
-        return 'sd'
-    else:
-        return cible[:4].lower()
 
 def format_df(df, list_cibles, angle=0, repere='xyz'):
     df=df.rename(columns={'Date':'date'})

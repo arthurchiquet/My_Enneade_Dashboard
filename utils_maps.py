@@ -3,7 +3,7 @@ import plotly.express as px
 import plotly.graph_objects as go
 from config import engine
 import pandas as pd
-from data import download_image
+from data import download_image, memoized_data
 import numpy as np
 from datetime import timedelta
 
@@ -50,7 +50,7 @@ def extract_position(df):
     df_y=df_y.reset_index().rename(columns={'index':'cible',0:'lon'})
     df_x.cible=df_x.cible.map(remove_xyz)
     df_y.cible=df_y.cible.map(remove_xyz)
-    df=df_x.merge(df_y).set_index('cible')
+    df=df_x.merge(df_y)
     df = changement_repere(df, coefx, coefy, interceptx, intercepty)
     return df
 
@@ -58,32 +58,59 @@ def extract_position(df):
 #######################  AFFICHAGE MAP CHANTIER   ######################################################
 
 
-def update_map_chantier(chantier, params):
+def update_map_chantier(chantier):
+
+    with engine.connect() as con:
+        query1 = f"SELECT * FROM chantier where nom_chantier = '{chantier}'"
+        query2 = f"SELECT * FROM capteur where nom_chantier = '{chantier}'"
+        query3 = f"SELECT * FROM secteur where nom_chantier = '{chantier}'"
+        coord_chantier = pd.read_sql_query(query1, con=con)
+        coord_capteurs=pd.read_sql_query(query2, con=con)
+        coord_secteurs=pd.read_sql_query(query3, con=con)
+
+    fig=go.Figure()
+
+    fig.add_trace(go.Scattermapbox(
+            name=chantier,
+            mode="markers+text",
+            lon=coord_chantier.lon,
+            lat=coord_chantier.lat,
+            text=coord_chantier.nom_chantier,
+            opacity=0.3))
+
     try:
-        secteurs = params["secteur"]
-        del params["secteur"]
+        data = memoized_data(chantier, "actif", "topographie", "topo.csv")
+        visible=[True, True]
+        no_visible = [True, False]
+        df = extract_position(data)
+        fig.add_trace(go.Scattermapbox(
+                name='cible',
+                mode="markers+text",
+                lon=df.lon,
+                lat=df.lat,
+                text=df.cible,
+                customdata=['cible' for i in range(df.shape[0])]
+                ))
     except:
-        secteurs = []
+        visible=[True]
+        no_visible = [True]
 
-    df = (
-        pd.concat(
-            {k: pd.DataFrame.from_dict(v, "index") for k, v in params.items()}, axis=0
+    for i in coord_capteurs.type.unique():
+        fig.add_trace(go.Scattermapbox(
+            name=i,
+            mode="markers+text",
+            customdata=[i for j in range(coord_capteurs[coord_capteurs.type==i].shape[0])] ,
+            text = coord_capteurs[coord_capteurs.type==i].nom_capteur,
+            lon=coord_capteurs[coord_capteurs.type==i].lon,
+            lat=coord_capteurs[coord_capteurs.type==i].lat
+            )
         )
-        .reset_index()
-        .rename(columns={"level_0": "type", "level_1": "capteur"})
-    )
-
-    fig = px.scatter_mapbox(
-        df,
-        lat="lat",
-        lon="lon",
-        color="type",
-        opacity=0.7,
-        text="capteur",
-        hover_data={"type": True},
-    )
 
     fig.update_traces(hovertemplate="%{text}", textfont_size=11)
+
+    fig.update_traces(
+        marker=dict(size=5, color="#6495ED", opacity=1), selector=dict(name="cible")
+    )
 
     fig.update_traces(
         marker=dict(size=20, color="#FF6347", opacity=0.5), selector=dict(name="inclino")
@@ -99,26 +126,29 @@ def update_map_chantier(chantier, params):
     )
 
 
-    for secteur in secteurs:
-        coords = secteurs[secteur]
+    for secteur in coord_secteurs.nom_secteur:
+        lat1=coord_secteurs.lat1[0]
+        lat2=coord_secteurs.lat2[0]
+        lon1=coord_secteurs.lon1[0]
+        lon2=coord_secteurs.lon2[0]
         fig.add_trace(
             go.Scattermapbox(
                 name=secteur,
                 mode="lines",
                 text=secteur,
                 lon=[
-                    coords[0][0],
-                    coords[0][0],
-                    coords[1][0],
-                    coords[1][0],
-                    coords[0][0],
+                    lon1,
+                    lon1,
+                    lon2,
+                    lon2,
+                    lon1,
                 ],
                 lat=[
-                    coords[1][1],
-                    coords[0][1],
-                    coords[0][1],
-                    coords[1][1],
-                    coords[1][1],
+                    lat2,
+                    lat1,
+                    lat1,
+                    lat2,
+                    lat2,
                 ],
             )
         )
@@ -129,28 +159,29 @@ def update_map_chantier(chantier, params):
         with engine.connect() as con:
             query=f"SELECT * FROM chantier WHERE nom_chantier='{chantier}'"
             dim = pd.read_sql_query(query, con=con)[['x1','x2','y1','y2']]
+        layers = [
+            dict(
+                below="traces",
+                minzoom=16,
+                maxzoom=21,
+                opacity=0.7,
+                source=plan,
+                sourcetype="image",
+                coordinates=[
+                    [dim.x1[0], dim.y2[0]],
+                    [dim.x2[0], dim.y2[0]],
+                    [dim.x2[0], dim.y1[0]],
+                    [dim.x1[0], dim.y1[0]],
+                ],
+            )
+        ]
     except:
         plan=None
+        layers=None
 
-    layers = [
-        dict(
-            below="traces",
-            minzoom=16,
-            maxzoom=21,
-            opacity=0.7,
-            source=plan,
-            sourcetype="image",
-            coordinates=[
-                [dim.x1[0], dim.y2[0]],
-                [dim.x2[0], dim.y2[0]],
-                [dim.x2[0], dim.y1[0]],
-                [dim.x1[0], dim.y1[0]],
-            ],
-        )
-    ]
     mapbox = dict(
-        zoom=17.6,
-        center=dict(lon=7.4126551, lat=43.7315788),
+        zoom=coord_chantier.zoom[0],
+        center=dict(lon=coord_chantier.lon[0], lat=coord_chantier.lat[0]),
     )
 
     fig.update_layout(
@@ -184,8 +215,9 @@ def update_map_chantier(chantier, params):
                             method="update",
                             args=[
                                 {
-                                    "visible": [True for i in range(df.type.nunique())]
-                                    + [False for i in range(len(secteurs))]
+                                    "visible": visible
+                                    + [True for i in range(len(coord_capteurs.type.unique()))]
+                                    + [False for i in range(len(coord_secteurs.nom_secteur))]
                                 }
                             ],
                         ),
@@ -194,8 +226,9 @@ def update_map_chantier(chantier, params):
                             method="update",
                             args=[
                                 {
-                                    "visible": [False for i in range(df.type.nunique())]
-                                    + [True for i in range(len(secteurs))]
+                                    "visible": no_visible
+                                    + [False for i in range(len(coord_capteurs.type.unique()))]
+                                    + [True for i in range(len(coord_secteurs.nom_secteur))]
                                 }
                             ],
                         ),
@@ -204,8 +237,9 @@ def update_map_chantier(chantier, params):
                             method="update",
                             args=[
                                 {
-                                    "visible": [True for i in range(df.type.nunique())]
-                                    + [True for i in range(len(secteurs))]
+                                    "visible": visible
+                                    + [True for i in range(len(coord_capteurs.type.unique()))]
+                                    + [True for i in range(len(coord_secteurs.nom_secteur))]
                                 }
                             ],
                         ),
