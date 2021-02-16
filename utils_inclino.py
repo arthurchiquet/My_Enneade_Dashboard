@@ -375,8 +375,7 @@ def update_graphs(
     secteur_selected, nb_courbes, nb_courbes2, nb_courbes3, profondeur, chantier
 ):
     try:
-        secteur = list(secteur_selected.keys())[0]
-        inclino = secteur_selected[secteur]["inclino"][0]
+        inclino = secteur_selected['inclino']
         dfnorm = get_data(chantier, "actif", "inclinometrie", f"{inclino}_norm.csv", sep=False)
         dftan = get_data(chantier, "actif", "inclinometrie", f"{inclino}_tan.csv", sep=False)
         fig1 = create_graph_1(dfnorm, chantier, inclino, nb_courbes3, "normal")

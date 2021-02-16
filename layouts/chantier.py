@@ -3,7 +3,6 @@ import dash_html_components as html
 import dash_gif_component as gif
 from dash.dependencies import Input, Output, State
 import dash_bootstrap_components as dbc
-from google.cloud.exceptions import NotFound
 import plotly.graph_objects as go
 import pandas as pd
 import dash_table as dt
@@ -11,7 +10,7 @@ import warnings
 from server import app
 from config import engine
 from pangres import upsert
-from data import memoized_data
+from data import memoized_data, list_files
 from utils_maps import update_map_chantier, empty_figure, extract_position
 from params_mgmt import ajout_secteur, ajout_capteur, maj_secteur, maj_capteur, supp_secteur, supp_capteur
 import utils_topo, utils_inclino, utils_jauge, utils_tirant, utils_piezo
@@ -83,13 +82,13 @@ layout = html.Div(
 @app.callback(
     Output("map-chantier", "figure"),
     Output("no-chantier-selected", "children"),
-    Input('reload-map', 'children'),
     Input("chantier-select", "data"),
+    Input('reload-map', 'children')
 )
-def affichage_map(reload, chantier):
+def affichage_map(chantier, reload):
     try:
         return update_map_chantier(chantier), ''
-    except ValueError:
+    except:
         return empty_figure(), 'Aucune donnée à afficher'
 
 collapse = html.Div(
@@ -255,8 +254,26 @@ def display_right_content(options, clickData, chantier):
     State('chantier-select', 'data')
 )
 def return_input_dropdown(option, param, chantier):
-    if option==1:
+    if option==1 and param==1:
         return {'display':'inline'}, {'display':'none'},[]
+
+    elif option == 1:
+        if param ==3:
+            liste=list_files(f'{chantier}/actif/inclinometrie/')
+            options=[{"label": inclino, "value": inclino} for inclino in liste]
+        elif param ==4:
+            liste=list_files(f'{chantier}/actif/tirant/')
+            options=[{"label": tirant, "value": tirant} for tirant in liste]
+        elif param ==5:
+            liste=list_files(f'{chantier}/actif/jauge/')
+            options=[{"label": jauge, "value": jauge} for jauge in liste]
+        elif param ==6:
+            liste=list_files(f'{chantier}/actif/piezometrie/')
+            options=[{"label": piezo, "value": piezo} for piezo in liste]
+        else:
+            options=[]
+        return {'display':'none'}, {"color": "black","width": "100%"}, options
+
     elif option == 2 or option ==3:
         with engine.connect() as con:
             query2 = f"SELECT * FROM capteur where nom_chantier = '{chantier}'"
@@ -281,9 +298,9 @@ def return_input_dropdown(option, param, chantier):
             options=[]
 
         return {'display':'none'}, {"color": "black","width": "100%"}, options
+
     else:
         return {'display':'none'}, {'display':'none'},[]
-
 
 @app.callback(
     Output("secteur-select", "data"),
@@ -295,30 +312,28 @@ def return_input_dropdown(option, param, chantier):
 )
 def select_secteur(n_clicks, secteur_selected, chantier):
     if n_clicks > 0:
-        # try:
-        #     df = extract_position(memoized_data(chantier, "actif", "topographie", "topo.csv"))
-        #     with engine.connect() as con:
-        #         query2 = f"SELECT * FROM capteur where chantier = '{chantier}'"
-        #         query3 = f"SELECT * FROM secteur where chantier = '{chantier}' and secteur='{secteur_selected}'"
-        #         liste_capteurs=pd.read_sql_query(query2, con=con)
-        #         liste_secteurs=pd.read_sql_query(query3, con=con)
-        #     lat1=liste_secteurs.lat1[0]
-        #     lat2=liste_secteurs.lat2[0]
-        #     lon1=liste_secteurs.lon1[0]
-        #     lon2=liste_secteurs.lon2[0]
+        try:
+            df = extract_position(memoized_data(chantier, "actif", "topographie", "topo.csv"))
+            with engine.connect() as con:
+                query2 = f"SELECT * FROM capteur where nom_chantier = '{chantier}'"
+                query3 = f"SELECT * FROM secteur where nom_chantier = '{chantier}' and nom_secteur='{secteur_selected}'"
+                liste_capteurs=pd.read_sql_query(query2, con=con)
+                liste_secteurs=pd.read_sql_query(query3, con=con)
+            lat1=liste_secteurs.lat1[0]
+            lat2=liste_secteurs.lat2[0]
+            lon1=liste_secteurs.lon1[0]
+            lon2=liste_secteurs.lon2[0]
 
-        #     cibles_select =
-        #     capteurs = liste_capteurs[
-        #         (liste_capteurs.lon > lon1)
-        #         & (liste_capteurs.lon < lon2)
-        #         & (liste_capteurs.lat > lat1)
-        #         & (liste_capteurs.lat < lat2)
-        #     ]
-        # except IndexError:
-        #     return {}
-
-
-        return secteur_selected
+            cibles_select = df[(df.lat>lat1) & (df.lat<lat2) & (df.lon>lon1) & (df.lon<lon2)]
+            cibles_select = {'cible':cibles_select.cible.tolist()}
+            capteurs_select = liste_capteurs[(liste_capteurs.lon > lon1) & (liste_capteurs.lon < lon2) & (liste_capteurs.lat < lat1) & (liste_capteurs.lat > lat2)]
+            capteurs_select ={type:capteurs_select[capteurs_select.type == type].nom_capteur.tolist() for type in capteurs_select.type}
+            selection={'secteur' : secteur_selected}
+            selection.update(cibles_select)
+            selection.update(capteurs_select)
+            return selection
+        except IndexError:
+            return {}
     else:
         return {}
 
@@ -339,33 +354,37 @@ def select_secteur(n_clicks, secteur_selected, chantier):
 def add_modif_param(n_clicks, option, param, nom_param1, nom_param2, selectedData, chantier):
     if option == 1:
         if selectedData:
-            nom_param = nom_param1
             range_selection = selectedData["range"]["mapbox"]
             lat = (range_selection[0][1] + range_selection[1][1]) / 2
             lon = (range_selection[0][0] + range_selection[1][0]) / 2
             if param == 1:
-                lon1=range_selection[0][0]
+                nom_param = nom_param1
+                lat2=range_selection[0][1]
+                lat1=range_selection[1][1]
                 lon2=range_selection[1][0]
-                lat1=range_selection[0][1]
-                lat2=range_selection[1][1]
+                lon1=range_selection[0][0]
                 if n_clicks:
                     ajout_secteur(nom_param, chantier, lat1, lat2, lon1, lon2)
                     return "Les paramètres ont bien été enregistrés", ''
             elif param == 2:
                 return "", ''
             elif param == 3:
+                nom_param = nom_param2
                 if n_clicks:
                     ajout_capteur(nom_param, chantier, 'inclino', lat, lon)
                     return "Les paramètres ont bien été enregistrés", ''
             elif param == 4:
+                nom_param = nom_param2
                 if n_clicks:
                     ajout_capteur(nom_param, chantier, 'tirant', lat, lon)
                     return "Les paramètres ont bien été enregistrés", ''
             elif param == 5:
+                nom_param = nom_param2
                 if n_clicks:
                     ajout_capteur(nom_param, chantier, 'jauge', lat, lon)
                     return "Les paramètres ont bien été enregistrés", ''
             elif param == 6:
+                nom_param = nom_param2
                 if n_clicks:
                     ajout_capteur(nom_param, chantier, 'piezo', lat, lon)
                     return "Les paramètres ont bien été enregistrés", ''
@@ -378,10 +397,10 @@ def add_modif_param(n_clicks, option, param, nom_param1, nom_param2, selectedDat
             lat = (range_selection[0][1] + range_selection[1][1]) / 2
             lon = (range_selection[0][0] + range_selection[1][0]) / 2
             if param == 1:
-                lon1=range_selection[0][0]
+                lat2=range_selection[0][1]
+                lat1=range_selection[1][1]
                 lon2=range_selection[1][0]
-                lat1=range_selection[0][1]
-                lat2=range_selection[1][1]
+                lon1=range_selection[0][0]
                 if n_clicks:
                     maj_secteur(nom_param, chantier, lat1, lat2, lon1, lon2)
                     return "Les paramètres ont bien été enregistrés", ''
@@ -447,40 +466,29 @@ def add_modif_param(n_clicks, option, param, nom_param1, nom_param2, selectedDat
 )
 def affichage_courbe_capteur(selectedData, chantier):
     try:
-        customdata = selectedData["points"][0]["customdata"][0]
+        customdata = selectedData["points"][0]["customdata"]
         text = selectedData["points"][0]["text"]
-        return (
-            text,
-            selection_affichage(chantier, customdata, text),
-            sous_titre(customdata)
-            )
+        if customdata == "cible":
+            df = memoized_data(chantier, "actif", "topographie", "topo.csv")
+            df = utils_topo.format_df(df, text, angle=0, repere='xyz')
+            fig = utils_topo.graph_topo(df, height=550, spacing=0.06, showlegend=False)
+        elif customdata == "inclino":
+            fig = utils_inclino.graph_inclino(chantier, text, height=550)
+        elif customdata == "tirant":
+            fig = utils_tirant.graph_tirant(chantier, text, height=550, mode=2)
+        elif customdata == "jauge":
+            fig = utils_jauge.graph_jauge(chantier, text, height=550)
+        elif customdata == "piezo":
+            fig = utils_piezo.graph_piezo(chantier, text)
+        else:
+            fig = empty_figure()
+        return (text, fig, sous_titre(customdata))
     except :
         return "", empty_figure(), "Aucune donnée existante pour cet élément"
 
-
-### RENVOIE LA METHODE D'AFFICHAGE DE LA COURBE EN FONCTION DU TYPE DE CAPTEUR ####
-def selection_affichage(chantier, customdata, text):
-    if customdata == "cible":
-        df = memoized_data(chantier, "actif", "topographie", "topo.csv")
-        df = utils_topo.format_df(df, text, angle=0, repere='xyz')
-        return utils_topo.graph_topo(
-            df, height=550, spacing=0.06, showlegend=False
-        )
-    elif customdata == "inclino":
-        return utils_inclino.graph_inclino(chantier, text, height=550)
-    elif customdata == "tirant":
-        return utils_tirant.graph_tirant(chantier, text, height=550, mode=2)
-    elif customdata == "jauge":
-        return utils_jauge.graph_jauge(chantier, text, height=550)
-    elif customdata == "piezo":
-        return utils_piezo.graph_piezo(chantier, text)
-    else:
-        return empty_figure()
-
-
 def sous_titre(customdata):
     if customdata == "cible":
-        return "Déplacements 3 axes (mm)"
+        return "Déplacements X, Y, Z (mm)"
     elif customdata == "inclino":
         return ""
     elif customdata == "tirant":

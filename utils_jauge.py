@@ -39,10 +39,9 @@ layout = html.Div(
     Output("courbe_jauge", "figure"),
     [Input("chantier-select", "data"), Input("secteur-select", "data")],
 )
-def update_graph_jauges(chantier, secteurselected):
+def update_graph_jauges(chantier, secteur_selected):
     try:
-        secteur = list(secteurselected.keys())[0]
-        liste_jauges = secteurselected[secteur]["jauge"]
+        liste_jauges = secteur_selected["jauge"]
         return graph_jauge(chantier, liste_jauges)
     except:
         return empty_figure()

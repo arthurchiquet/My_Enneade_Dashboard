@@ -65,6 +65,15 @@ def download_image(
         os.remove("plan.jpeg")
     return img
 
+def list_files(prefix, bucketname=BUCKET_NAME, projetcid=PROJECT_ID):
+    creds = get_credentials()
+    client = storage.Client(credentials=creds, project=projetcid)
+    bucket = client.get_bucket(bucketname)
+    files = bucket.list_blobs(prefix=prefix)
+    fileList = [file.name for file in files if '.' in file.name]
+    docs = [i.replace(prefix,'')[:-4] for i in fileList]
+    return docs
+
 def export_data(
     df, chantier, path, types, filename, bucket=BUCKET_NAME, project_id=PROJECT_ID
 ):

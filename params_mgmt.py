@@ -62,7 +62,7 @@ def maj_capteur(nom_capteur, nom_chantier, type, lat, lon):
         Capteur_tbl.update().values(
             lat=lat,
             lon=lon)
-        .where(Capteur_tbl.c.nom_capteur == nom_capteur and Capteur_tbl.c.nom_chantier == nom_chantier)
+        .where((Capteur_tbl.c.nom_capteur == nom_capteur) & (Capteur_tbl.c.nom_chantier == nom_chantier))
     )
 
     conn = engine.connect()
@@ -77,7 +77,7 @@ def maj_secteur(nom_secteur, nom_chantier, lat1, lat2, lon1, lon2):
             lon1=lon1,
             lon2=lon2
             )
-        .where(Secteur_tbl.c.nom_secteur == secnom_secteurteur and Secteur_tbl.c.nom_chantier == nom_chantier)
+        .where((Secteur_tbl.c.nom_secteur == nom_secteur) & (Secteur_tbl.c.nom_chantier == nom_chantier))
     )
 
     conn = engine.connect()
@@ -85,13 +85,13 @@ def maj_secteur(nom_secteur, nom_chantier, lat1, lat2, lon1, lon2):
     conn.close()
 
 def supp_capteur(nom_capteur, nom_chantier):
-    delete = Capteur_tbl.delete().where(Capteur_tbl.c.nom_capteur == nom_capteur and Capteur_tbl.c.nom_chantier == nom_chantier)
+    delete = Capteur_tbl.delete().where((Capteur_tbl.c.nom_capteur == nom_capteur) & (Capteur_tbl.c.nom_chantier == nom_chantier))
     conn = engine.connect()
     conn.execute(delete)
     conn.close()
 
 def supp_secteur(nom_secteur, nom_chantier):
-    delete = Secteur_tbl.delete().where(Secteur_tbl.c.nom_secteur == nom_secteur and Secteur_tbl.c.nom_chantier == nom_chantier)
+    delete = Secteur_tbl.delete().where((Secteur_tbl.c.nom_secteur == nom_secteur) & (Secteur_tbl.c.nom_chantier == nom_chantier))
     conn = engine.connect()
     conn.execute(delete)
     conn.close()

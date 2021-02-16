@@ -94,7 +94,7 @@ def return_title(secteur_selected):
     if secteur_selected=={}:
         return 'Aucun secteur sélectionné'
     else:
-       return f'Secteur {secteur_selected}'
+       return f'Secteur {secteur_selected["secteur"]}'
 
 @app.callback(
     Output("tab_type_content", "children"),

@@ -93,7 +93,7 @@ def display_geoloc(n_clicks, adresse, nom):
         response = requests.get(url).json()
         result = response["features"][0]["geometry"]["coordinates"]
         coords = {nom: result}
-        add_chantier(nom, user, adresse, result[1], result[0])
+        add_chantier(nom, current_user.username, adresse, result[1], result[0])
         df = pd.DataFrame(coords).T.reset_index()
         fig = px.scatter_mapbox(
             df,

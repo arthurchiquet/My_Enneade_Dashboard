@@ -89,10 +89,9 @@ def update_graph_meteo(chantier, relayout_data):
         Input("secteur-select", "data"),
     ],
 )
-def update_graph_piezos(chantier, secteurselected):
+def update_graph_piezos(chantier, secteur_selected):
     try:
-        secteur = list(secteurselected.keys())[0]
-        piezo = secteurselected[secteur]["piezo"][0]
+        piezo = secteur_selected["piezo"]
         return graph_piezo(chantier, piezo, height=450)
     except:
         return empty_figure()

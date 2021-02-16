@@ -60,10 +60,9 @@ layout = dbc.Container(
     ],
     [Input("secteur-select", "data"), Input("chantier-select", "data")],
 )
-def update_graph_tirants(secteurselected, chantier):
+def update_graph_tirants(secteur_selected, chantier):
     try:
-        secteur = list(secteurselected.keys())[0]
-        liste_tirants = secteurselected[secteur]["tirant"]
+        liste_tirants = secteur_selected["tirant"]
         return graph_tirant(chantier, liste_tirants)
     except:
         return empty_figure(), empty_figure()

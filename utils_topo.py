@@ -8,7 +8,7 @@ import numpy as np
 from server import app
 import plotly.express as px
 import plotly.graph_objects as go
-from utils_maps import empty_figure
+from utils_maps import empty_figure, extract_position
 from math import radians, cos, sin
 from data import memoized_data
 from scipy.stats import zscore
@@ -23,10 +23,11 @@ layout = html.Div(
                 id="focus",
                 style={"color": "black", 'width': '150px'},
                 options=[
-                    {"label": 'Vue chantier', "value": 30},
-                    {"label": 'Vue secteur', "value": 1}
+                    {"label": 'Vue chantier', "value": 'chantier'},
+                    {"label": 'Vue secteur', "value": 'secteur'}
                 ],
-                value=30,
+                value='chantier',
+                clearable=False,
                 persistence=True,
                 persistence_type='session'
             ), justify='center'
@@ -36,13 +37,13 @@ layout = html.Div(
             dcc.Slider(
                 id="size_ref",
                 min=0,
-                max=100,
-                step=1,
-                value=50,
+                max=1000,
+                step=10,
+                value=500,
                 marks={
                     0: "Zoom Min.",
-                    50: "50%",
-                    100: "Zoom Max.",
+                    500: "50%",
+                    1000: "Zoom Max.",
                 },
             )
         ),
@@ -63,6 +64,7 @@ layout = html.Div(
                     {"label": 'Secteur', "value": 'secteur'}
                 ],
                 value='absolu',
+                clearable=False,
                 persistence=True,
                 persistence_type='session'
             ),
@@ -78,23 +80,27 @@ layout = html.Div(
     Output("graph-3D", "figure"),
     Input('focus', 'value'),
     Input('size_ref', 'value'),
-    State("chantier-select", "data"),
     State('secteur-select', 'data'),
+    State("chantier-select", "data"),
 )
-def update_graph_3D(focus, sizeref, chantier, secteur_selected):
+def update_graph_3D(focus, sizeref, secteur_selected, chantier):
     if secteur_selected == {}:
         return empty_figure()
     else:
-        df = memoized_data(chantier, "actif", "topographie", "topo.csv")
-        secteur = list(secteur_selected.keys())[0]
-        list_capteur = secteur_selected[secteur]["cible"]
-        coords = secteurs_params[secteur]
-        df2 = format_df_vector(df)
-        if focus==30:
-            pass
-        else:
-            df2=df2[df2.cible.isin(list_capteur)]
-        return graph_3D(df2, coords, secteur, list_capteur, sizeref, focus)
+        try:
+            df = format_df_vector(memoized_data(chantier, "actif", "topographie", "topo.csv"))
+            secteur = secteur_selected['secteur']
+            list_capteur = secteur_selected["cible"]
+            with engine.connect() as con:
+                query3 = f"SELECT * FROM secteur where nom_chantier = '{chantier}' and nom_secteur='{secteur}'"
+                secteur_params=pd.read_sql_query(query3, con=con)
+            lat1=secteur_params.lat1[0]
+            lat2=secteur_params.lat2[0]
+            lon1=secteur_params.lon1[0]
+            lon2=secteur_params.lon2[0]
+            return graph_3D(df, lat1, lat2, lon1, lon2, secteur, list_capteur, sizeref, focus)
+        except KeyError:
+            return empty_figure()
 
 @app.callback(
     Output("time-series", "figure"),
@@ -108,11 +114,11 @@ def update_time_serie(ref, secteur_selected, chantier):
     if secteur_selected == {}:
         return empty_figure(), '', ''
     else:
-        secteur = list(secteur_selected.keys())[0]
+        secteur = secteur_selected['secteur']
         if ref=='secteur':
             try:
                 with engine.connect() as con:
-                    query=f"SELECT * FROM secteur_param WHERE nom_chantier='{chantier}' AND secteur='{secteur}' "
+                    query=f"SELECT * FROM secteur_param WHERE nom_chantier='{chantier}' AND nom_secteur='{secteur}' "
                     angle = pd.read_sql_query(query, con=con).angle[0]
                     subtitle='N, T, Z (mm)'
                     repere='ntz'
@@ -126,7 +132,7 @@ def update_time_serie(ref, secteur_selected, chantier):
             subtitle='X, Y, Z (mm)'
             repere='xyz'
         df = memoized_data(chantier, "actif", "topographie", "topo.csv")
-        list_capteur = secteur_selected[secteur]["cible"]
+        list_capteur = secteur_selected["cible"]
         if angle==None:
             df = format_df(df, list_capteur, 0)
             fig = graph_topo(df, height=700)
@@ -167,30 +173,30 @@ def extract_3d_positions(df, liste_capteur, secteur):
     return df
 
 
-def graph_3D(df2, secteur, nom_secteur, list_capteur, sizeref, focus):
+def graph_3D(df, lat1, lat2, lon1, lon2, nom_secteur, list_capteur, sizeref, focus):
 
     fig = go.Figure()
 
     fig.add_trace(go.Cone(
-        x=df2.x.tolist(),
-        y=df2.y.tolist(),
-        z=df2.z.tolist(),
-        u=df2.u.tolist(),
-        v=df2.v.tolist(),
-        w=df2.w.tolist(),
+        x=df.x.tolist(),
+        y=df.y.tolist(),
+        z=df.z.tolist(),
+        u=df.u.tolist(),
+        v=df.v.tolist(),
+        w=df.w.tolist(),
         colorscale='pinkyl',
-        sizemode="scaled",
-        text=df2.cible,
+        sizemode="absolute",
+        text=df.cible,
         name='Déplacement',
-        sizeref=sizeref*focus,
+        sizeref=sizeref,
         )
     )
 
-    x1, x2, y1, y2 = changement_repere(secteur, coefx, coefy, interceptx, intercepty)
-    z1 =df2[df2.cible.isin(list_capteur)].z.min()-5
-    z2 =df2[df2.cible.isin(list_capteur)].z.max()+5
+    x1, x2, y1, y2 = changement_repere(lat1, lat2, lon1, lon2, coefx, coefy, interceptx, intercepty)
+    z1 =df[df.cible.isin(list_capteur)].z.min()
+    z2 =df[df.cible.isin(list_capteur)].z.max()
 
-    if focus==1:
+    if focus=='secteur':
         rangex=[x1,x2]
         rangey=[y1,y2]
         rangez=[z1,z2]
@@ -351,11 +357,11 @@ interceptx = 1718838.64187916
 coefy= [  4307.97154979, 110939.10161203]
 intercepty = -1703790.12645452
 
-def changement_repere(secteur, coefx, coefy, interceptx, intercepty):
-    x1= secteur[0][0] * coefx[0] + secteur[0][1] * coefx[1] + interceptx
-    x2= secteur[1][0] * coefx[0] + secteur[1][1] * coefx[1] + interceptx
-    y1= secteur[1][0] * coefy[0] + secteur[1][1] * coefy[1] + intercepty
-    y2= secteur[0][0] * coefy[0] + secteur[0][1] * coefy[1] + intercepty
+def changement_repere(lat1, lat2, lon1, lon2, coefx, coefy, interceptx, intercepty):
+    x1= lon1 * coefx[0] + lat1 * coefx[1] + interceptx
+    x2= lon2 * coefx[0] + lat2 * coefx[1] + interceptx
+    y1= lon1 * coefy[0] + lat1 * coefy[1] + intercepty
+    y2= lon2 * coefy[0] + lat2 * coefy[1] + intercepty
     return x1, x2, y1, y2
 
 def format_df_vector(df):
