@@ -19,39 +19,45 @@ colors = {"background": "#222222", "text": "#FF8C00"}
 
 layout = html.Div(
     [
-        dbc.Row(html.H4(id='loading-map-title', children='La carte est en cours de chargment ...'), justify='center'),
+        dbc.Row(
+            html.H4(
+                id="loading-map-title",
+                children="La carte est en cours de chargment ...",
+            ),
+            justify="center",
+        ),
         html.Div(id="map-geo"),
         html.Br(),
         dbc.Row(
             dbc.Button(
                 href="/creation",
                 size="lg",
-                id='add_button',
+                id="add_button",
                 className="fas fa-map-marked",
-                style={'width':'80px'}
-            ), justify="center",
+                style={"width": "80px"},
+            ),
+            justify="center",
         ),
         dbc.Tooltip(
-            "Définir un nouveau chantier",
-            target="add_button",
-            placement='right'
-        )
+            "Définir un nouveau chantier", target="add_button", placement="right"
+        ),
     ]
 )
 
 
 @app.callback(
     Output("map-geo", "children"),
-    Output("loading-map-title",'children'),
-    Input("page-content", "children"))
+    Output("loading-map-title", "children"),
+    Input("page-content", "children"),
+)
 def display_map_geo(page_content):
     with engine.connect() as con:
-        query = f"SELECT * FROM chantier where username = '{current_user.username}'"
-        # query = f"SELECT * FROM chantier where username = '{user}'"
+        # query = f"SELECT * FROM chantier where username = '{current_user.username}'"
+        query = f"SELECT * FROM chantier where username = '{user}'"
         df = pd.read_sql_query(query, con=con)
 
-    if df.shape[0]==0:
-        return [] , 'Aucun chantier'
+    if df.shape[0] == 0:
+        return [], "Aucun chantier"
     else:
         fig = px.scatter_mapbox(
             df,
@@ -66,20 +72,23 @@ def display_map_geo(page_content):
             height=650,
             zoom=4,
         )
-        fig.add_layout_image(dict(
+        fig.add_layout_image(
+            dict(
                 source=app.get_asset_url("logo.png"),
                 x=0,
                 y=0.98,
-                )
+            )
         )
-        fig.update_layout_images(dict(
+        fig.update_layout_images(
+            dict(
                 xref="paper",
                 yref="paper",
                 sizex=0.12,
                 sizey=0.12,
                 xanchor="left",
-                yanchor="top"
-        ))
+                yanchor="top",
+            )
+        )
         fig.update_layout(mapbox_style="dark", mapbox_accesstoken=mapbox_token)
         fig.update_layout(
             plot_bgcolor=colors["background"],
@@ -88,8 +97,8 @@ def display_map_geo(page_content):
             margin=dict(l=0, r=0, t=10, b=0),
         )
 
-        return dcc.Graph(
-            id="map-geo", config={"displayModeBar": False}, figure=fig), ''
+        return dcc.Graph(id="map-geo", config={"displayModeBar": False}, figure=fig), ""
+
 
 ##### SELECTIONNE CHANTIER #####
 @app.callback(

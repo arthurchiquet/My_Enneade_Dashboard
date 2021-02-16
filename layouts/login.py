@@ -9,7 +9,10 @@ from werkzeug.security import check_password_hash
 layout = dbc.Container(
     [
         html.Br(),
-        dbc.Row(html.Img(src=app.get_asset_url("logo.png"), height="250px"), justify='center'),
+        dbc.Row(
+            html.Img(src=app.get_asset_url("logo.png"), height="250px"),
+            justify="center",
+        ),
         html.Br(),
         dbc.Container(
             [
@@ -26,8 +29,9 @@ layout = dbc.Container(
                                         id="uname-box",
                                         className="form-control",
                                         n_submit=0,
-                                        style=dict(width='300px')
-                                    ), justify='center'
+                                        style=dict(width="300px"),
+                                    ),
+                                    justify="center",
                                 ),
                                 html.Br(),
                                 dbc.Row(
@@ -37,31 +41,33 @@ layout = dbc.Container(
                                         id="pwd-box",
                                         className="form-control",
                                         n_submit=0,
-                                        style=dict(width='300px')
-                                    ), justify='center'
+                                        style=dict(width="300px"),
+                                    ),
+                                    justify="center",
                                 ),
-                                dbc.Row(dbc.Alert(id="alert"), justify='center'),
+                                dbc.Row(dbc.Alert(id="alert"), justify="center"),
                                 # html.Br(),
                                 dbc.Row(
                                     dbc.Button(
-                                        id='login-button',
+                                        id="login-button",
                                         n_clicks=0,
                                         className="fas fa-sign-in-alt",
                                         size="lg",
-                                        style={'width':'100px'}
-                                    ), justify='center'
+                                        style={"width": "100px"},
+                                    ),
+                                    justify="center",
                                 ),
                                 dbc.Tooltip(
                                     "Se connecter",
                                     target="login-button",
-                                    placement='down'
+                                    placement="down",
                                 ),
                                 html.Br(),
                                 dbc.Row(
                                     dcc.Link(
-                                        children="Créer un compte",
-                                        href='/conditions'
-                                    ), justify='center'
+                                        children="Créer un compte", href="/conditions"
+                                    ),
+                                    justify="center",
                                 ),
                                 html.Br(),
                             ],

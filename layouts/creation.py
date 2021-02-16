@@ -20,7 +20,10 @@ layout = html.Div(
     [
         dbc.Container(
             [
-                dbc.Row(html.Img(src=app.get_asset_url("logo.png"), height="100px"), justify='center'),
+                dbc.Row(
+                    html.Img(src=app.get_asset_url("logo.png"), height="100px"),
+                    justify="center",
+                ),
                 html.Br(),
                 dbc.Row(html.H3("Définition d'un nouveau chantier"), justify="center"),
                 html.Br(),
@@ -30,7 +33,7 @@ layout = html.Div(
                             dbc.Input(
                                 id="nom_chantier",
                                 placeholder="Nom du chantier",
-                                style=dict(width='500px')
+                                style=dict(width="500px"),
                             ),
                             justify="center",
                         ),
@@ -39,7 +42,7 @@ layout = html.Div(
                             dbc.Input(
                                 id="adresse_chantier",
                                 placeholder="Adresse du chantier",
-                                style=dict(width='500px')
+                                style=dict(width="500px"),
                             ),
                             justify="center",
                         ),
@@ -49,24 +52,27 @@ layout = html.Div(
                                 dbc.Button(
                                     id="creation",
                                     className="fas fa-plus-circle mr-1",
-                                    size='lg',
-                                    style={'width':'80px'},
-                                    n_clicks=0
+                                    size="lg",
+                                    style={"width": "80px"},
+                                    n_clicks=0,
                                 ),
                                 dbc.Button(
                                     href="/export",
-                                    id='importer',
+                                    id="importer",
                                     className="fas fa-cloud-upload-alt mr-1",
-                                    size='lg',
-                                    style={'width':'80px'},
-                                    disabled=True
+                                    size="lg",
+                                    style={"width": "80px"},
+                                    disabled=True,
                                 ),
-                            ], justify='center'
+                            ],
+                            justify="center",
                         ),
                         html.Br(),
-                        dbc.Row(html.Div(id="sucess_label", className="text-success"), justify ='center'),
-
-                        dbc.Row(id="geo_loc", justify='center'),
+                        dbc.Row(
+                            html.Div(id="sucess_label", className="text-success"),
+                            justify="center",
+                        ),
+                        dbc.Row(id="geo_loc", justify="center"),
                     ]
                 ),
             ]
@@ -88,12 +94,12 @@ layout = html.Div(
     ],
 )
 def display_geoloc(n_clicks, adresse, nom):
-    if n_clicks >0:
+    if n_clicks > 0:
         url = f"https://api.mapbox.com/geocoding/v5/mapbox.places/{adresse}.json?access_token={mapbox_token}"
         response = requests.get(url).json()
         result = response["features"][0]["geometry"]["coordinates"]
         coords = {nom: result}
-        add_chantier(nom, current_user.username, adresse, result[1], result[0])
+        add_chantier(nom, user, adresse, result[1], result[0])
         df = pd.DataFrame(coords).T.reset_index()
         fig = px.scatter_mapbox(
             df,
@@ -115,7 +121,7 @@ def display_geoloc(n_clicks, adresse, nom):
         fig.update_traces(marker=dict(size=30, color="#FF8C00", opacity=0.5))
         return (
             dcc.Graph(figure=fig),
-           False,
+            False,
             f"Le chantier {nom} a bien été créé",
         )
     else:

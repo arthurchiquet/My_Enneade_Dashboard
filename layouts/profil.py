@@ -72,8 +72,8 @@ layout = html.Div(
                                 dbc.Button(
                                     id="updatePasswordButton",
                                     n_clicks=0,
-                                    className='fas fa-save',
-                                    size='lg'
+                                    className="fas fa-save",
+                                    size="lg",
                                 ),
                                 html.Br(),
                                 html.Div(id="updateSuccess"),

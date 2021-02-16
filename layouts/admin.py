@@ -166,17 +166,15 @@ layout = html.Div(
 )
 
 
-@app.callback(
-    Output('chantier_list', 'options'),
-    Input('page-content', 'children'))
+@app.callback(Output("chantier_list", "options"), Input("page-content", "children"))
 def update_choix_chantier(page):
     with engine.connect() as con:
         query = f"SELECT * FROM chantier"
         liste_chantiers = pd.read_sql_query(query, con=con).nom_chantier.tolist()
-    if len(liste_chantiers)==0:
+    if len(liste_chantiers) == 0:
         return []
     else:
-        return [{'label': chantier, 'value': chantier} for chantier in liste_chantiers]
+        return [{"label": chantier, "value": chantier} for chantier in liste_chantiers]
 
 
 @app.callback(
@@ -201,12 +199,13 @@ def modify_profil(n_clicks1, n_clicks2, user, profil):
         )
 
 
-@app.callback(
-    Output("chantiers", "data"),
-    Input('page-content', 'children'))
+@app.callback(Output("chantiers", "data"), Input("page-content", "children"))
 def update_table_chantier(page):
     with engine.connect() as con:
-        return pd.read_sql('chantier', con=con)[['nom_chantier', 'username', 'adresse']].to_dict('records')
+        return pd.read_sql("chantier", con=con)[
+            ["nom_chantier", "username", "adresse"]
+        ].to_dict("records")
+
 
 @app.callback(
     Output("del_chantier_success", "children"),

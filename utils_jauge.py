@@ -10,7 +10,6 @@ import dash_bootstrap_components as dbc
 import dash_core_components as dcc
 from utils_maps import empty_figure
 
-
 colors = {"background": "#222222", "text": "white"}
 
 layout = html.Div(
@@ -46,7 +45,6 @@ def update_graph_jauges(chantier, secteur_selected):
     except:
         return empty_figure()
 
-
 def first(col):
     i = 0
     for j in col:
@@ -55,16 +53,14 @@ def first(col):
             break
     return i
 
-
 def diff_jauge(df):
     for col in df.columns:
         df[col] = (df[col] - first(df[col])) * 100
     return df
 
-
 def graph_jauge(chantier, jauges, height=None):
     df = get_data(chantier, "actif", "jauge", "jauges.csv", sep=False)
-    df=df.rename(columns={'Date':'date'})
+    df = df.rename(columns={"Date": "date"})
     df.date = pd.to_datetime(df.date, format="%d/%m/%Y")
     liste_colonnes = []
     for jauge in jauges:

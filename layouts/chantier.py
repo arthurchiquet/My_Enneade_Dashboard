@@ -12,7 +12,14 @@ from config import engine
 from pangres import upsert
 from data import memoized_data, list_files
 from utils_maps import update_map_chantier, empty_figure, extract_position
-from params_mgmt import ajout_secteur, ajout_capteur, maj_secteur, maj_capteur, supp_secteur, supp_capteur
+from params_mgmt import (
+    ajout_secteur,
+    ajout_capteur,
+    maj_secteur,
+    maj_capteur,
+    supp_secteur,
+    supp_capteur,
+)
 import utils_topo, utils_inclino, utils_jauge, utils_tirant, utils_piezo
 
 warnings.filterwarnings("ignore")
@@ -22,15 +29,22 @@ colors = {"background": "#222222", "text": "#FF8C00"}
 layout = html.Div(
     children=[
         html.Br(),
-        html.Div(id='reload-map'),
+        html.Div(id="reload-map"),
         dbc.Row(
             [
                 dbc.Col(
                     [
                         dbc.Row(
-                            dbc.Container(id='map-container',
+                            dbc.Container(
+                                id="map-container",
                                 children=[
-                                    dbc.Row(html.H4(id='no-chantier-selected', children='Chargement des données en cours ...'), justify='center'),
+                                    dbc.Row(
+                                        html.H4(
+                                            id="no-chantier-selected",
+                                            children="Chargement des données en cours ...",
+                                        ),
+                                        justify="center",
+                                    ),
                                     dcc.Graph(
                                         id="map-chantier",
                                         config={
@@ -44,18 +58,27 @@ layout = html.Div(
                                         [
                                             dbc.Tabs(
                                                 [
-                                                    dbc.Tab(labelClassName="fas fa-hand-pointer", tab_id='control-map'),
-                                                    dbc.Tab(labelClassName="fas fa-sliders-h", tab_id='modify-map'),
-                                                    dbc.Tab(labelClassName="far fa-object-ungroup", tab_id='select-map'),
-
+                                                    dbc.Tab(
+                                                        labelClassName="fas fa-hand-pointer",
+                                                        tab_id="control-map",
+                                                    ),
+                                                    dbc.Tab(
+                                                        labelClassName="fas fa-sliders-h",
+                                                        tab_id="modify-map",
+                                                    ),
+                                                    dbc.Tab(
+                                                        labelClassName="far fa-object-ungroup",
+                                                        tab_id="select-map",
+                                                    ),
                                                 ],
-                                                id= 'options-map',
+                                                id="options-map",
                                                 active_tab="control-map",
                                             )
                                         ],
                                         justify="center",
                                     ),
-                                ], fluid=True
+                                ],
+                                fluid=True,
                             ),
                             justify="center",
                         )
@@ -83,24 +106,37 @@ layout = html.Div(
     Output("map-chantier", "figure"),
     Output("no-chantier-selected", "children"),
     Input("chantier-select", "data"),
-    Input('reload-map', 'children')
+    Input("reload-map", "children"),
 )
 def affichage_map(chantier, reload):
     try:
-        return update_map_chantier(chantier), ''
+        return update_map_chantier(chantier), ""
     except:
-        return empty_figure(), 'Aucune donnée à afficher'
+        return empty_figure(), "Aucune donnée à afficher"
+
 
 collapse = html.Div(
     [
         html.Br(),
-        dbc.Row(dbc.Button(id="help", className="fas fa-info-circle"), justify="center"),
+        dbc.Row(
+            dbc.Button(id="help", className="fas fa-info-circle"), justify="center"
+        ),
         dbc.Collapse(
-            dbc.Card(dbc.CardBody([dbc.Row(gif.GifPlayer(gif='assets/help.gif', still='statique.png'), justify='center')])),
+            dbc.Card(
+                dbc.CardBody(
+                    [
+                        dbc.Row(
+                            gif.GifPlayer(gif="assets/help.gif", still="statique.png"),
+                            justify="center",
+                        )
+                    ]
+                )
+            ),
             id="card-help",
         ),
     ]
 )
+
 
 @app.callback(
     Output("card-help", "is_open"),
@@ -119,10 +155,10 @@ def collapse_parametres(n, is_open):
         Input("options-map", "active_tab"),
         Input("map-chantier", "clickData"),
     ],
-        State('chantier-select', 'data')
+    State("chantier-select", "data"),
 )
 def display_right_content(options, clickData, chantier):
-    if options=='control-map':
+    if options == "control-map":
         if clickData:
             return [
                 dbc.Row(html.H3(id="titre_graph"), justify="center"),
@@ -136,7 +172,7 @@ def display_right_content(options, clickData, chantier):
             ]
         else:
             return []
-    elif options=='modify-map':
+    elif options == "modify-map":
         return [
             html.Br(),
             html.Br(),
@@ -174,10 +210,14 @@ def display_right_content(options, clickData, chantier):
                                 clearable=False,
                             ),
                             html.Br(),
-                            dbc.Input(placeholder="Nom du paramètre", id="nom_param_1", style={'display':'none'}),
+                            dbc.Input(
+                                placeholder="Nom du paramètre",
+                                id="nom_param_1",
+                                style={"display": "none"},
+                            ),
                             dcc.Dropdown(
                                 id="nom_param_2",
-                                style={'display':'none'},
+                                style={"display": "none"},
                             ),
                             html.Br(),
                             html.Br(),
@@ -186,8 +226,8 @@ def display_right_content(options, clickData, chantier):
                                     id="save-update",
                                     href="/chantier",
                                     n_clicks=0,
-                                    className='fas fa-save',
-                                    size='lg',
+                                    className="fas fa-save",
+                                    size="lg",
                                 ),
                                 justify="center",
                             ),
@@ -200,13 +240,15 @@ def display_right_content(options, clickData, chantier):
                     ),
                 ],
                 style={"width": "41rem"},
-            )
+            ),
         ]
-    elif options=='select-map':
+    elif options == "select-map":
         with engine.connect() as con:
             query3 = f"SELECT * FROM secteur where nom_chantier = '{chantier}'"
-            liste_secteurs=pd.read_sql_query(query3, con=con).nom_secteur.tolist()
-        options_secteur = [{"label": secteur, "value": secteur} for secteur in liste_secteurs]
+            liste_secteurs = pd.read_sql_query(query3, con=con).nom_secteur.tolist()
+        options_secteur = [
+            {"label": secteur, "value": secteur} for secteur in liste_secteurs
+        ]
         return [
             html.Br(),
             html.Br(),
@@ -221,8 +263,8 @@ def display_right_content(options, clickData, chantier):
                             dbc.Row(
                                 dcc.Dropdown(
                                     id="secteur-selection",
-                                    style={"color": "black", 'width': '150px'},
-                                    options=options_secteur
+                                    style={"color": "black", "width": "150px"},
+                                    options=options_secteur,
                                 ),
                                 justify="center",
                             ),
@@ -233,7 +275,7 @@ def display_right_content(options, clickData, chantier):
                                     href="/secteur",
                                     n_clicks=0,
                                     className="fas fa-chart-line",
-                                    size='lg'
+                                    size="lg",
                                 ),
                                 justify="center",
                             ),
@@ -241,94 +283,119 @@ def display_right_content(options, clickData, chantier):
                     ),
                 ],
                 style={"width": "41rem"},
-            )
+            ),
         ]
 
 
 @app.callback(
-    Output('nom_param_1', 'style'),
-    Output('nom_param_2', 'style'),
-    Output('nom_param_2', 'options'),
-    Input('type_option', 'value'),
-    Input('type_param', 'value'),
-    State('chantier-select', 'data')
+    Output("nom_param_1", "style"),
+    Output("nom_param_2", "style"),
+    Output("nom_param_2", "options"),
+    Input("type_option", "value"),
+    Input("type_param", "value"),
+    State("chantier-select", "data"),
 )
 def return_input_dropdown(option, param, chantier):
-    if option==1 and param==1:
-        return {'display':'inline'}, {'display':'none'},[]
+    if option == 1 and param == 1:
+        return {"display": "inline"}, {"display": "none"}, []
 
     elif option == 1:
-        if param ==3:
-            liste=list_files(f'{chantier}/actif/inclinometrie/')
-            options=[{"label": inclino, "value": inclino} for inclino in liste]
-        elif param ==4:
-            liste=list_files(f'{chantier}/actif/tirant/')
-            options=[{"label": tirant, "value": tirant} for tirant in liste]
-        elif param ==5:
-            liste=list_files(f'{chantier}/actif/jauge/')
-            options=[{"label": jauge, "value": jauge} for jauge in liste]
-        elif param ==6:
-            liste=list_files(f'{chantier}/actif/piezometrie/')
-            options=[{"label": piezo, "value": piezo} for piezo in liste]
+        if param == 3:
+            liste = list_files(f"{chantier}/actif/inclinometrie/")
+            options = [{"label": inclino, "value": inclino} for inclino in liste]
+        elif param == 4:
+            liste = list_files(f"{chantier}/actif/tirant/")
+            options = [{"label": tirant, "value": tirant} for tirant in liste]
+        elif param == 5:
+            liste = list_files(f"{chantier}/actif/jauge/")
+            options = [{"label": jauge, "value": jauge} for jauge in liste]
+        elif param == 6:
+            liste = list_files(f"{chantier}/actif/piezometrie/")
+            options = [{"label": piezo, "value": piezo} for piezo in liste]
         else:
-            options=[]
-        return {'display':'none'}, {"color": "black","width": "100%"}, options
+            options = []
+        return {"display": "none"}, {"color": "black", "width": "100%"}, options
 
-    elif option == 2 or option ==3:
+    elif option == 2 or option == 3:
         with engine.connect() as con:
             query2 = f"SELECT * FROM capteur where nom_chantier = '{chantier}'"
             query3 = f"SELECT * FROM secteur where nom_chantier = '{chantier}'"
-            liste_capteurs=pd.read_sql_query(query2, con=con)
-            liste_secteurs=pd.read_sql_query(query3, con=con).nom_secteur.tolist()
-        liste_inclino = liste_capteurs[liste_capteurs.type=='inclino'].nom_capteur.tolist()
-        liste_tirant = liste_capteurs[liste_capteurs.type=='tirant'].nom_capteur.tolist()
-        liste_jauge = liste_capteurs[liste_capteurs.type=='jauge'].nom_capteur.tolist()
-        liste_piezo = liste_capteurs[liste_capteurs.type=='piezo'].nom_capteur.tolist()
-        if param==1:
-            options=[{"label": secteur, "value": secteur} for secteur in liste_secteurs]
-        elif param ==3:
-            options=[{"label": inclino, "value": inclino} for inclino in liste_inclino]
-        elif param ==4:
-            options=[{"label": tirant, "value": tirant} for tirant in liste_tirant]
-        elif param ==5:
-            options=[{"label": jauge, "value": jauge} for jauge in liste_jauge]
-        elif param ==6:
-            options=[{"label": piezo, "value": piezo} for piezo in liste_piezo]
+            liste_capteurs = pd.read_sql_query(query2, con=con)
+            liste_secteurs = pd.read_sql_query(query3, con=con).nom_secteur.tolist()
+        liste_inclino = liste_capteurs[
+            liste_capteurs.type == "inclino"
+        ].nom_capteur.tolist()
+        liste_tirant = liste_capteurs[
+            liste_capteurs.type == "tirant"
+        ].nom_capteur.tolist()
+        liste_jauge = liste_capteurs[
+            liste_capteurs.type == "jauge"
+        ].nom_capteur.tolist()
+        liste_piezo = liste_capteurs[
+            liste_capteurs.type == "piezo"
+        ].nom_capteur.tolist()
+        if param == 1:
+            options = [
+                {"label": secteur, "value": secteur} for secteur in liste_secteurs
+            ]
+        elif param == 3:
+            options = [
+                {"label": inclino, "value": inclino} for inclino in liste_inclino
+            ]
+        elif param == 4:
+            options = [{"label": tirant, "value": tirant} for tirant in liste_tirant]
+        elif param == 5:
+            options = [{"label": jauge, "value": jauge} for jauge in liste_jauge]
+        elif param == 6:
+            options = [{"label": piezo, "value": piezo} for piezo in liste_piezo]
         else:
-            options=[]
+            options = []
 
-        return {'display':'none'}, {"color": "black","width": "100%"}, options
+        return {"display": "none"}, {"color": "black", "width": "100%"}, options
 
     else:
-        return {'display':'none'}, {'display':'none'},[]
+        return {"display": "none"}, {"display": "none"}, []
+
 
 @app.callback(
     Output("secteur-select", "data"),
     [
         Input("go-secteur", "n_clicks"),
         State("secteur-selection", "value"),
-        State('chantier-select', 'data')
+        State("chantier-select", "data"),
     ],
 )
 def select_secteur(n_clicks, secteur_selected, chantier):
     if n_clicks > 0:
         try:
-            df = extract_position(memoized_data(chantier, "actif", "topographie", "topo.csv"))
+            df = extract_position(
+                memoized_data(chantier, "actif", "topographie", "topo.csv")
+            )
             with engine.connect() as con:
                 query2 = f"SELECT * FROM capteur where nom_chantier = '{chantier}'"
                 query3 = f"SELECT * FROM secteur where nom_chantier = '{chantier}' and nom_secteur='{secteur_selected}'"
-                liste_capteurs=pd.read_sql_query(query2, con=con)
-                liste_secteurs=pd.read_sql_query(query3, con=con)
-            lat1=liste_secteurs.lat1[0]
-            lat2=liste_secteurs.lat2[0]
-            lon1=liste_secteurs.lon1[0]
-            lon2=liste_secteurs.lon2[0]
+                liste_capteurs = pd.read_sql_query(query2, con=con)
+                liste_secteurs = pd.read_sql_query(query3, con=con)
+            lat1 = liste_secteurs.lat1[0]
+            lat2 = liste_secteurs.lat2[0]
+            lon1 = liste_secteurs.lon1[0]
+            lon2 = liste_secteurs.lon2[0]
 
-            cibles_select = df[(df.lat>lat1) & (df.lat<lat2) & (df.lon>lon1) & (df.lon<lon2)]
-            cibles_select = {'cible':cibles_select.cible.tolist()}
-            capteurs_select = liste_capteurs[(liste_capteurs.lon > lon1) & (liste_capteurs.lon < lon2) & (liste_capteurs.lat < lat1) & (liste_capteurs.lat > lat2)]
-            capteurs_select ={type:capteurs_select[capteurs_select.type == type].nom_capteur.tolist() for type in capteurs_select.type}
-            selection={'secteur' : secteur_selected}
+            cibles_select = df[
+                (df.lat > lat1) & (df.lat < lat2) & (df.lon > lon1) & (df.lon < lon2)
+            ]
+            cibles_select = {"cible": cibles_select.cible.tolist()}
+            capteurs_select = liste_capteurs[
+                (liste_capteurs.lon > lon1)
+                & (liste_capteurs.lon < lon2)
+                & (liste_capteurs.lat < lat1)
+                & (liste_capteurs.lat > lat2)
+            ]
+            capteurs_select = {
+                type: capteurs_select[capteurs_select.type == type].nom_capteur.tolist()
+                for type in capteurs_select.type
+            }
+            selection = {"secteur": secteur_selected}
             selection.update(cibles_select)
             selection.update(capteurs_select)
             return selection
@@ -340,7 +407,7 @@ def select_secteur(n_clicks, secteur_selected, chantier):
 
 @app.callback(
     Output("update-success", "children"),
-    Output('reload-map', 'children'),
+    Output("reload-map", "children"),
     [
         Input("save-update", "n_clicks"),
         State("type_option", "value"),
@@ -351,7 +418,9 @@ def select_secteur(n_clicks, secteur_selected, chantier):
         State("chantier-select", "data"),
     ],
 )
-def add_modif_param(n_clicks, option, param, nom_param1, nom_param2, selectedData, chantier):
+def add_modif_param(
+    n_clicks, option, param, nom_param1, nom_param2, selectedData, chantier
+):
     if option == 1:
         if selectedData:
             range_selection = selectedData["range"]["mapbox"]
@@ -359,37 +428,37 @@ def add_modif_param(n_clicks, option, param, nom_param1, nom_param2, selectedDat
             lon = (range_selection[0][0] + range_selection[1][0]) / 2
             if param == 1:
                 nom_param = nom_param1
-                lat2=range_selection[0][1]
-                lat1=range_selection[1][1]
-                lon2=range_selection[1][0]
-                lon1=range_selection[0][0]
+                lat2 = range_selection[0][1]
+                lat1 = range_selection[1][1]
+                lon2 = range_selection[1][0]
+                lon1 = range_selection[0][0]
                 if n_clicks:
                     ajout_secteur(nom_param, chantier, lat1, lat2, lon1, lon2)
-                    return "Les paramètres ont bien été enregistrés", ''
+                    return "Les paramètres ont bien été enregistrés", ""
             elif param == 2:
-                return "", ''
+                return "", ""
             elif param == 3:
                 nom_param = nom_param2
                 if n_clicks:
-                    ajout_capteur(nom_param, chantier, 'inclino', lat, lon)
-                    return "Les paramètres ont bien été enregistrés", ''
+                    ajout_capteur(nom_param, chantier, "inclino", lat, lon)
+                    return "Les paramètres ont bien été enregistrés", ""
             elif param == 4:
                 nom_param = nom_param2
                 if n_clicks:
-                    ajout_capteur(nom_param, chantier, 'tirant', lat, lon)
-                    return "Les paramètres ont bien été enregistrés", ''
+                    ajout_capteur(nom_param, chantier, "tirant", lat, lon)
+                    return "Les paramètres ont bien été enregistrés", ""
             elif param == 5:
                 nom_param = nom_param2
                 if n_clicks:
-                    ajout_capteur(nom_param, chantier, 'jauge', lat, lon)
-                    return "Les paramètres ont bien été enregistrés", ''
+                    ajout_capteur(nom_param, chantier, "jauge", lat, lon)
+                    return "Les paramètres ont bien été enregistrés", ""
             elif param == 6:
                 nom_param = nom_param2
                 if n_clicks:
-                    ajout_capteur(nom_param, chantier, 'piezo', lat, lon)
-                    return "Les paramètres ont bien été enregistrés", ''
+                    ajout_capteur(nom_param, chantier, "piezo", lat, lon)
+                    return "Les paramètres ont bien été enregistrés", ""
             else:
-                return "", ''
+                return "", ""
     elif option == 2:
         if selectedData:
             nom_param = nom_param2
@@ -397,62 +466,62 @@ def add_modif_param(n_clicks, option, param, nom_param1, nom_param2, selectedDat
             lat = (range_selection[0][1] + range_selection[1][1]) / 2
             lon = (range_selection[0][0] + range_selection[1][0]) / 2
             if param == 1:
-                lat2=range_selection[0][1]
-                lat1=range_selection[1][1]
-                lon2=range_selection[1][0]
-                lon1=range_selection[0][0]
+                lat2 = range_selection[0][1]
+                lat1 = range_selection[1][1]
+                lon2 = range_selection[1][0]
+                lon1 = range_selection[0][0]
                 if n_clicks:
                     maj_secteur(nom_param, chantier, lat1, lat2, lon1, lon2)
-                    return "Les paramètres ont bien été enregistrés", ''
+                    return "Les paramètres ont bien été enregistrés", ""
             elif param == 2:
-                return "", ''
+                return "", ""
             elif param == 3:
                 if n_clicks:
-                    maj_capteur(nom_param, chantier, 'inclino', lat, lon)
-                    return "Les paramètres ont bien été enregistrés", ''
+                    maj_capteur(nom_param, chantier, "inclino", lat, lon)
+                    return "Les paramètres ont bien été enregistrés", ""
             elif param == 4:
                 if n_clicks:
-                    maj_capteur(nom_param, chantier, 'tirant', lat, lon)
-                    return "Les paramètres ont bien été enregistrés", ''
+                    maj_capteur(nom_param, chantier, "tirant", lat, lon)
+                    return "Les paramètres ont bien été enregistrés", ""
             elif param == 5:
                 if n_clicks:
-                    maj_capteur(nom_param, chantier, 'jauge', lat, lon)
-                    return "Les paramètres ont bien été enregistrés", ''
+                    maj_capteur(nom_param, chantier, "jauge", lat, lon)
+                    return "Les paramètres ont bien été enregistrés", ""
             elif param == 6:
                 if n_clicks:
-                    maj_capteur(nom_param, chantier, 'piezo', lat, lon)
-                    return "Les paramètres ont bien été enregistrés", ''
+                    maj_capteur(nom_param, chantier, "piezo", lat, lon)
+                    return "Les paramètres ont bien été enregistrés", ""
             else:
-                return "", ''
+                return "", ""
 
     elif option == 3:
         nom_param = nom_param2
         if param == 1:
             if n_clicks:
                 supp_secteur(nom_param, chantier)
-                return "Le secteur a bien été supprimé", ''
+                return "Le secteur a bien été supprimé", ""
         elif param == 2:
-            return "", ''
+            return "", ""
         elif param == 3:
             if n_clicks:
                 supp_capteur(nom_param, chantier)
-                return "L'inclinomètre a bien été supprimé", ''
+                return "L'inclinomètre a bien été supprimé", ""
         elif param == 4:
             if n_clicks:
                 supp_capteur(nom_param, chantier)
-                return "Le tirant a bien été supprimé", ''
+                return "Le tirant a bien été supprimé", ""
         elif param == 5:
             if n_clicks:
                 supp_capteur(nom_param, chantier)
-                return "La jauge a bien été supprimé", ''
+                return "La jauge a bien été supprimé", ""
         elif param == 6:
             if n_clicks:
                 supp_capteur(nom_param, chantier)
-                return "Le piezomètre a bien été supprimé", ''
+                return "Le piezomètre a bien été supprimé", ""
         else:
-            return "", ''
+            return "", ""
     else:
-        return '', ''
+        return "", ""
 
 
 ### AFFICHE LA COURBE CORRESPONDANT AU CAPTEUR SELECTIONNÉ ####
@@ -470,7 +539,7 @@ def affichage_courbe_capteur(selectedData, chantier):
         text = selectedData["points"][0]["text"]
         if customdata == "cible":
             df = memoized_data(chantier, "actif", "topographie", "topo.csv")
-            df = utils_topo.format_df(df, text, angle=0, repere='xyz')
+            df = utils_topo.format_df(df, text, angle=0, repere="xyz")
             fig = utils_topo.graph_topo(df, height=550, spacing=0.06, showlegend=False)
         elif customdata == "inclino":
             fig = utils_inclino.graph_inclino(chantier, text, height=550)
@@ -483,8 +552,9 @@ def affichage_courbe_capteur(selectedData, chantier):
         else:
             fig = empty_figure()
         return (text, fig, sous_titre(customdata))
-    except :
+    except:
         return "", empty_figure(), "Aucune donnée existante pour cet élément"
+
 
 def sous_titre(customdata):
     if customdata == "cible":

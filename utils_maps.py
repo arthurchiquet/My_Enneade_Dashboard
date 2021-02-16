@@ -11,52 +11,7 @@ mapbox_token = "pk.eyJ1IjoiYXJ0aHVyY2hpcXVldCIsImEiOiJja2E1bDc3cjYwMTh5M2V0Zzdvb
 
 colors = {"background": "#222222", "text": "white"}
 
-coefx = [1.23952055e-05, 6.63856015e-07]
-coefy = [-4.81328848e-07,  8.98817548e-06]
-interceptx = -20.17428687
-intercepty = 16.1412919
-
-def empty_figure():
-    fig = {
-        "data": [],
-        "layout": {
-            "plot_bgcolor": colors["background"],
-            "paper_bgcolor": colors["background"],
-            "font": {"color": colors["text"]},
-        },
-    }
-    return fig
-
-
-def changement_repere(df, coefx, coefy, interceptx, intercepty):
-    lon = df.lat * coefx[0] + df.lon * coefx[1] + interceptx
-    lat = df.lat * coefy[0] + df.lon * coefy[1] + intercepty
-    df.lat, df.lon = lat, lon
-    return df
-
-
-def remove_xyz(string):
-    return string[:-2]
-
-
-def extract_position(df):
-    df=df.drop(columns=["date"]).dropna(axis=1, how="all")
-    first_indexes = df.apply(pd.Series.first_valid_index).to_dict()
-    positions = {col : [df.loc[first_indexes[col], col]] for col in df.columns}
-    df =pd.DataFrame.from_dict(positions).T
-    df_x=df.iloc[[3*i for i in range(df.shape[0]//3)],:]
-    df_y=df.iloc[[3*i+1 for i in range(df.shape[0]//3)],:]
-    df_x=df_x.reset_index().rename(columns={'index':'cible',0:'lat'})
-    df_y=df_y.reset_index().rename(columns={'index':'cible',0:'lon'})
-    df_x.cible=df_x.cible.map(remove_xyz)
-    df_y.cible=df_y.cible.map(remove_xyz)
-    df=df_x.merge(df_y)
-    df = changement_repere(df, coefx, coefy, interceptx, intercepty)
-    return df
-
-
 #######################  AFFICHAGE MAP CHANTIER   ######################################################
-
 
 def update_map_chantier(chantier):
 
@@ -65,44 +20,52 @@ def update_map_chantier(chantier):
         query2 = f"SELECT * FROM capteur where nom_chantier = '{chantier}'"
         query3 = f"SELECT * FROM secteur where nom_chantier = '{chantier}'"
         coord_chantier = pd.read_sql_query(query1, con=con)
-        coord_capteurs=pd.read_sql_query(query2, con=con)
-        coord_secteurs=pd.read_sql_query(query3, con=con)
+        coord_capteurs = pd.read_sql_query(query2, con=con)
+        coord_secteurs = pd.read_sql_query(query3, con=con)
 
-    fig=go.Figure()
+    fig = go.Figure()
 
-    fig.add_trace(go.Scattermapbox(
+    fig.add_trace(
+        go.Scattermapbox(
             name=chantier,
             mode="markers+text",
             lon=coord_chantier.lon,
             lat=coord_chantier.lat,
             text=coord_chantier.nom_chantier,
-            opacity=0.3))
+            opacity=0.3,
+        )
+    )
 
     try:
         data = memoized_data(chantier, "actif", "topographie", "topo.csv")
-        visible=[True, True]
+        visible = [True, True]
         no_visible = [True, False]
         df = extract_position(data)
-        fig.add_trace(go.Scattermapbox(
-                name='cible',
+        fig.add_trace(
+            go.Scattermapbox(
+                name="cible",
                 mode="markers+text",
                 lon=df.lon,
                 lat=df.lat,
                 text=df.cible,
-                customdata=['cible' for i in range(df.shape[0])]
-                ))
+                customdata=["cible" for i in range(df.shape[0])],
+            )
+        )
     except:
-        visible=[True]
+        visible = [True]
         no_visible = [True]
 
     for i in coord_capteurs.type.unique():
-        fig.add_trace(go.Scattermapbox(
-            name=i,
-            mode="markers+text",
-            customdata=[i for j in range(coord_capteurs[coord_capteurs.type==i].shape[0])] ,
-            text = coord_capteurs[coord_capteurs.type==i].nom_capteur,
-            lon=coord_capteurs[coord_capteurs.type==i].lon,
-            lat=coord_capteurs[coord_capteurs.type==i].lat
+        fig.add_trace(
+            go.Scattermapbox(
+                name=i,
+                mode="markers+text",
+                customdata=[
+                    i for j in range(coord_capteurs[coord_capteurs.type == i].shape[0])
+                ],
+                text=coord_capteurs[coord_capteurs.type == i].nom_capteur,
+                lon=coord_capteurs[coord_capteurs.type == i].lon,
+                lat=coord_capteurs[coord_capteurs.type == i].lat,
             )
         )
 
@@ -113,7 +76,8 @@ def update_map_chantier(chantier):
     )
 
     fig.update_traces(
-        marker=dict(size=20, color="#FF6347", opacity=0.5), selector=dict(name="inclino")
+        marker=dict(size=20, color="#FF6347", opacity=0.5),
+        selector=dict(name="inclino"),
     )
     fig.update_traces(
         marker=dict(size=20, color="#FF8C00", opacity=0.5), selector=dict(name="tirant")
@@ -125,12 +89,11 @@ def update_map_chantier(chantier):
         marker=dict(size=20, color="#9370DB", opacity=0.5), selector=dict(name="button")
     )
 
-
     for secteur in coord_secteurs.nom_secteur:
-        lat1=coord_secteurs.lat1[0]
-        lat2=coord_secteurs.lat2[0]
-        lon1=coord_secteurs.lon1[0]
-        lon2=coord_secteurs.lon2[0]
+        lat1 = coord_secteurs.lat1[0]
+        lat2 = coord_secteurs.lat2[0]
+        lon1 = coord_secteurs.lon1[0]
+        lon2 = coord_secteurs.lon2[0]
         fig.add_trace(
             go.Scattermapbox(
                 name=secteur,
@@ -157,8 +120,8 @@ def update_map_chantier(chantier):
     try:
         plan = download_image(chantier, "plan.jpeg")
         with engine.connect() as con:
-            query=f"SELECT * FROM chantier WHERE nom_chantier='{chantier}'"
-            dim = pd.read_sql_query(query, con=con)[['x1','x2','y1','y2']]
+            query = f"SELECT * FROM chantier WHERE nom_chantier='{chantier}'"
+            dim = pd.read_sql_query(query, con=con)[["x1", "x2", "y1", "y2"]]
         layers = [
             dict(
                 below="traces",
@@ -176,8 +139,8 @@ def update_map_chantier(chantier):
             )
         ]
     except:
-        plan=None
-        layers=None
+        plan = None
+        layers = None
 
     mapbox = dict(
         zoom=coord_chantier.zoom[0],
@@ -192,7 +155,7 @@ def update_map_chantier(chantier):
         plot_bgcolor=colors["background"],
         paper_bgcolor=colors["background"],
         font_color=colors["text"],
-        font_family='Century Gothic, AppleGothic, sans-serif',
+        font_family="Century Gothic, AppleGothic, sans-serif",
         font_size=12,
         margin=dict(l=20, r=10, t=0, b=0),
         height=580,
@@ -216,8 +179,16 @@ def update_map_chantier(chantier):
                             args=[
                                 {
                                     "visible": visible
-                                    + [True for i in range(len(coord_capteurs.type.unique()))]
-                                    + [False for i in range(len(coord_secteurs.nom_secteur))]
+                                    + [
+                                        True
+                                        for i in range(
+                                            len(coord_capteurs.type.unique())
+                                        )
+                                    ]
+                                    + [
+                                        False
+                                        for i in range(len(coord_secteurs.nom_secteur))
+                                    ]
                                 }
                             ],
                         ),
@@ -227,8 +198,16 @@ def update_map_chantier(chantier):
                             args=[
                                 {
                                     "visible": no_visible
-                                    + [False for i in range(len(coord_capteurs.type.unique()))]
-                                    + [True for i in range(len(coord_secteurs.nom_secteur))]
+                                    + [
+                                        False
+                                        for i in range(
+                                            len(coord_capteurs.type.unique())
+                                        )
+                                    ]
+                                    + [
+                                        True
+                                        for i in range(len(coord_secteurs.nom_secteur))
+                                    ]
                                 }
                             ],
                         ),
@@ -238,13 +217,21 @@ def update_map_chantier(chantier):
                             args=[
                                 {
                                     "visible": visible
-                                    + [True for i in range(len(coord_capteurs.type.unique()))]
-                                    + [True for i in range(len(coord_secteurs.nom_secteur))]
+                                    + [
+                                        True
+                                        for i in range(
+                                            len(coord_capteurs.type.unique())
+                                        )
+                                    ]
+                                    + [
+                                        True
+                                        for i in range(len(coord_secteurs.nom_secteur))
+                                    ]
                                 }
                             ],
                         ),
                     ]
-                )
+                ),
             ),
             dict(
                 type="dropdown",
@@ -273,3 +260,45 @@ def update_map_chantier(chantier):
     )
 
     return fig
+
+
+def empty_figure():
+    fig = {
+        "data": [],
+        "layout": {
+            "plot_bgcolor": colors["background"],
+            "paper_bgcolor": colors["background"],
+            "font": {"color": colors["text"]},
+        },
+    }
+    return fig
+
+
+def remove_xyz(string):
+    return string[:-2]
+
+
+def changement_repere(df):
+    coefx = [1.23952055e-05, 6.63856015e-07]
+    coefy = [-4.81328848e-07, 8.98817548e-06]
+    interceptx = -20.17428687
+    intercepty = 16.1412919
+    lon = df.lat * coefx[0] + df.lon * coefx[1] + interceptx
+    lat = df.lat * coefy[0] + df.lon * coefy[1] + intercepty
+    df.lat, df.lon = lat, lon
+    return df
+
+def extract_position(df):
+    df = df.drop(columns=["date"]).dropna(axis=1, how="all")
+    first_indexes = df.apply(pd.Series.first_valid_index).to_dict()
+    positions = {col: [df.loc[first_indexes[col], col]] for col in df.columns}
+    df = pd.DataFrame.from_dict(positions).T
+    df_x = df.iloc[[3 * i for i in range(df.shape[0] // 3)], :]
+    df_y = df.iloc[[3 * i + 1 for i in range(df.shape[0] // 3)], :]
+    df_x = df_x.reset_index().rename(columns={"index": "cible", 0: "lat"})
+    df_y = df_y.reset_index().rename(columns={"index": "cible", 0: "lon"})
+    df_x.cible = df_x.cible.map(remove_xyz)
+    df_y.cible = df_y.cible.map(remove_xyz)
+    df = df_x.merge(df_y)
+    df = changement_repere(df)
+    return df

@@ -141,8 +141,8 @@ layout = dbc.Container(
         html.Br(),
         collapse,
         html.Br(),
-        dbc.Button(id="button", n_clicks=0, className="fas fa-save mr-1", size='lg'),
-        dbc.Button(href="/", className="fas fa-undo-alt mr-1", size='lg'),
+        dbc.Button(id="button", n_clicks=0, className="fas fa-save mr-1", size="lg"),
+        dbc.Button(href="/", className="fas fa-undo-alt mr-1", size="lg"),
         html.Div(id="success"),
     ]
 )

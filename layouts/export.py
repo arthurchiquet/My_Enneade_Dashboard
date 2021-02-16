@@ -16,7 +16,7 @@ import io
 
 warnings.filterwarnings("ignore")
 
-user='Vallicorp'
+user = "Vallicorp"
 
 tab_content = dbc.Container(
     fluid=True,
@@ -24,22 +24,23 @@ tab_content = dbc.Container(
         html.Div(
             [
                 html.Br(),
-                dbc.Row(html.H3('Importer un document'), justify='center'),
+                dbc.Row(html.H3("Importer un document"), justify="center"),
                 html.Br(),
                 dbc.Row(
                     dcc.Dropdown(
                         id="choix_chantier",
-                        placeholder='Selectionner un chantier',
-                        style={"color": "black", 'width': '300px'},
-                        clearable=False
-                    ), justify='center'
+                        placeholder="Selectionner un chantier",
+                        style={"color": "black", "width": "300px"},
+                        clearable=False,
+                    ),
+                    justify="center",
                 ),
                 html.Br(),
                 dbc.Row(
                     dcc.Dropdown(
                         id="type_document",
-                        placeholder='Type de données',
-                        style={"color": "black", 'width': '300px'},
+                        placeholder="Type de données",
+                        style={"color": "black", "width": "300px"},
                         options=[
                             {"label": "Mesures topographiques", "value": 1},
                             {"label": "Mesures inclinométriques", "value": 2},
@@ -48,24 +49,35 @@ tab_content = dbc.Container(
                             {"label": "Jauges", "value": 5},
                         ],
                         clearable=False,
-                    ), justify='center'
+                    ),
+                    justify="center",
                 ),
                 html.Br(),
-                dbc.Row(dbc.Input(id='nom_capteur', placeholder='Nom du capteur', style= {'display': 'none'}), justify='center'),
+                dbc.Row(
+                    dbc.Input(
+                        id="nom_capteur",
+                        placeholder="Nom du capteur",
+                        style={"display": "none"},
+                    ),
+                    justify="center",
+                ),
                 html.Br(),
-                dbc.Row(html.H6('Date de la dernière mesure'), justify='center'),
+                dbc.Row(html.H6("Date de la dernière mesure"), justify="center"),
                 dbc.Row(
                     dcc.DatePickerSingle(
                         id="date-picker",
                         initial_visible_month=date.today(),
-                        placeholder='             Saisir une date',
-                    ), justify='center',
+                        placeholder="             Saisir une date",
+                    ),
+                    justify="center",
                 ),
                 html.Br(),
                 dbc.Row(
                     dcc.Upload(
                         id="datatable-upload",
-                        children=html.Div([html.A("Séléctionner un fichier (XLS ou CSV)")]),
+                        children=html.Div(
+                            [html.A("Séléctionner un fichier (XLS ou CSV)")]
+                        ),
                         max_size=-1,
                         style={
                             "width": "300px",
@@ -77,7 +89,8 @@ tab_content = dbc.Container(
                             "textAlign": "center",
                             "margin": "10px",
                         },
-                    ), justify='center'
+                    ),
+                    justify="center",
                 ),
                 html.Br(),
                 dt.DataTable(
@@ -96,59 +109,63 @@ tab_content = dbc.Container(
                         "fontWeight": "bold",
                     },
                 ),
-                dbc.Row(dbc.Button(id="update", n_clicks=0, className='fas fa-save', size='lg'), justify='center'),
-                dbc.Tooltip(
-                    "Enregistrer",
-                    target="update",
-                    placement='down'
+                dbc.Row(
+                    dbc.Button(
+                        id="update", n_clicks=0, className="fas fa-save", size="lg"
+                    ),
+                    justify="center",
                 ),
+                dbc.Tooltip("Enregistrer", target="update", placement="down"),
                 html.Br(),
                 dbc.Row(
                     html.Div(
                         id="import_success",
                         className="text-success",
-                    ), justify='center'
-                )
+                    ),
+                    justify="center",
+                ),
             ]
         )
-    ]
+    ],
 )
 
 tabs = tab_content
 
 layout = tabs
 
+
 def read_data(contents, filename):
     content_type, content_string = contents.split(",")
     decoded = base64.b64decode(content_string)
     if "csv" in filename:
         # Assume that the user uploaded a CSV file
-        return pd.read_csv(io.StringIO(decoded.decode("utf-8")), sep=None, engine='python')
+        return pd.read_csv(
+            io.StringIO(decoded.decode("utf-8")), sep=None, engine="python"
+        )
 
     elif "xls" in filename:
         # Assume that the user uploaded an excel file
-        return pd.read_excel(io.BytesIO(decoded), sep=None, engine='python')
+        return pd.read_excel(io.BytesIO(decoded), sep=None, engine="python")
 
-@app.callback(
-    Output('choix_chantier', 'options'),
-    Input('page-content', 'children'))
+
+@app.callback(Output("choix_chantier", "options"), Input("page-content", "children"))
 def update_choix_chantier(page):
     with engine.connect() as con:
-        query = f"SELECT * FROM chantier where username = '{current_user.username}'"
+        query = f"SELECT * FROM chantier where username = '{user}'"
         liste_chantiers = pd.read_sql_query(query, con=con).nom_chantier.tolist()
-    if len(liste_chantiers)==0:
+    if len(liste_chantiers) == 0:
         return []
     else:
-        return [{'label': chantier, 'value': chantier} for chantier in liste_chantiers]
+        return [{"label": chantier, "value": chantier} for chantier in liste_chantiers]
 
-@app.callback(
-    Output('nom_capteur', 'style'),
-    Input('type_document', 'value'))
+
+@app.callback(Output("nom_capteur", "style"), Input("type_document", "value"))
 def prop_nom_capteur(type_doc):
-    if type_doc in[2,3]:
-        return {'display': 'inline-block', "color": "black", 'width': '300px'}
+    if type_doc in [2, 3]:
+        return {"display": "inline-block", "color": "black", "width": "300px"}
     else:
-        return {'display': 'none'}
+        return {"display": "none"}
+
 
 @app.callback(
     Output("datatable-upload-container", "data"),
@@ -170,7 +187,7 @@ def update_table(contents, filename):
     State("datatable-upload", "contents"),
     State("choix_chantier", "value"),
     State("type_document", "value"),
-    State("nom_capteur", 'value'),
+    State("nom_capteur", "value"),
     State("date-picker", "date"),
 )
 def import_file(n_clicks, filename, contents, chantier, type_doc, nom_capteur, date):
@@ -179,31 +196,31 @@ def import_file(n_clicks, filename, contents, chantier, type_doc, nom_capteur, d
             return ""
         else:
             df = read_data(contents, filename)
-            if type_doc==1:
+            if type_doc == 1:
                 filename_archive = f"topo_{date}.csv"
                 filename_actif = "topo.csv"
-                export_data(df, chantier, 'actif', 'topographie', filename_actif)
-                export_data(df, chantier, 'archive', 'topographie', filename_archive)
-            elif type_doc==2:
+                export_data(df, chantier, "actif", "topographie", filename_actif)
+                export_data(df, chantier, "archive", "topographie", filename_archive)
+            elif type_doc == 2:
                 filename_archive = f"{nom_capteur}_{date}.csv"
                 filename_actif = f"{nom_capteur}.csv"
-                export_data(df, chantier, 'actif', 'inclinometrie', filename_actif)
-                export_data(df, chantier, 'archive', 'inclinometrie', filename_archive)
-            elif type_doc==3:
+                export_data(df, chantier, "actif", "inclinometrie", filename_actif)
+                export_data(df, chantier, "archive", "inclinometrie", filename_archive)
+            elif type_doc == 3:
                 filename_archive = f"{nom_capteur}_{date}.csv"
                 filename_actif = f"{nom_capteur}.csv"
-                export_data(df, chantier, 'actif', 'piezometrie', filename_actif)
-                export_data(df, chantier, 'archive', 'piezometrie', filename_archive)
-            elif type_doc==4:
+                export_data(df, chantier, "actif", "piezometrie", filename_actif)
+                export_data(df, chantier, "archive", "piezometrie", filename_archive)
+            elif type_doc == 4:
                 filename_archive = f"tirant_{date}.csv"
                 filename_actif = "tirant.csv"
-                export_data(df, chantier, 'actif', 'tirant', filename_actif)
-                export_data(df, chantier, 'archive', 'tirant', filename_archive)
-            elif type_doc==5:
+                export_data(df, chantier, "actif", "tirant", filename_actif)
+                export_data(df, chantier, "archive", "tirant", filename_archive)
+            elif type_doc == 5:
                 filename_archive = f"jauge_{date}.csv"
                 filename_actif = "jauge.csv"
-                export_data(df, chantier, 'actif', 'jauge', filename_actif)
-                export_data(df, chantier, 'archive', 'jauge', filename_archive)
+                export_data(df, chantier, "actif", "jauge", filename_actif)
+                export_data(df, chantier, "archive", "jauge", filename_archive)
             return "Le fichier à bien été importé"
     else:
         return ""

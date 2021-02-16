@@ -67,6 +67,7 @@ def update_graph_tirants(secteur_selected, chantier):
     except:
         return empty_figure(), empty_figure()
 
+
 def first(col):
     i = 0
     for j in col:
@@ -84,7 +85,7 @@ def tension_blocage(df):
 
 
 def format_df(df, list_tirants):
-    df=df.rename(columns={'Date':'date'})
+    df = df.rename(columns={"Date": "date"})
     df.date = pd.to_datetime(df.date, format="%d/%m/%Y")
     df = pd.DataFrame(df.set_index("date")[list_tirants])
     df_ratio = tension_blocage(df) * 100

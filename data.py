@@ -27,7 +27,9 @@ def get_credentials(local=False):
 
 
 @cache.memoize(timeout=TIMEOUT)
-def query_data(chantier, path, types, filename, bucket=BUCKET_NAME, project_id=PROJECT_ID, sep=True):
+def query_data(
+    chantier, path, types, filename, bucket=BUCKET_NAME, project_id=PROJECT_ID, sep=True
+):
     creds = get_credentials()
     client = storage.Client(credentials=creds, project=project_id)
     bucket = client.get_bucket(BUCKET_NAME)
@@ -38,7 +40,10 @@ def query_data(chantier, path, types, filename, bucket=BUCKET_NAME, project_id=P
     else:
         return pd.read_csv(io.BytesIO(data), encoding="utf-8", memory_map=True)
 
-def get_data(chantier, path, types, filename, bucket=BUCKET_NAME, project_id=PROJECT_ID, sep=True):
+
+def get_data(
+    chantier, path, types, filename, bucket=BUCKET_NAME, project_id=PROJECT_ID, sep=True
+):
     creds = get_credentials()
     client = storage.Client(credentials=creds, project=project_id)
     bucket = client.get_bucket(BUCKET_NAME)
@@ -48,9 +53,11 @@ def get_data(chantier, path, types, filename, bucket=BUCKET_NAME, project_id=PRO
         return pd.read_csv(io.BytesIO(data), encoding="utf-8", sep=";", memory_map=True)
     else:
         return pd.read_csv(io.BytesIO(data), encoding="utf-8", memory_map=True)
+
 
 def memoized_data(chantier, path, types, filename):
     return query_data(chantier, path, types, filename)
+
 
 def download_image(
     chantier, filename, bucket=BUCKET_NAME, project_id=PROJECT_ID, rm=True
@@ -65,14 +72,16 @@ def download_image(
         os.remove("plan.jpeg")
     return img
 
+
 def list_files(prefix, bucketname=BUCKET_NAME, projetcid=PROJECT_ID):
     creds = get_credentials()
     client = storage.Client(credentials=creds, project=projetcid)
     bucket = client.get_bucket(bucketname)
     files = bucket.list_blobs(prefix=prefix)
-    fileList = [file.name for file in files if '.' in file.name]
-    docs = [i.replace(prefix,'')[:-4] for i in fileList]
+    fileList = [file.name for file in files if "." in file.name]
+    docs = [i.replace(prefix, "")[:-4] for i in fileList]
     return docs
+
 
 def export_data(
     df, chantier, path, types, filename, bucket=BUCKET_NAME, project_id=PROJECT_ID
@@ -81,4 +90,4 @@ def export_data(
     client = storage.Client(credentials=creds, project=project_id)
     bucket = client.get_bucket(BUCKET_NAME)
     blob = bucket.blob(f"{chantier}/{path}/{types}/{filename}")
-    blob.upload_from_string(df.to_csv(index=False, sep=';'))
+    blob.upload_from_string(df.to_csv(index=False, sep=";"))

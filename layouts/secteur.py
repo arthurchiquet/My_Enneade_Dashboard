@@ -59,23 +59,29 @@ table_secteur = html.Div(
 layout = html.Div(
     [
         html.Br(),
-        dbc.Row(html.H4(id='secteur-title'), justify='center'),
-        html.Hr(style=dict(width='400px')),
+        dbc.Row(html.H4(id="secteur-title"), justify="center"),
+        html.Hr(style=dict(width="400px")),
         dbc.Row(
             [
                 dbc.Tabs(
                     [
-                        dbc.Tab(labelClassName="far fa-dot-circle", tab_id=1, id='topo'),
-                        dbc.Tab(labelClassName="fas fa-slash", tab_id=2, id='inclino'),
-                        dbc.Tab(labelClassName="fas fa-arrows-alt-h", tab_id=3, id='tirant'),
-                        dbc.Tab(labelClassName="fab fa-cloudscale", tab_id=4, id='jauge'),
-                        dbc.Tab(labelClassName="fas fa-water", tab_id=5, id='pizeo'),
+                        dbc.Tab(
+                            labelClassName="far fa-dot-circle", tab_id=1, id="topo"
+                        ),
+                        dbc.Tab(labelClassName="fas fa-slash", tab_id=2, id="inclino"),
+                        dbc.Tab(
+                            labelClassName="fas fa-arrows-alt-h", tab_id=3, id="tirant"
+                        ),
+                        dbc.Tab(
+                            labelClassName="fab fa-cloudscale", tab_id=4, id="jauge"
+                        ),
+                        dbc.Tab(labelClassName="fas fa-water", tab_id=5, id="pizeo"),
                         # dbc.Tab(labelClassName="far fa-dot-circle", tab_id=6),
                     ],
                     id="tabs_type",
                     active_tab=1,
                     persistence=True,
-                    persistence_type='session'
+                    persistence_type="session",
                 ),
             ],
             justify="center",
@@ -91,10 +97,11 @@ layout = html.Div(
     Input("secteur-select", "data"),
 )
 def return_title(secteur_selected):
-    if secteur_selected=={}:
-        return 'Aucun secteur sélectionné'
+    if secteur_selected == {}:
+        return "Aucun secteur sélectionné"
     else:
-       return f'Secteur {secteur_selected["secteur"]}'
+        return f'Secteur {secteur_selected["secteur"]}'
+
 
 @app.callback(
     Output("tab_type_content", "children"),

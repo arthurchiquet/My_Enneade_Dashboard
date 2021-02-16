@@ -18,21 +18,22 @@ colors = {"background": "#222222", "text": "white"}
 
 layout = html.Div(
     [
-        dbc.Row(html.H4('Niveau piezométrique et terrassement'), justify='center'),
+        dbc.Row(html.H4("Niveau piezométrique et terrassement"), justify="center"),
         dbc.Container(
             [
                 dcc.Graph(
                     id="graph_piezo", figure=empty_figure(), config={"scrollZoom": True}
                 ),
                 html.Hr(),
-                dbc.Row(html.H4('Pluviométrie (mm) et température (°C'), justify='center'),
+                dbc.Row(
+                    html.H4("Pluviométrie (mm) et température (°C"), justify="center"
+                ),
                 dcc.Graph(id="graph_meteo", figure=empty_figure()),
             ],
             fluid=True,
-        )
+        ),
     ]
 )
-
 
 @app.callback(
     Output("graph_meteo", "figure"),
@@ -97,38 +98,48 @@ def update_graph_piezos(chantier, secteur_selected):
         return empty_figure()
 
 
-
-
 def graph_piezo(chantier, piezo, height=550):
     df = get_data(chantier, "actif", "piezometrie", f"{piezo}.csv")
-    terrassement = get_data(chantier, "actif", "piezometrie", f"/terrassement/niveau_{piezo}.csv")
-    df=df.rename(columns={'Date':'date'})
-    terrassement=terrassement.rename(columns={'Date':'date'})
+    terrassement = get_data(
+        chantier, "actif", "piezometrie", f"/terrassement/niveau_{piezo}.csv"
+    )
+    df = df.rename(columns={"Date": "date"})
+    terrassement = terrassement.rename(columns={"Date": "date"})
     df.date = pd.to_datetime(df.date, format="%d/%m/%Y")
     terrassement.date = pd.to_datetime(terrassement.date, format="%d/%m/%Y")
     with engine.connect() as con:
         query = f"select * from piezo_param WHERE nom_chantier='{chantier}' AND piezo='{piezo}'"
         params = pd.read_sql_query(query, con=con)
-    Z_tete=params.Z_tête[0]
-    Z_pied=params.Z_pied[0]
-    unite=params.reference[0]
+    Z_tete = params.Z_tête[0]
+    Z_pied = params.Z_pied[0]
+    unite = params.reference[0]
     fig = go.Figure()
     fig.add_trace(
-        go.Scatter(name="Niveau terrassement", x=terrassement.date, y=terrassement["Coupe IJ"])
+        go.Scatter(
+            name="Niveau terrassement", x=terrassement.date, y=terrassement["Coupe IJ"]
+        )
     )
-    fig.add_trace(go.Scatter(name=f"Z ({unite}) pour {piezo}", x=df.date, y=df.Niveau_eau))
-    fig.add_trace(go.Scatter(
-        name=f"Z (Tête) {piezo} ({unite})",
-        x=df.date,
-        y=[Z_tete for i in range(df.shape[0])],
-        mode='lines',
-        line = dict(color='#7FFFD4', width=2, dash='dash')))
-    fig.add_trace(go.Scatter(
-        name=f"Z (Pied) {piezo} ({unite})",
-        x=df.date,
-        y=[Z_pied for i in range(df.shape[0])],
-        mode='lines',
-        line = dict(color='#DC143C', width=2, dash='dash')))
+    fig.add_trace(
+        go.Scatter(name=f"Z ({unite}) pour {piezo}", x=df.date, y=df.Niveau_eau)
+    )
+    fig.add_trace(
+        go.Scatter(
+            name=f"Z (Tête) {piezo} ({unite})",
+            x=df.date,
+            y=[Z_tete for i in range(df.shape[0])],
+            mode="lines",
+            line=dict(color="#7FFFD4", width=2, dash="dash"),
+        )
+    )
+    fig.add_trace(
+        go.Scatter(
+            name=f"Z (Pied) {piezo} ({unite})",
+            x=df.date,
+            y=[Z_pied for i in range(df.shape[0])],
+            mode="lines",
+            line=dict(color="#DC143C", width=2, dash="dash"),
+        )
+    )
     fig.update_layout(
         plot_bgcolor=colors["background"],
         paper_bgcolor=colors["background"],

@@ -15,64 +15,6 @@ import warnings
 
 colors = {"background": "#222222", "text": "white"}
 
-
-def graph_inclino(chantier, inclino, height=None):
-
-    dfnorm = get_data(chantier, "actif", "inclinometrie", f"{inclino}_norm.csv", sep=False)
-    dftan = get_data(chantier, "actif", "inclinometrie", f"{inclino}_tan.csv", sep=False)
-
-    last_col = dfnorm.columns[-1]
-    past_last_col = dfnorm.columns[-2]
-    dfnorm[f"{last_col} vs {past_last_col}"] = dfnorm[last_col] - dfnorm[past_last_col]
-    dftan[f"{last_col} vs {past_last_col}"] = dftan[last_col] - dftan[past_last_col]
-    fig = make_subplots(
-        rows=2,
-        cols=1,
-        shared_xaxes=True,
-        shared_yaxes=True,
-        vertical_spacing=0.1,
-        subplot_titles=["Déplacements normaux (mm)", "Déplacements tangentiels (mm)"],
-    )
-    fig.add_trace(
-        go.Scatter(name=last_col, x=dfnorm[last_col], y=dfnorm.profondeur), row=1, col=1
-    )
-    fig.add_trace(
-        go.Scatter(
-            name=f"{last_col} vs {past_last_col}",
-            x=dfnorm[f"{last_col} vs {past_last_col}"],
-            y=dfnorm.profondeur,
-        ),
-        row=2,
-        col=1,
-    )
-    fig.add_trace(
-        go.Scatter(name=last_col, x=dftan[last_col], y=dftan.profondeur), row=2, col=1
-    )
-    fig.add_trace(
-        go.Scatter(
-            name=f"{last_col} vs {past_last_col}",
-            x=dftan[f"{last_col} vs {past_last_col}"],
-            y=dftan.profondeur,
-        ),
-        row=1,
-        col=1,
-    )
-    fig.update_yaxes(autorange="reversed", gridcolor="grey")
-    fig.update_xaxes(gridcolor="grey")
-    fig.update_layout(
-        height=height,
-        legend_title_text=None,
-        yaxis_title="Profondeur (m)",
-        xaxis_title=None,
-        legend_orientation="h",
-        plot_bgcolor=colors["background"],
-        paper_bgcolor=colors["background"],
-        font_color=colors["text"],
-        margin={"r": 20, "t": 30, "l": 0, "b": 0},
-    )
-    return fig
-
-
 warnings.filterwarnings("ignore")
 
 
@@ -222,7 +164,7 @@ layout = html.Div(
                         dbc.Col(
                             [
                                 dcc.Graph(
-                                    id='var_tan',
+                                    id="var_tan",
                                     figure=empty_figure(),
                                 ),
                             ]
@@ -375,9 +317,13 @@ def update_graphs(
     secteur_selected, nb_courbes, nb_courbes2, nb_courbes3, profondeur, chantier
 ):
     try:
-        inclino = secteur_selected['inclino']
-        dfnorm = get_data(chantier, "actif", "inclinometrie", f"{inclino}_norm.csv", sep=False)
-        dftan = get_data(chantier, "actif", "inclinometrie", f"{inclino}_tan.csv", sep=False)
+        inclino = secteur_selected["inclino"]
+        dfnorm = get_data(
+            chantier, "actif", "inclinometrie", f"{inclino}_norm.csv", sep=False
+        )
+        dftan = get_data(
+            chantier, "actif", "inclinometrie", f"{inclino}_tan.csv", sep=False
+        )
         fig1 = create_graph_1(dfnorm, chantier, inclino, nb_courbes3, "normal")
         fig2 = create_graph_1(dftan, chantier, inclino, nb_courbes3, "tangentiel")
         fig3 = create_graph_2(dfnorm, chantier, inclino, nb_courbes, "normal")
@@ -424,8 +370,69 @@ def update_graphs(
             empty_figure(),
             empty_figure(),
             [],
-            []
+            [],
         )
+
+
+def graph_inclino(chantier, inclino, height=None):
+
+    dfnorm = get_data(
+        chantier, "actif", "inclinometrie", f"{inclino}_norm.csv", sep=False
+    )
+    dftan = get_data(
+        chantier, "actif", "inclinometrie", f"{inclino}_tan.csv", sep=False
+    )
+
+    last_col = dfnorm.columns[-1]
+    past_last_col = dfnorm.columns[-2]
+    dfnorm[f"{last_col} vs {past_last_col}"] = dfnorm[last_col] - dfnorm[past_last_col]
+    dftan[f"{last_col} vs {past_last_col}"] = dftan[last_col] - dftan[past_last_col]
+    fig = make_subplots(
+        rows=2,
+        cols=1,
+        shared_xaxes=True,
+        shared_yaxes=True,
+        vertical_spacing=0.1,
+        subplot_titles=["Déplacements normaux (mm)", "Déplacements tangentiels (mm)"],
+    )
+    fig.add_trace(
+        go.Scatter(name=last_col, x=dfnorm[last_col], y=dfnorm.profondeur), row=1, col=1
+    )
+    fig.add_trace(
+        go.Scatter(
+            name=f"{last_col} vs {past_last_col}",
+            x=dfnorm[f"{last_col} vs {past_last_col}"],
+            y=dfnorm.profondeur,
+        ),
+        row=2,
+        col=1,
+    )
+    fig.add_trace(
+        go.Scatter(name=last_col, x=dftan[last_col], y=dftan.profondeur), row=2, col=1
+    )
+    fig.add_trace(
+        go.Scatter(
+            name=f"{last_col} vs {past_last_col}",
+            x=dftan[f"{last_col} vs {past_last_col}"],
+            y=dftan.profondeur,
+        ),
+        row=1,
+        col=1,
+    )
+    fig.update_yaxes(autorange="reversed", gridcolor="grey")
+    fig.update_xaxes(gridcolor="grey")
+    fig.update_layout(
+        height=height,
+        legend_title_text=None,
+        yaxis_title="Profondeur (m)",
+        xaxis_title=None,
+        legend_orientation="h",
+        plot_bgcolor=colors["background"],
+        paper_bgcolor=colors["background"],
+        font_color=colors["text"],
+        margin={"r": 20, "t": 30, "l": 0, "b": 0},
+    )
+    return fig
 
 def create_graph_1(dfi, chantier, inclino, nb_courbes, title):
     df = dfi.copy()
@@ -552,7 +559,7 @@ def create_3d_graph(dfnormi, dftani, chantier, inclino, nb_courbes):
     profondeur = dfnorm.profondeur
     fig = go.Figure()
     for i in range(nb_courbes):
-        normi = dfnorm.iloc[:, -1 -i]
+        normi = dfnorm.iloc[:, -1 - i]
         tani = dftan.iloc[:, -1 - i]
         fig.add_trace(
             go.Scatter3d(
