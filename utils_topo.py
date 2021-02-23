@@ -160,7 +160,7 @@ def update_time_serie(ref, secteur_selected, chantier):
             return fig, "Aucun référentiel renseigné pour ce secteur"
         else:
             df = format_df(df, list_capteur, angle, repere=repere)
-            fig = graph_topo(df, chantier, height=700)
+            fig = graph_topo(df, height=700)
             return fig, subtitle, ""
 
 
@@ -257,7 +257,7 @@ def graph_vecteurs(df, lat1, lat2, lon1, lon2, nom_secteur, list_capteur, sizere
     )
     return fig
 
-def graph_topo(df, chantier, height=470, memo=False, spacing=0.08, showlegend=True):
+def graph_topo(df, height=470, memo=False, spacing=0.08, showlegend=True):
     fig = px.line(
         df,
         x="date",
