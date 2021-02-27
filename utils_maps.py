@@ -1,11 +1,14 @@
+####Import des librairies python
+
 import plotly.figure_factory as ff
 import plotly.express as px
 import plotly.graph_objects as go
-from config import engine
 import pandas as pd
-from data import download_image, memoized_data
 import numpy as np
 from datetime import timedelta
+
+from config import engine
+from data import download_image, memoized_data
 
 mapbox_token = "pk.eyJ1IjoiYXJ0aHVyY2hpcXVldCIsImEiOiJja2E1bDc3cjYwMTh5M2V0ZzdvbmF5NXB5In0.ETylJ3ztuDA-S3tQmNGpPQ"
 
@@ -13,7 +16,11 @@ colors = {"background": "#222222", "text": "white"}
 
 #######################  AFFICHAGE MAP CHANTIER   ######################################################
 
+
+#### CREATION DE LA CARTE CHANTIER
 def update_map_chantier(chantier):
+
+    ''' Recuperation des données chantiers, secteurs et capteurs'''
 
     with engine.connect() as con:
         query1 = f"SELECT * FROM chantier where nom_chantier = '{chantier}'"
@@ -23,7 +30,11 @@ def update_map_chantier(chantier):
         coord_capteurs = pd.read_sql_query(query2, con=con)
         coord_secteurs = pd.read_sql_query(query3, con=con)
 
+    ''' Initialistaion de la figure'''
+
     fig = go.Figure()
+
+    ''' Ajout de la position du chantier '''
 
     fig.add_trace(
         go.Scattermapbox(
@@ -35,6 +46,8 @@ def update_map_chantier(chantier):
             opacity=0.3,
         )
     )
+
+    ''' Ajout des positions des cibles sur la carte si les données existent'''
 
     try:
         data = memoized_data(chantier, "actif", "topographie", "topo.csv")
@@ -55,6 +68,8 @@ def update_map_chantier(chantier):
         visible = [True]
         no_visible = [True]
 
+    ''' Ajout des positions des autres capteurs sur la carte'''
+
     for i in coord_capteurs.type.unique():
         fig.add_trace(
             go.Scattermapbox(
@@ -68,6 +83,8 @@ def update_map_chantier(chantier):
                 lat=coord_capteurs[coord_capteurs.type == i].lat,
             )
         )
+
+    ''' mise a jour des marqueurs en fonction du type de capteurs'''
 
     fig.update_traces(hovertemplate="%{text}", textfont_size=11)
 
@@ -88,6 +105,8 @@ def update_map_chantier(chantier):
     fig.update_traces(
         marker=dict(size=20, color="#9370DB", opacity=0.5), selector=dict(name="button")
     )
+
+    ''' Ajout des zones correspondants aux secteurs sur la carte'''
 
     for secteur in coord_secteurs.nom_secteur:
         lat1 = coord_secteurs.lat1[0]
@@ -117,6 +136,8 @@ def update_map_chantier(chantier):
         )
         fig.update_traces(hovertemplate="Secteur", selector={"name": secteur})
 
+    '''Téléchargement de l'image du plan si le fichier jpeg existe'''
+
     try:
         plan = download_image(chantier, "plan.jpeg")
         with engine.connect() as con:
@@ -142,10 +163,14 @@ def update_map_chantier(chantier):
         plan = None
         layers = None
 
+    ''' Paramétrage de la map'''
+
     mapbox = dict(
         zoom=coord_chantier.zoom[0],
         center=dict(lon=coord_chantier.lon[0], lat=coord_chantier.lat[0]),
     )
+
+    ''' Mise en forme de la carte et création des filtres "capteurs + affichage plan"'''
 
     fig.update_layout(
         mapbox=mapbox,
@@ -262,6 +287,7 @@ def update_map_chantier(chantier):
     return fig
 
 
+#### Creation d'une figure vide
 def empty_figure():
     fig = {
         "data": [],
@@ -273,11 +299,12 @@ def empty_figure():
     }
     return fig
 
-
+#### Methode permettant de supprimer les deux derniers caractères d'un mot
 def remove_xyz(string):
     return string[:-2]
 
-
+#### Methode de conversion des positions en repere lambert CC Zone 44
+#### vers positions GPS
 def changement_repere(df):
     coefx = [1.23952055e-05, 6.63856015e-07]
     coefy = [-4.81328848e-07, 8.98817548e-06]
@@ -288,6 +315,8 @@ def changement_repere(df):
     df.lat, df.lon = lat, lon
     return df
 
+#### Methode permettant d'extraire les positions des cibles extract_position
+#### convertir en positions GPS
 def extract_position(df):
     df = df.drop(columns=["date"]).dropna(axis=1, how="all")
     first_indexes = df.apply(pd.Series.first_valid_index).to_dict()

@@ -1,12 +1,17 @@
+#### import des modules dash
+
 import dash_core_components as dcc
 import dash_html_components as html
 import dash_bootstrap_components as dbc
 from dash.dependencies import Input, Output, State
-from server import app
+
 from flask_login import current_user
+import warnings
+
+from server import app
+
 from user_mgmt import update_password
 from werkzeug.security import check_password_hash
-import warnings
 
 warnings.filterwarnings("ignore")
 
@@ -90,7 +95,10 @@ layout = html.Div(
 )
 
 
-@app.callback(Output("username", "children"), [Input("pageContent", "children")])
+#### Affiche le nom de l'utilisateur connecté
+@app.callback(
+    Output("username", "children"),
+    [Input("pageContent", "children")])
 def currentUserName(pageContent):
     try:
         username = current_user.username
@@ -98,7 +106,7 @@ def currentUserName(pageContent):
     except AttributeError:
         return ""
 
-
+#### Affiche l'adresse mail de l'utilisateur connecté
 @app.callback(Output("email", "children"), [Input("pageContent", "children")])
 def currentUserEmail(pageContent):
     try:
@@ -108,9 +116,7 @@ def currentUserEmail(pageContent):
         return ""
 
 
-################################################################################
-# UPDATE PWD BUTTON CLICKED / ENTER PRESSED - RETURN RED BOXES IF OLD PWD IS NOT CURR PWD
-################################################################################
+#### Affiche un message lors de la tentative de modification du mot de passe ( SUCCES / ERREUR)
 @app.callback(
     Output("oldPassword", "className"),
     [
@@ -135,6 +141,10 @@ def validateOldPassword(
     newPassword2,
 ):
     if (n_clicks > 0) or (newPassword1Submit > 0) or (newPassword2Submit) > 0:
+
+        ''' check_password_hash est une fonction permettant de vérifier la correspondance
+        du mot de passe (crypté) avec l'utilisateur associé'''
+
         if check_password_hash(current_user.password, oldPassword):
             return "form-control is-valid"
         else:
@@ -143,9 +153,8 @@ def validateOldPassword(
         return "form-control"
 
 
-# ###############################################################################
-# UPDATE PWD BUTTON CLICKED / ENTER PRESSED - RETURN RED BOXES IF NEW PASSWORDS ARE NOT THE SAME
-# ###############################################################################
+#### Verifie que la double saisie du nouveau mot de passe est correcte
+#### Affiche un message d'erreur si la premiere saisie du nouveau mot de passe est incorrecte
 @app.callback(
     Output("newPassword1", "className"),
     [
@@ -167,9 +176,8 @@ def validatePassword1(
         return "form-control"
 
 
-# ###############################################################################
-# UPDATE PWD BUTTON CLICKED / ENTER PRESSED - RETURN RED BOXES IF NEW PASSWORDS ARE NOT THE SAME
-# ###############################################################################
+#### Verifie que la double saisie du nouveau mot de passe est correcte
+#### Affiche un message d'erreur si la deuxième saisie du nouveau mot de passe est incorrecte
 @app.callback(
     Output("newPassword2", "className"),
     [
@@ -191,9 +199,8 @@ def validatePassword2(
         return "form-control"
 
 
-################################################################################
-# UPDATE PWD BUTTON CLICKED / ENTER PRESSED - UPDATE DATABASE WITH NEW PASSWORD
-################################################################################
+#### Met à jour le nouveau mot de passe dans la table SQL si l'ensemble des conditions
+#### sont satisfaites
 @app.callback(
     Output("updateSuccess", "children"),
     [

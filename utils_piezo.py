@@ -1,16 +1,21 @@
-import warnings
+#### Import des modules dash
+
 import dash_core_components as dcc
 import dash_html_components as html
 import dash_bootstrap_components as dbc
 from dash.dependencies import Input, Output, State
-from data import get_data
+
+
+#### Import des librairies python
+from plotly.subplots import make_subplots
+import plotly.graph_objects as go
 import pandas as pd
+import warnings
+
+from data import get_data
 from config import engine
 from server import app
 from utils_maps import empty_figure
-from plotly.subplots import make_subplots
-import plotly.graph_objects as go
-from data import get_data
 
 warnings.filterwarnings("ignore")
 
@@ -35,6 +40,8 @@ layout = html.Div(
     ]
 )
 
+
+#### Creation du graph -> Temperature + précipitaion
 @app.callback(
     Output("graph_meteo", "figure"),
     [
@@ -44,6 +51,8 @@ layout = html.Div(
 )
 def update_graph_meteo(chantier, relayout_data):
     try:
+        ''' Telechargement des données de temperatures et pluviometrie'''
+
         df = get_data(chantier, "actif", "temperature.csv")
         df.Date = pd.to_datetime(df.Date, format="%d/%m/%Y")
         fig = make_subplots(
@@ -83,6 +92,8 @@ def update_graph_meteo(chantier, relayout_data):
         return empty_figure()
 
 
+
+#### Creation du graph -> Mesures piezometriques + terrasement
 @app.callback(
     Output("graph_piezo", "figure"),
     [
@@ -97,6 +108,9 @@ def update_graph_piezos(chantier, secteur_selected):
     except:
         return empty_figure()
 
+
+#### Methode permettant de recuperer les données piezo et superposer ces mesures
+#### avec les niveaux de terrassement
 
 def graph_piezo(chantier, piezo, height=550):
     df = get_data(chantier, "actif", "piezometrie", f"{piezo}.csv")

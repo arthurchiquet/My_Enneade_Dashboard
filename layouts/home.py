@@ -1,14 +1,19 @@
+#### Import des modules dash
+
 import dash_core_components as dcc
 import dash_html_components as html
 from dash.dependencies import Input, Output, State
 import dash_bootstrap_components as dbc
-from server import app
 import dash_table as dt
+
+#### Import des librairies python
 from flask_login import current_user
 import plotly.express as px
-from config import engine
 import pandas as pd
 import warnings
+
+from config import engine
+from server import app
 
 warnings.filterwarnings("ignore")
 
@@ -45,16 +50,24 @@ layout = html.Div(
 )
 
 
+#### Affiche la carte monde avec emplacment des chantiers
 @app.callback(
     Output("map-geo", "children"),
     Output("loading-map-title", "children"),
     Input("page-content", "children"),
 )
 def display_map_geo(page_content):
+
+    ''' recupère la liste et emplacement des chantiers associés
+    à l'utilisateur connecté'''
+
     with engine.connect() as con:
         query = f"SELECT * FROM chantier where username = '{current_user.username}'"
         # query = f"SELECT * FROM chantier where username = '{user}'"
         df = pd.read_sql_query(query, con=con)
+
+    ''' si aucun chantier associé ne retourne rien sinon
+    affiche la carte avec les positions des chanteirs'''
 
     if df.shape[0] == 0:
         return [], "Aucun chantier"
@@ -100,13 +113,17 @@ def display_map_geo(page_content):
         return dcc.Graph(id="map-geo", config={"displayModeBar": False}, figure=fig), ""
 
 
-##### SELECTIONNE CHANTIER #####
+##### Stocke la nom du chantier sélectionné sur la carte
 @app.callback(
     Output("chantier-select", "data"),
     Output("url", "pathname"),
     Input("map-geo", "clickData"),
 )
 def store_chantier(clickData):
+
+    ''' clickData : dictionnaire retourné par Plotly lors d'un click sur
+    la zone graphique'''
+
     try:
         chantier = clickData["points"][0]["hovertext"]
         return chantier, "/chantier"

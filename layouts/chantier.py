@@ -1,15 +1,21 @@
+#### Import des modules dash
+
 import dash_core_components as dcc
 import dash_html_components as html
 import dash_gif_component as gif
 from dash.dependencies import Input, Output, State
 import dash_bootstrap_components as dbc
+import dash_table as dt
+
+#### Import des librairies
 import plotly.graph_objects as go
 import pandas as pd
-import dash_table as dt
+from pangres import upsert
 import warnings
+
+
 from server import app
 from config import engine
-from pangres import upsert
 from data import memoized_data, list_files
 from utils_maps import update_map_chantier, empty_figure, extract_position
 from params_mgmt import (
@@ -25,6 +31,9 @@ import utils_topo, utils_inclino, utils_jauge, utils_tirant, utils_piezo
 warnings.filterwarnings("ignore")
 
 colors = {"background": "#222222", "text": "#FF8C00"}
+
+
+#### Definition de l'interface (page chantier)
 
 layout = html.Div(
     children=[
@@ -101,7 +110,7 @@ layout = html.Div(
 )
 
 
-### AFFICHAGE LA CARTE DU CHANTIER SELECTIONNE #####
+### AFFICHE LA CARTE DU CHANTIER SELECTIONNE #####
 @app.callback(
     Output("map-chantier", "figure"),
     Output("no-chantier-selected", "children"),
@@ -109,12 +118,16 @@ layout = html.Div(
     Input("reload-map", "children"),
 )
 def affichage_map(chantier, reload):
+
+    ''' Voir utils_maps pour plus d'information
+    sur la fonction update_map_chantier '''
+
     try:
         return update_map_chantier(chantier), ""
     except:
         return empty_figure(), "Aucune donnée à afficher"
 
-
+#### Création d'une zone depliable associé au bouton 'Aide'
 collapse = html.Div(
     [
         html.Br(),
@@ -144,10 +157,16 @@ collapse = html.Div(
     [State("card-help", "is_open")],
 )
 def collapse_parametres(n, is_open):
+    ''' Ouvre ou ferme la zone ci-dessus
+        lors du clique sur le bouton (Aide)'''
+
     if n:
         return not is_open
     return is_open
 
+
+#### Affiche le contenu situé a droite de la CARTE
+#### en fonction de l'option selectionnée
 
 @app.callback(
     Output("right-content", "children"),
@@ -158,6 +177,20 @@ def collapse_parametres(n, is_open):
     State("chantier-select", "data"),
 )
 def display_right_content(options, clickData, chantier):
+
+    '''
+    Option 1 : Manipulation -> Affiche la courbe CORRESPONDANT
+    au capteur selectionné directement sur la carte
+
+    Option 2 : Modification -> Affiche une fenètre de modification des paramètre
+    avec zone de saisie et enregistrement des modifs
+
+    Option 3: Selection -> Affiche un menu déroulant permettant de
+    sélectionné un secteur pré-défini et un bouton renvoyant à la page
+    de synthèse par secteur
+    '''
+
+
     if options == "control-map":
         if clickData:
             return [
@@ -172,6 +205,7 @@ def display_right_content(options, clickData, chantier):
             ]
         else:
             return []
+
     elif options == "modify-map":
         return [
             html.Br(),
@@ -242,6 +276,7 @@ def display_right_content(options, clickData, chantier):
                 style={"width": "41rem"},
             ),
         ]
+
     elif options == "select-map":
         with engine.connect() as con:
             query3 = f"SELECT * FROM secteur where nom_chantier = '{chantier}'"
@@ -287,6 +322,8 @@ def display_right_content(options, clickData, chantier):
         ]
 
 
+#### Permet de pré-définir les valeurs des menus déroulant
+#### définis ci-dessus
 @app.callback(
     Output("nom_param_1", "style"),
     Output("nom_param_2", "style"),
@@ -296,6 +333,19 @@ def display_right_content(options, clickData, chantier):
     State("chantier-select", "data"),
 )
 def return_input_dropdown(option, param, chantier):
+    '''
+
+    si l'option (ajouter) est sélectionné et le type de paramètre
+    est (secteur) on affiche une
+    zone de saisie du paramètre manuelle et non un menu déroulant
+
+    si l'option (ajouter) est sélectionnée on affiche un menu déroulant renvoyant
+    la liste des paramètres dont les données existent déja notre BDD
+
+    si l'une des options (modifier ou supprimer) est sélectionnée on affiche un menu déroulant renvoyant
+    la liste des paramètres ayant déjà été préalablement ajoutés
+    '''
+
     if option == 1 and param == 1:
         return {"display": "inline"}, {"display": "none"}, []
 
@@ -322,32 +372,35 @@ def return_input_dropdown(option, param, chantier):
             query3 = f"SELECT * FROM secteur where nom_chantier = '{chantier}'"
             liste_capteurs = pd.read_sql_query(query2, con=con)
             liste_secteurs = pd.read_sql_query(query3, con=con).nom_secteur.tolist()
-        liste_inclino = liste_capteurs[
-            liste_capteurs.type == "inclino"
-        ].nom_capteur.tolist()
-        liste_tirant = liste_capteurs[
-            liste_capteurs.type == "tirant"
-        ].nom_capteur.tolist()
-        liste_jauge = liste_capteurs[
-            liste_capteurs.type == "jauge"
-        ].nom_capteur.tolist()
-        liste_piezo = liste_capteurs[
-            liste_capteurs.type == "piezo"
-        ].nom_capteur.tolist()
+        liste_inclino = liste_capteurs[liste_capteurs.type == "inclino"].nom_capteur.tolist()
+        liste_tirant = liste_capteurs[liste_capteurs.type == "tirant"].nom_capteur.tolist()
+        liste_jauge = liste_capteurs[liste_capteurs.type == "jauge"].nom_capteur.tolist()
+        liste_piezo = liste_capteurs[liste_capteurs.type == "piezo"].nom_capteur.tolist()
         if param == 1:
-            options = [
-                {"label": secteur, "value": secteur} for secteur in liste_secteurs
-            ]
+
+            ''' param 1 = secteur'''
+            options = [{"label": secteur, "value": secteur} for secteur in liste_secteurs]
+
         elif param == 3:
-            options = [
-                {"label": inclino, "value": inclino} for inclino in liste_inclino
-            ]
+
+            ''' param 3 = Inclinomètre'''
+            options = [{"label": inclino, "value": inclino} for inclino in liste_inclino]
+
         elif param == 4:
+
+            ''' param 1 = Tirant'''
             options = [{"label": tirant, "value": tirant} for tirant in liste_tirant]
+
         elif param == 5:
+
+            ''' param 1 = Jauge'''
             options = [{"label": jauge, "value": jauge} for jauge in liste_jauge]
+
         elif param == 6:
+
+            ''' param 1 = Piezomètre'''
             options = [{"label": piezo, "value": piezo} for piezo in liste_piezo]
+
         else:
             options = []
 
@@ -357,54 +410,7 @@ def return_input_dropdown(option, param, chantier):
         return {"display": "none"}, {"display": "none"}, []
 
 
-@app.callback(
-    Output("secteur-select", "data"),
-    [
-        Input("go-secteur", "n_clicks"),
-        State("secteur-selection", "value"),
-        State("chantier-select", "data"),
-    ],
-)
-def select_secteur(n_clicks, secteur_selected, chantier):
-    if n_clicks > 0:
-        try:
-            df = extract_position(
-                memoized_data(chantier, "actif", "topographie", "topo.csv")
-            )
-            with engine.connect() as con:
-                query2 = f"SELECT * FROM capteur where nom_chantier = '{chantier}'"
-                query3 = f"SELECT * FROM secteur where nom_chantier = '{chantier}' and nom_secteur='{secteur_selected}'"
-                liste_capteurs = pd.read_sql_query(query2, con=con)
-                liste_secteurs = pd.read_sql_query(query3, con=con)
-            lat1 = liste_secteurs.lat1[0]
-            lat2 = liste_secteurs.lat2[0]
-            lon1 = liste_secteurs.lon1[0]
-            lon2 = liste_secteurs.lon2[0]
-
-            cibles_select = df[
-                (df.lat > lat1) & (df.lat < lat2) & (df.lon > lon1) & (df.lon < lon2)
-            ]
-            cibles_select = {"cible": cibles_select.cible.tolist()}
-            capteurs_select = liste_capteurs[
-                (liste_capteurs.lon > lon1)
-                & (liste_capteurs.lon < lon2)
-                & (liste_capteurs.lat < lat1)
-                & (liste_capteurs.lat > lat2)
-            ]
-            capteurs_select = {
-                type: capteurs_select[capteurs_select.type == type].nom_capteur.tolist()
-                for type in capteurs_select.type
-            }
-            selection = {"secteur": secteur_selected}
-            selection.update(cibles_select)
-            selection.update(capteurs_select)
-            return selection
-        except IndexError:
-            return {}
-    else:
-        return {}
-
-
+#### Modication et sauvegarde des paramètres
 @app.callback(
     Output("update-success", "children"),
     Output("reload-map", "children"),
@@ -421,12 +427,39 @@ def select_secteur(n_clicks, secteur_selected, chantier):
 def add_modif_param(
     n_clicks, option, param, nom_param1, nom_param2, selectedData, chantier
 ):
+    '''
+    Option 1 : Ajouter
+    Option 2 : Modifier
+    Option 3 : Supprimer
+
+
+    '''
+
     if option == 1:
+
+        ''' SelectedData : dictionnaire retourner par plotly lors
+        d'une sélection sur la zone graphique'''
+
+        ''' plus d'infos sur les fonctions ajout_capteur,
+        ajout_secteur, ajout_capteur, maj_secteur, maj_capteur, supp_secteur,supp_capteur
+        dans (params_mgmt)'''
+
         if selectedData:
+
+            #range_selection : liste de liste de coordonnées GPS
+            #correspondant à la zone sélectionnée
+
             range_selection = selectedData["range"]["mapbox"]
+
+            #définition de la latitude et longitude pour le positionnement des capteurs
+
             lat = (range_selection[0][1] + range_selection[1][1]) / 2
             lon = (range_selection[0][0] + range_selection[1][0]) / 2
+
             if param == 1:
+
+                #paramètre : Secteur
+
                 nom_param = nom_param1
                 lat2 = range_selection[0][1]
                 lat1 = range_selection[1][1]
@@ -435,30 +468,47 @@ def add_modif_param(
                 if n_clicks:
                     ajout_secteur(nom_param, chantier, lat1, lat2, lon1, lon2)
                     return "Les paramètres ont bien été enregistrés", ""
+
             elif param == 2:
                 return "", ""
             elif param == 3:
+
+                #paramètre : Inclinomètre
+
                 nom_param = nom_param2
                 if n_clicks:
                     ajout_capteur(nom_param, chantier, "inclino", lat, lon)
                     return "Les paramètres ont bien été enregistrés", ""
+
             elif param == 4:
+
+                #paramètre : Tirant
+
                 nom_param = nom_param2
                 if n_clicks:
                     ajout_capteur(nom_param, chantier, "tirant", lat, lon)
                     return "Les paramètres ont bien été enregistrés", ""
+
             elif param == 5:
+
+                #paramètre : Jauge
+
                 nom_param = nom_param2
                 if n_clicks:
                     ajout_capteur(nom_param, chantier, "jauge", lat, lon)
                     return "Les paramètres ont bien été enregistrés", ""
+
             elif param == 6:
+
+                #paramètre : Piezomètre
+
                 nom_param = nom_param2
                 if n_clicks:
                     ajout_capteur(nom_param, chantier, "piezo", lat, lon)
                     return "Les paramètres ont bien été enregistrés", ""
             else:
                 return "", ""
+
     elif option == 2:
         if selectedData:
             nom_param = nom_param2
@@ -524,6 +574,72 @@ def add_modif_param(
         return "", ""
 
 
+#### Stocke la valeur du secteur sélectionné et l'ensemble
+#### des capteurs se situant à l'intérieur de celui-ci
+@app.callback(
+    Output("secteur-select", "data"),
+    [
+        Input("go-secteur", "n_clicks"),
+        State("secteur-selection", "value"),
+        State("chantier-select", "data"),
+    ],
+)
+def select_secteur(n_clicks, secteur_selected, chantier):
+    if n_clicks > 0:
+        try:
+
+            ''' extract_position retourne les positions GPS initiales des cibles topo
+            issues du fichier de déplacement des cibles'''
+
+            df = extract_position(
+                memoized_data(chantier, "actif", "topographie", "topo.csv")
+            )
+
+            ''' récupération des coordonées GPS du secteur sélectionné ainsi que les
+            coordonnées de l'ensemble des autres capteurs '''
+            with engine.connect() as con:
+                query2 = f"SELECT * FROM capteur where nom_chantier = '{chantier}'"
+                query3 = f"SELECT * FROM secteur where nom_chantier = '{chantier}' and nom_secteur='{secteur_selected}'"
+                liste_capteurs = pd.read_sql_query(query2, con=con)
+                liste_secteurs = pd.read_sql_query(query3, con=con)
+            lat1 = liste_secteurs.lat1[0]
+            lat2 = liste_secteurs.lat2[0]
+            lon1 = liste_secteurs.lon1[0]
+            lon2 = liste_secteurs.lon2[0]
+
+            ''' filtre l'ensmble des cibles dont la latitude et longitude est comprise
+            dans la zone correspondant au secteur et retourne le resultat sous forme
+            d'un dictionnaire'''
+            cibles_select = df[
+                (df.lat > lat1) & (df.lat < lat2) & (df.lon > lon1) & (df.lon < lon2)
+            ]
+            cibles_select = {"cible": cibles_select.cible.tolist()}
+
+            ''' idem pour les autres capteurs'''
+            capteurs_select = liste_capteurs[
+                (liste_capteurs.lon > lon1)
+                & (liste_capteurs.lon < lon2)
+                & (liste_capteurs.lat < lat1)
+                & (liste_capteurs.lat > lat2)
+            ]
+            capteurs_select = {
+                type: capteurs_select[capteurs_select.type == type].nom_capteur.tolist()
+                for type in capteurs_select.type
+            }
+
+            ''' création d'un dictionnaire associant à chaque type de
+            paramètre ses coordonnées correspondantes'''
+
+            selection = {"secteur": secteur_selected}
+            selection.update(cibles_select)
+            selection.update(capteurs_select)
+            return selection
+        except IndexError:
+            return {}
+    else:
+        return {}
+
+
 ### AFFICHE LA COURBE CORRESPONDANT AU CAPTEUR SELECTIONNÉ ####
 @app.callback(
     [
@@ -535,6 +651,13 @@ def add_modif_param(
 )
 def affichage_courbe_capteur(selectedData, chantier):
     try:
+        ''' SelectedData : dictionnaire retourner par plotly lors
+        d'une sélection sur la zone graphique'''
+
+        '''En fonction du type de capteur sélectionné sur la carte
+        la méthode appelle des focntions spécifiques pour récuper les données
+        les mettre en forme et tracer les courbes'''
+
         customdata = selectedData["points"][0]["customdata"]
         text = selectedData["points"][0]["text"]
         if customdata == "cible":

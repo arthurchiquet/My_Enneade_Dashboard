@@ -1,10 +1,15 @@
+### import des modules dash
+
 import dash_core_components as dcc
 import dash_bootstrap_components as dbc
 import dash_html_components as html
 from dash.dependencies import Input, Output, State
-from server import app, User
+
+#### import des librairies
 from flask_login import login_user
 from werkzeug.security import check_password_hash
+
+from server import app, User
 
 layout = dbc.Container(
     [
@@ -81,6 +86,8 @@ layout = dbc.Container(
 )
 
 
+#### Coonecte l'utilisateur et renvoie vers l'URL de la page accueil (carte monde) lors que
+#### la connexion est effectuée avec succès
 @app.callback(
     Output("url_login", "pathname"),
     [Input("login-button", "n_clicks")],
@@ -98,8 +105,11 @@ def sucess(n_click, input1, input2):
         pass
 
 
+#### Verification de la correspondance du mot de passe
+#### avec l'identifiant utilisateur
 @app.callback(
-    [Output("alert", "children"), Output("alert", "color")],
+    [Output("alert", "children"),
+    Output("alert", "color")],
     [Input("login-button", "n_clicks")],
     [State("uname-box", "value"), State("pwd-box", "value")],
 )

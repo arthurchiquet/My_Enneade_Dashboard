@@ -1,7 +1,11 @@
+###   IMPORTATION DES MODULES
+
 import dash_core_components as dcc
 import dash_html_components as html
 from dash.dependencies import Input, Output, State
 import dash_bootstrap_components as dbc
+
+###   IMPORTAION DES MODULES + ENSEMBLE DES PAGES
 from server import app
 from flask_login import logout_user, current_user
 from layouts import (
@@ -34,6 +38,8 @@ app.layout = html.Div(
 )
 
 
+###     CREATION DES BOUTONS DE LA BARRE DE NAVIGATION EN
+###     FONCTION DU PROFIL UTILISATEUR
 def return_buttons(profil):
     if profil == 1:
         buttons = dbc.Row(
@@ -291,6 +297,7 @@ def return_buttons(profil):
     return buttons
 
 
+###     CREATION DE LA BARRE DE NAVIGATION
 def return_navbar(profil):
     navbar = dbc.Navbar(
         [
@@ -315,7 +322,7 @@ def return_navbar(profil):
     )
     return navbar
 
-
+###     AFFICHAGE DU CHANTIER SELECTIONNE SUR LA BARRE DE NAVIGATION
 @app.callback(Output("title_chantier", "children"), Input("chantier-select", "data"))
 def afficher_nom_chantier(chantier):
     if chantier == {}:
@@ -356,6 +363,7 @@ def afficher_nom_chantier(chantier):
 #         return error.layout
 
 
+###     AFFICHE LA PAGE DEMANDE EN FONCTION DE L'URL, ETAT DE CONNEXION ET PROFIL UTILISATEUR
 @app.callback(
     Output("page-content", "children"),
     Input("url", "pathname")
@@ -429,6 +437,7 @@ def display_page(pathname):
         return error.layout
 
 
+####     AFFICHAGE DE LA BARRE DE NAVIGATION APRES LOGIN
 @app.callback(
     Output("navBar", "children"),
     [Input("page-content", "children"), Input("url", "pathname")],
@@ -444,5 +453,6 @@ def navBar(input1, url):
             return []
 
 
+#### EXECUTE LES SERVEUR LORSQUE LE FICHIER APP.PY EST APPELE
 if __name__ == "__main__":
     app.run_server(debug=True)

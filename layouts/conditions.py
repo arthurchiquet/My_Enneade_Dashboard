@@ -1,13 +1,15 @@
-import warnings
 import dash_core_components as dcc
 import dash_html_components as html
 import dash_bootstrap_components as dbc
 from dash.dependencies import Input, Output, State
-import pandas as pd
-from server import app
 import dash_table as dt
-from user_mgmt import show_users, add_user
+
+import pandas as pd
 import warnings
+
+from server import app
+from user_mgmt import show_users, add_user
+
 
 warnings.filterwarnings("ignore")
 

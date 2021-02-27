@@ -1,16 +1,24 @@
+####  Import des modules dash
+
 import dash_core_components as dcc
 import dash_html_components as html
 import dash_bootstrap_components as dbc
 import dash_table as dt
-import pandas as pd
 from dash.dependencies import Input, Output, State
+
+import pandas as pd
+import warnings
+
 from server import app
 from user_mgmt import show_users, update_profil, update_output, del_user
 from chantier_mgmt import del_chantier
 from config import engine
-import warnings
+
 
 warnings.filterwarnings("ignore")
+
+
+# Definition de l'interface admin
 
 layout = html.Div(
     [
@@ -165,18 +173,8 @@ layout = html.Div(
     ]
 )
 
-
-@app.callback(Output("chantier_list", "options"), Input("page-content", "children"))
-def update_choix_chantier(page):
-    with engine.connect() as con:
-        query = f"SELECT * FROM chantier"
-        liste_chantiers = pd.read_sql_query(query, con=con).nom_chantier.tolist()
-    if len(liste_chantiers) == 0:
-        return []
-    else:
-        return [{"label": chantier, "value": chantier} for chantier in liste_chantiers]
-
-
+#### Modification du type de profil utilisateur
+#### 1 : admin / 2 : profil complet (lecteur + editeur) / 3 : profil basic (lecteur)
 @app.callback(
     Output("update_profil_success", "children"),
     [
@@ -187,11 +185,16 @@ def update_choix_chantier(page):
     ],
 )
 def modify_profil(n_clicks1, n_clicks2, user, profil):
+    ''' Met à jour le profil si lorsque l'on clique sur le bouton (update) '''
+
     if (n_clicks1 > 0) and user != "":
         update_profil(user, profil)
         return html.Div(
             children=["Le profil a été mis à jour"], className="text-success"
         )
+
+    ''' Supprime l'utilisateur lorsque l'on clique sur le bouton (delete)'''
+
     if (n_clicks2 > 0) and user != "":
         del_user(user)
         return html.Div(
@@ -199,14 +202,21 @@ def modify_profil(n_clicks1, n_clicks2, user, profil):
         )
 
 
-@app.callback(Output("chantiers", "data"), Input("page-content", "children"))
+#### Retourne les données pour le tableau "chantiers"
+@app.callback(
+    Output("chantiers", "data"),
+    Input("page-content", "children"))
 def update_table_chantier(page):
+
+    ''' Conversion de la requete SQL en dictionnaire'''
+
     with engine.connect() as con:
         return pd.read_sql("chantier", con=con)[
             ["nom_chantier", "username", "adresse"]
         ].to_dict("records")
 
 
+#### Supprime le chantier selectionné
 @app.callback(
     Output("del_chantier_success", "children"),
     [
@@ -214,9 +224,24 @@ def update_table_chantier(page):
         Input("chantier_list", "value"),
     ],
 )
-def modify_chantier(n_clicks, chantier):
+def suppr_chantier(n_clicks, chantier):
     if n_clicks > 0 and chantier != "":
         del_chantier(chantier)
         return html.Div(
             children=["Le chantier a bien été supprimé"], className="text-success"
         )
+
+#### Retourne la liste de tous les chantiers crées
+@app.callback(Output("chantier_list", "options"), Input("page-content", "children"))
+def update_choix_chantier(page):
+
+    ''' Conversion de la requete SQL en liste de chantiers.
+        Retourne une liste vide si aucun chantier'''
+
+    with engine.connect() as con:
+        query = f"SELECT * FROM chantier"
+        liste_chantiers = pd.read_sql_query(query, con=con).nom_chantier.tolist()
+    if len(liste_chantiers) == 0:
+        return []
+    else:
+        return [{"label": chantier, "value": chantier} for chantier in liste_chantiers]

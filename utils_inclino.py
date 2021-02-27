@@ -1,22 +1,28 @@
-import pandas as pd
-from server import app
+#### import des modules dash
+
 import dash_table as dt
-from config import engine
 import dash_core_components as dcc
 import dash_html_components as html
-from utils_maps import empty_figure
-from dash.dependencies import Input, Output, State
 import dash_bootstrap_components as dbc
+from dash.dependencies import Input, Output, State
+
+#### Import des librairies python
+import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
-from data import get_data
 import warnings
+
+
+from server import app
+from config import engine
+from utils_maps import empty_figure
+from data import get_data
+
 
 colors = {"background": "#222222", "text": "white"}
 
 warnings.filterwarnings("ignore")
-
 
 profondeurs_table = [
     "Date",
@@ -30,6 +36,8 @@ profondeurs_table = [
     "60.0",
 ]
 
+
+#### Slider permettant de choisir le nombre de courbes à afficher (entre 1 et 10)
 controls1 = dcc.Slider(
     id="nb_curv",
     min=1,
@@ -51,6 +59,7 @@ controls1 = dcc.Slider(
     },
 )
 
+#### Slider permettant de choisir le nombre de courbes à afficher (entre 1 et 10)
 controls2 = dcc.Slider(
     id="nb_curv2",
     min=1,
@@ -72,6 +81,7 @@ controls2 = dcc.Slider(
     },
 )
 
+#### Slider permettant de choisir le nombre de courbes à afficher (entre 1 et 10)
 controls3 = dcc.Slider(
     id="nb_curv3",
     min=1,
@@ -93,6 +103,7 @@ controls3 = dcc.Slider(
     },
 )
 
+#### Slider permettant de choisir le nombre de courbes à afficher (entre 1 et 10)
 controls4 = dcc.Slider(
     id="prof",
     min=2,
@@ -111,6 +122,7 @@ controls4 = dcc.Slider(
     },
 )
 
+#### Definition de la table des déplacements normaux
 table_norm = dt.DataTable(
     id="table_norm",
     columns=[{"name": i, "id": i} for i in profondeurs_table],
@@ -129,6 +141,8 @@ table_norm = dt.DataTable(
     },
 )
 
+
+#### Definition de la table des déplacements tangentiels
 table_tan = dt.DataTable(
     id="table_tan",
     columns=[{"name": i, "id": i} for i in profondeurs_table],
@@ -290,6 +304,9 @@ layout = html.Div(
 )
 
 
+
+
+#### Mise a jour de l'ensemble des graphs et tables de données
 @app.callback(
     [
         Output("var_norm", "figure"),
@@ -317,13 +334,23 @@ def update_graphs(
     secteur_selected, nb_courbes, nb_courbes2, nb_courbes3, profondeur, chantier
 ):
     try:
+
+        ''' Extraction du nom de l'inclino se trouvant dans le secteur sélectionné'''
+
         inclino = secteur_selected["inclino"]
+
+        ''' Telechargement des données normales et tangentielles associées à l'inclino'''
+
         dfnorm = get_data(
             chantier, "actif", "inclinometrie", f"{inclino}_norm.csv", sep=False
         )
         dftan = get_data(
             chantier, "actif", "inclinometrie", f"{inclino}_tan.csv", sep=False
         )
+
+
+        ''' Creation de l'ensemble des figure et tables (voir méthodes ci-dessous'''
+
         fig1 = create_graph_1(dfnorm, chantier, inclino, nb_courbes3, "normal")
         fig2 = create_graph_1(dftan, chantier, inclino, nb_courbes3, "tangentiel")
         fig3 = create_graph_2(dfnorm, chantier, inclino, nb_courbes, "normal")
@@ -374,7 +401,11 @@ def update_graphs(
         )
 
 
+#### Methode d'affichage des courbes inclino (UNIQUEMENT DANS LA PAGE CHANTIER)
+#### lorqu'un inclino est selectionné sur la carte
 def graph_inclino(chantier, inclino, height=None):
+
+    ''' Telechargement des données normales et tangentielles associées à l'inclino'''
 
     dfnorm = get_data(
         chantier, "actif", "inclinometrie", f"{inclino}_norm.csv", sep=False
@@ -383,10 +414,17 @@ def graph_inclino(chantier, inclino, height=None):
         chantier, "actif", "inclinometrie", f"{inclino}_tan.csv", sep=False
     )
 
+    ''' identification de la derniere mesure connue ainsi que de l'avant dernière'''
     last_col = dfnorm.columns[-1]
     past_last_col = dfnorm.columns[-2]
+
+    ''' creation d'une nouvelle mesure correpondant à la differences des deux mesures ci-dessus'''
+
     dfnorm[f"{last_col} vs {past_last_col}"] = dfnorm[last_col] - dfnorm[past_last_col]
     dftan[f"{last_col} vs {past_last_col}"] = dftan[last_col] - dftan[past_last_col]
+
+    ''' initialisation de deux sous graphiques sur deux lignes'''
+
     fig = make_subplots(
         rows=2,
         cols=1,
@@ -395,6 +433,9 @@ def graph_inclino(chantier, inclino, height=None):
         vertical_spacing=0.1,
         subplot_titles=["Déplacements normaux (mm)", "Déplacements tangentiels (mm)"],
     )
+
+    ''' premier graph (deplacements normaux) : derniere mesure + difference '''
+
     fig.add_trace(
         go.Scatter(name=last_col, x=dfnorm[last_col], y=dfnorm.profondeur), row=1, col=1
     )
@@ -407,6 +448,9 @@ def graph_inclino(chantier, inclino, height=None):
         row=2,
         col=1,
     )
+
+    ''' premier graph (deplacements tangentiels) : derniere mesure. + difference'''
+
     fig.add_trace(
         go.Scatter(name=last_col, x=dftan[last_col], y=dftan.profondeur), row=2, col=1
     )
@@ -434,7 +478,13 @@ def graph_inclino(chantier, inclino, height=None):
     )
     return fig
 
+
+####  Creation du graph -> derniere mesure + difference des n dernieres mesures avec la derniere
 def create_graph_1(dfi, chantier, inclino, nb_courbes, title):
+
+    ''' trace la derniere mesure en date de l'inclino
+    ainsi que la difference entre les n dernieres mesures'''
+
     df = dfi.copy()
     last_col = df.columns[-1]
     n_col = df.columns[-(1 + nb_courbes)]
@@ -464,8 +514,11 @@ def create_graph_1(dfi, chantier, inclino, nb_courbes, title):
     fig.update_yaxes(gridcolor="grey")
     return fig
 
-
+#### Creation du graph -> n derniere mesures
 def create_graph_2(dfi, chantier, inclino, nb_courbes, title):
+
+    ''' trace les n dernieres mesures de l'inclino'''
+
     df = dfi.copy()
     cols = df.columns[-nb_courbes:]
     fig = px.line(df, y="profondeur", x=cols, title=f"Deplacement {title} (mm)")
@@ -488,8 +541,11 @@ def create_graph_2(dfi, chantier, inclino, nb_courbes, title):
     fig.update_yaxes(gridcolor="grey")
     return fig
 
-
+#### creation du graph -> n dernieres deplacmeents ponctuels
 def create_graph_3(dfi, chantier, inclino, nb_courbes, title):
+
+    ''' trace les n dernieres deplacements ponctuels de l'inclino'''
+
     df = dfi.copy()
     cols = df.columns[-nb_courbes:]
     for col in cols:
@@ -521,8 +577,12 @@ def create_graph_3(dfi, chantier, inclino, nb_courbes, title):
     fig.update_yaxes(gridcolor="grey")
     return fig
 
-
+#### Creation du graph -> evolution du deplacement à differentes profondeurs en fonction du temps
 def create_graph_4(dfi, chantier, inclino, profondeur, title):
+
+    ''' trace l'évolution du deplacement à differentes profondeur en
+    fonction du temps'''
+
     df = dfi.copy().set_index("profondeur").T
     df["Max"] = df.max(axis=1)
     df["Min"] = df.min(axis=1)
@@ -553,8 +613,12 @@ def create_graph_4(dfi, chantier, inclino, profondeur, title):
     fig.update_yaxes(gridcolor="grey")
     return fig
 
-
+#### Creation du graph -> N dernieres deplacements 3D (normal, tangent, profondeur)
 def create_3d_graph(dfnormi, dftani, chantier, inclino, nb_courbes):
+
+    ''' trace les n dernieres mesures de deplacments en 3D
+    ('normal, tangent et profondeur)'''
+
     dfnorm, dftan = dfnormi.copy(), dftani.copy()
     profondeur = dfnorm.profondeur
     fig = go.Figure()

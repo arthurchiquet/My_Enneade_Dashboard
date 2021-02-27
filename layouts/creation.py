@@ -1,13 +1,18 @@
+#### Import des modules dash
+
 import dash_core_components as dcc
 import dash_html_components as html
 from dash.dependencies import Input, Output, State
 import dash_bootstrap_components as dbc
-from server import app
-from flask_login import current_user
-from utils_maps import empty_figure
+
+#### Import des librairies
 import pandas as pd
 import plotly.express as px
 import requests
+from flask_login import current_user
+
+from server import app
+from utils_maps import empty_figure
 from chantier_mgmt import add_chantier
 
 mapbox_token = "pk.eyJ1IjoiYXJ0aHVyY2hpcXVldCIsImEiOiJja2E1bDc3cjYwMTh5M2V0ZzdvbmF5NXB5In0.ETylJ3ztuDA-S3tQmNGpPQ"
@@ -81,6 +86,7 @@ layout = html.Div(
 )
 
 
+#### Retourne la position GPS associée à l'adresse du chantier renseignée
 @app.callback(
     [
         Output("geo_loc", "children"),
@@ -99,8 +105,18 @@ def display_geoloc(n_clicks, adresse, nom):
         response = requests.get(url).json()
         result = response["features"][0]["geometry"]["coordinates"]
         coords = {nom: result}
-        add_chantier(nom, current_user.username, adresse, result[1], result[0])
+
+        ''' ajout des paramètres chantier dans la base SQL'''
+
+        try:
+            add_chantier(nom, current_user.username, adresse, result[1], result[0])
+        except:
+            return [], True, "Chantier existant !"
+
         df = pd.DataFrame(coords).T.reset_index()
+
+        ''' trace la position du chantier sur la carte'''
+
         fig = px.scatter_mapbox(
             df,
             lat=1,

@@ -1,9 +1,14 @@
+#### import des modules dash
+
 import dash_core_components as dcc
 import dash_html_components as html
 from dash.dependencies import Input, Output, State
 import dash_bootstrap_components as dbc
-import pandas as pd
 import dash_table as dt
+
+#### Import des librairies
+
+import pandas as pd
 import warnings
 
 from server import app
@@ -11,50 +16,6 @@ from config import engine
 import utils_topo, utils_inclino, utils_jauge, utils_tirant, utils_piezo
 
 warnings.filterwarnings("ignore")
-
-table_parametres = html.Div(
-    [
-        dt.DataTable(
-            id="table_parametres",
-            editable=True,
-            filter_action="native",
-            fixed_rows={"headers": True},
-            style_cell={
-                "backgroundColor": "rgb(50, 50, 50)",
-                "color": "white",
-                "textAlign": "center",
-            },
-            style_header={
-                "backgroundColor": "rgb(20, 20, 20)",
-                "color": "white",
-                "fontWeight": "bold",
-            },
-            style_table={"height": "500px", "overflowY": "auto"},
-        )
-    ]
-)
-
-table_secteur = html.Div(
-    [
-        dt.DataTable(
-            id="table_secteur",
-            editable=True,
-            filter_action="native",
-            fixed_rows={"headers": True},
-            style_cell={
-                "backgroundColor": "rgb(50, 50, 50)",
-                "color": "white",
-                "textAlign": "center",
-            },
-            style_header={
-                "backgroundColor": "rgb(20, 20, 20)",
-                "color": "white",
-                "fontWeight": "bold",
-            },
-            style_table={"height": "500px", "overflowY": "auto"},
-        )
-    ]
-)
 
 layout = html.Div(
     [
@@ -92,6 +53,7 @@ layout = html.Div(
 )
 
 
+#### Affiche en titre le nom du secteur sélectionné
 @app.callback(
     Output("secteur-title", "children"),
     Input("secteur-select", "data"),
@@ -102,7 +64,8 @@ def return_title(secteur_selected):
     else:
         return f'Secteur {secteur_selected["secteur"]}'
 
-
+#### En fonction de l'onglet sélectionné renvoie l'interface (page) correspond
+#### au type de mesures à afficher
 @app.callback(
     Output("tab_type_content", "children"),
     [Input("tabs_type", "active_tab")],
@@ -110,12 +73,31 @@ def return_title(secteur_selected):
 )
 def return_tabs_content(tab, chantier, secteur):
     if tab == 1:
+
+        ''' onglet 1 : Mesures topographiques'''
+
         return utils_topo.layout
+
     elif tab == 2:
+
+        ''' onglet 2 : Mesures inclinométriques'''
+
         return utils_inclino.layout
+
     elif tab == 3:
+
+        ''' onglet 3 : Mesures tirants'''
+
         return utils_tirant.layout
+
     elif tab == 4:
+
+        ''' onglet 4 : Mesures jauges'''
+
         return utils_jauge.layout
+
     elif tab == 5:
+
+        ''' onglet 5 : Mesures piezométriques'''
+
         return utils_piezo.layout

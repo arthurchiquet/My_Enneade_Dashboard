@@ -1,3 +1,5 @@
+#### Voir chantier_mgmt.py pour plus de détails
+
 from sqlalchemy import Table
 from sqlalchemy.sql import select
 from flask_sqlalchemy import SQLAlchemy

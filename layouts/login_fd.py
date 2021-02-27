@@ -38,7 +38,7 @@ layout = dbc.Container(
 )
 
 
-# Create callbacks
+#### Renvoie vers l'URL de la page de connexion
 @app.callback(Output("url_login_df", "pathname"), [Input("back-button", "n_clicks")])
 def logout_dashboard(n_clicks):
     if n_clicks > 0:

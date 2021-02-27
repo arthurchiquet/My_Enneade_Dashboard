@@ -1,12 +1,18 @@
+#### IMPORT DES MODULES
+
 from sqlalchemy import Table
 from sqlalchemy.sql import select
 from flask_sqlalchemy import SQLAlchemy
-from config import engine
 import pandas as pd
+
+#### VOIR CONFIG.PY
+from config import engine
+
+#### Crée une instance SQLACHEMY
 
 db = SQLAlchemy()
 
-
+#### DEFINITION DES COLONNES DE LA TABLE CHANTIER
 class Chantier(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     nom_chantier = db.Column(db.String(50), unique=True)
@@ -24,10 +30,12 @@ class Chantier(db.Model):
 Chantier_tbl = Table("chantier", Chantier.metadata)
 
 
+#### METHODE DE CREATION DE LA TABLE CHANTIER
 def create_table():
     Chantier.metadata.create_all(engine)
 
 
+#### METHODE PERMETTANT D'AJOUTER UN NOUVEAU CHANTIER
 def add_chantier(
     nom_chantier, username, adresse, lat, lon, zoom=15, x1=0, x2=0, y1=0, y2=0
 ):
@@ -49,6 +57,7 @@ def add_chantier(
     conn.close()
 
 
+#### METHODE PERMETTANT DE SUPPRIMER UN CHANTIER EXISTANT
 def del_chantier(nom_chantier):
     delete = Chantier_tbl.delete().where(Chantier_tbl.c.nom_chantier == nom_chantier)
 
@@ -57,6 +66,7 @@ def del_chantier(nom_chantier):
     conn.close()
 
 
+#### METHODE PERMETTANT DE MODIFIER LES INFORMATIONS D'UN CHANTIER EXISTANT
 def update_chantier(nom_chantier, x1, x2, y1, y2):
     update = (
         Chantier_tbl.update()
@@ -77,7 +87,7 @@ def update_chantier(nom_chantier, x1, x2, y1, y2):
     conn.execute(update)
     conn.close()
 
-
+#### METHODE PERMETTANT D'AFFICHER LES CHANTIERS EXISTANT
 def afficher_chantier():
     select_stmt = select(
         [

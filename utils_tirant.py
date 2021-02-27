@@ -1,11 +1,17 @@
-import pandas as pd
-import numpy as np
-import plotly.express as px
-import warnings
+#### import des modules dash
+
 import dash_core_components as dcc
 import dash_html_components as html
 from dash.dependencies import Input, Output, State
 import dash_bootstrap_components as dbc
+
+
+#### Import des librairies python
+import pandas as pd
+import numpy as np
+import plotly.express as px
+import warnings
+
 from server import app
 from config import engine
 from data import get_data
@@ -53,6 +59,7 @@ layout = dbc.Container(
 )
 
 
+#### Creation des graphs -> Tension brut (kN) et ratio sur tension de blocage
 @app.callback(
     [
         Output("evol_tirants_kn", "figure"),
@@ -67,7 +74,7 @@ def update_graph_tirants(secteur_selected, chantier):
     except:
         return empty_figure(), empty_figure()
 
-
+#### Methode permettant de recuperer la premiere valeur non nulle d'une colonne
 def first(col):
     i = 0
     for j in col:
@@ -76,14 +83,14 @@ def first(col):
             break
     return i
 
-
+#### Calcul le ratio entre chaque valeur d'une colonne et la premiere valeur non nulle de cette colonne
 def tension_blocage(df):
     df1 = df.copy()
     for col in df1.columns:
         df1[col] = df1[col] / first(df1[col])
     return df1
 
-
+#### Methode permettant de mettre en forme les données pour le traçage des graphs
 def format_df(df, list_tirants):
     df = df.rename(columns={"Date": "date"})
     df.date = pd.to_datetime(df.date, format="%d/%m/%Y")
@@ -91,7 +98,7 @@ def format_df(df, list_tirants):
     df_ratio = tension_blocage(df) * 100
     return df, df_ratio
 
-
+#### Methode permettant le telechargement des données tirant et la création des deux figures
 def graph_tirant(chantier, list_tirants, height=400, mode=1):
     df = get_data(chantier, "actif", "tirant", "tirant.csv", sep=False)
     df, df_ratio = format_df(df, list_tirants)

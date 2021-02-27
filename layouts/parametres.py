@@ -1,19 +1,26 @@
-import warnings
+#### Import des modules dash
+
 import dash_core_components as dcc
 import dash_html_components as html
 import dash_bootstrap_components as dbc
 from dash.dependencies import Input, Output, State
-from data import get_data, export_data
+import dash_table as dt
+
+#### Import des librairies python
 import pandas as pd
+import warnings
+from pangres import upsert
+
+from data import get_data, export_data
 from server import app
 from config import engine
 from data import memoized_data
-import dash_table as dt
-from pangres import upsert
 from chantier_mgmt import update_chantier
 
 warnings.filterwarnings("ignore")
 
+
+#### Contenu des onglets de paramètres
 tab_content_param = dbc.Container(
     [
         html.Br(),
@@ -45,7 +52,8 @@ tab_content_param = dbc.Container(
     ]
 )
 
-tabs_pram = html.Div(
+#### Definition des onglets par type de paramètre
+tabs_param = html.Div(
     [
         html.Br(),
         dbc.Row(
@@ -84,9 +92,11 @@ tabs_pram = html.Div(
     ]
 )
 
-layout = tabs_pram
+layout = tabs_param
 
 
+#### renvoie le tableau de valeurs correpondant à l'onglet sélectionné
+#### ainsi que le chantier sélectionné
 @app.callback(
     [
         Output("table_params", "data"),
@@ -100,12 +110,18 @@ layout = tabs_pram
 def display_table(tab, chantier):
     with engine.connect() as con:
         if tab == 1:
+
+            ''' Paramètre : Chantier'''
+
             query = f"SELECT * FROM chantier WHERE nom_chantier='{chantier}'"
             parametres = pd.read_sql_query(query, con=con).iloc[:, 1:]
             return parametres.to_dict("records"), [
                 {"name": i, "id": i} for i in parametres.columns
             ]
         if tab == 2:
+
+            ''' Paramètre : Secteurs'''
+
             query1 = f"SELECT * FROM secteur WHERE nom_chantier='{chantier}'"
             query2 = f"SELECT * FROM secteur_param WHERE nom_chantier='{chantier}'"
             gauche = pd.read_sql_query(query1, con=con)[["nom_secteur", "nom_chantier"]]
@@ -115,6 +131,9 @@ def display_table(tab, chantier):
                 {"name": i, "id": i} for i in result.columns
             ]
         if tab == 3:
+
+            ''' Paramètre : Cibles'''
+
             values = memoized_data(
                 chantier, "actif", "topographie", "topo.csv"
             ).columns[1:]
@@ -132,6 +151,10 @@ def display_table(tab, chantier):
                 {"name": i, "id": i} for i in result.columns
             ]
         if tab == 4:
+
+            ''' Paramètre : Inclinomètres'''
+
+
             query1 = f"SELECT * FROM capteur WHERE nom_chantier='{chantier}' and type='inclino'"
             query2 = f"SELECT * FROM inclino_param WHERE nom_chantier='{chantier}'"
             gauche = pd.read_sql_query(query1, con=con)[["nom_capteur", "nom_chantier"]]
@@ -141,6 +164,9 @@ def display_table(tab, chantier):
                 {"name": i, "id": i} for i in result.columns
             ]
         if tab == 5:
+
+            ''' Paramètre : Tirants'''
+
             query1 = f"SELECT * FROM capteur WHERE nom_chantier='{chantier}' and type='tirant'"
             query2 = f"SELECT * FROM inclino_param WHERE nom_chantier='{chantier}'"
             gauche = pd.read_sql_query(query1, con=con)[["nom_capteur", "nom_chantier"]]
@@ -150,6 +176,10 @@ def display_table(tab, chantier):
                 {"name": i, "id": i} for i in result.columns
             ]
         if tab == 6:
+
+            ''' Paramètre : Jauges'''
+
+
             query1 = f"SELECT * FROM capteur WHERE nom_chantier='{chantier}' and type='jauge'"
             query2 = f"SELECT * FROM inclino_param WHERE nom_chantier='{chantier}'"
             gauche = pd.read_sql_query(query1, con=con)[["nom_capteur", "nom_chantier"]]
@@ -159,6 +189,10 @@ def display_table(tab, chantier):
                 {"name": i, "id": i} for i in result.columns
             ]
         if tab == 7:
+
+            ''' Paramètre : Piezomètres'''
+
+
             query1 = f"SELECT * FROM capteur WHERE nom_chantier='{chantier}' and type='piezo'"
             query2 = f"SELECT * FROM inclino_param WHERE nom_chantier='{chantier}'"
             gauche = pd.read_sql_query(query1, con=con)[["nom_capteur", "nom_chantier"]]
@@ -169,6 +203,8 @@ def display_table(tab, chantier):
             ]
 
 
+
+#### Mise à jour des paramètres en fonction des modifications renseignées dans le tableau de valeurs
 @app.callback(
     Output("update_success", "children"),
     [
@@ -181,8 +217,17 @@ def display_table(tab, chantier):
 )
 def update_params(n_clicks, data, tab, chantier, label):
     if n_clicks:
+
+        '''Conversion des données du tableau en DataFrame'''
         df = pd.DataFrame(data)
+
+        '''Affectation des premières colonnes (index) en clef primaires (SQL)'''
         df = df.set_index([df.columns[0], df.columns[1]])
+
+
+        ''' La fonction upsert permet de mettre à jour (UPDATE) la table SQL si une valeur correspondants aux clefs
+        primaires et modifiée et insert une nouvelle entrée lorsque le couple de clefs primaires n'existe pas encore'''
+
         if tab == 1:
             df = df.reset_index().set_index("nom_chantier")
             upsert(engine=engine, df=df, table_name="chantier", if_row_exists="update")

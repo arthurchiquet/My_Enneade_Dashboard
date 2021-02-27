@@ -1,20 +1,27 @@
-import pandas as pd
-from PIL import Image
-from server import app, TIMEOUT, cache
-from server import app
+#### Import des modules google cloud
+
 from google.cloud import storage
 from google.oauth2 import service_account
-import io
+
+#### Import des modules python
+
+import pandas as pd
+from PIL import Image
 from io import BytesIO
+import io
 import os
 import json
 
+from server import app, TIMEOUT, cache
 
+#### PROJECT_ID : nom du projet crée dans GOOGLE CLOUD PLATEFORM
+#### BUCKET_ID : nom de la bucket de stockage de données crée dans GOOGLE CLOUD STORAGE
 PROJECT_ID = "vallicorp1"
 BUCKET_NAME = "myenneade-data"
 
-
-def get_credentials(local=False):
+#### FONCTION PERMETTANT DE RÉCUPÉRER LES CREDENTIALS STOCKÉS DANS LA VARIABLE D'ENVIRONNEMENT
+#### GOOGLE_APPLICATION_CREDENTIALS NÉCESSAIRE À LA CONNEXION GOOGLE STORAGE
+def get_credentials(local=True):
     if local:
         credentials_raw = os.environ.get("GOOGLE_APPLICATION_CREDENTIALS")
         if ".json" in credentials_raw:
@@ -26,10 +33,17 @@ def get_credentials(local=False):
     return creds_gcp
 
 
+#### LE DECORATEUR @cache.memoize() PERMET DE STOCKER LA VALEUR DE LA FONCTION DEFINIT CI-DESSOUS
+#### PERMET UN UNIQUE CHARGEMENT ET CALCUL DES DONNÉES ET RESTITUE DIRECTEMENT LA VALEUR
+#### PAR LA SUITE LORSQUE LA FONCTION EST APPELÉÉ
+
 @cache.memoize(timeout=TIMEOUT)
 def query_data(
     chantier, path, types, filename, bucket=BUCKET_NAME, project_id=PROJECT_ID, sep=True
 ):
+    '''fonction permettant le telechargement des données stockées dans la bucket google storage
+    sous forme de CSV et les retourne sous forme d'un Dataframe'''
+
     creds = get_credentials()
     client = storage.Client(credentials=creds, project=project_id)
     bucket = client.get_bucket(BUCKET_NAME)
@@ -44,6 +58,9 @@ def query_data(
 def get_data(
     chantier, path, types, filename, bucket=BUCKET_NAME, project_id=PROJECT_ID, sep=True
 ):
+    '''fonction permettant le telechargement des données stockées dans la bucket google storage
+    sous forme de CSV et les retourne sous forme d'un Dataframe'''
+
     creds = get_credentials()
     client = storage.Client(credentials=creds, project=project_id)
     bucket = client.get_bucket(BUCKET_NAME)
@@ -54,11 +71,12 @@ def get_data(
     else:
         return pd.read_csv(io.BytesIO(data), encoding="utf-8", memory_map=True)
 
-
+#### fonction permettant de beneficier de la focntion de mise en cache
 def memoized_data(chantier, path, types, filename):
     return query_data(chantier, path, types, filename)
 
 
+#### FONCTION PERMETTANT DE TELECHARGER UNE IMAGE STOCKÉE DANS UNE BUCKET GOOGLE STORAGE
 def download_image(
     chantier, filename, bucket=BUCKET_NAME, project_id=PROJECT_ID, rm=True
 ):
@@ -72,7 +90,7 @@ def download_image(
         os.remove("plan.jpeg")
     return img
 
-
+#### FONCTION PERMETTANT DE RETOURNER LA LISTE DES FICHIERS PRÉSENTS DANS UN SOUS-SOSSIER GOOGLE STORAGE
 def list_files(prefix, bucketname=BUCKET_NAME, projetcid=PROJECT_ID):
     creds = get_credentials()
     client = storage.Client(credentials=creds, project=projetcid)
@@ -82,7 +100,7 @@ def list_files(prefix, bucketname=BUCKET_NAME, projetcid=PROJECT_ID):
     docs = [i.replace(prefix, "")[:-4] for i in fileList]
     return docs
 
-
+#### FONCTION PERMETTANT D'EXPORTER SOUS FORME DE CSV DANS UN DOSSIER GOOGLE STORAGE
 def export_data(
     df, chantier, path, types, filename, bucket=BUCKET_NAME, project_id=PROJECT_ID
 ):

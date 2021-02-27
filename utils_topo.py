@@ -1,18 +1,24 @@
+#### import des modules python
+
 import dash_core_components as dcc
 import dash_html_components as html
 import dash_bootstrap_components as dbc
 from dash.dependencies import Input, Output, State
-from config import engine
+
+#### import des librairies python
 import pandas as pd
 import numpy as np
-from server import app
 import plotly.express as px
 import plotly.graph_objects as go
-from utils_maps import empty_figure, extract_position
-from math import radians, cos, sin
-from data import memoized_data
 from scipy.stats import zscore
 import json
+from math import radians, cos, sin
+
+from config import engine
+from server import app
+from utils_maps import empty_figure, extract_position
+from data import memoized_data
+
 
 colors = {"background": "#222222", "text": "white"}
 
@@ -77,6 +83,8 @@ layout = html.Div(
     ]
 )
 
+
+#### Creation du graph -> Deplacements 3D des cibles
 @app.callback(
     Output("graph-3D", "figure"),
     Input("focus", "value"),
